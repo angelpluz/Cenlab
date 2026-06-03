@@ -1,0 +1,13 @@
+.next/
+node_modules/
+
+*.log
+.next-dev-*.log
+
+out/
+dist/
+coverage/
+
+.env
+.env.*
+!.env.example
