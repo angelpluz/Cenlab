@@ -1,6 +1,19 @@
 "use client";
 
+import Image, { type StaticImageData } from "next/image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import francesGazImage from "@/char/Screenshot_25690604095103.png";
+import junoirExtremeImage from "@/char/Screenshot_25690604095121.png";
+import archAngelpluzImage from "@/char/Screenshot_25690604095128.png";
+import queen0FeriaImage from "@/char/Screenshot_25690604095133.png";
+import izanoAlpImage from "@/char/Screenshot_25690604095139.png";
+import reginaAlpImage from "@/char/Screenshot_25690604095146.png";
+import candySellerAlpImage from "@/char/Screenshot_25690604095153.png";
+import khrasedraAlpImage from "@/char/Screenshot_25690604095200.png";
+import soulAlpImage from "@/char/Screenshot_25690604095206.png";
+import power0FranzImage from "@/char/Screenshot_25690604095211.png";
+import jessiGazAlpImage from "@/char/Screenshot_25690604095216.png";
+import souffleExtremeImage from "@/char/Screenshot_25690604095221.png";
 
 type StageId = "stage1" | "stage2" | "stage3";
 
@@ -17,7 +30,7 @@ type Character = {
   name: string;
   job: string;
   level: number;
-  imageSrc?: string;
+  imageSrc?: StaticImageData;
 };
 
 type CharacterRun = {
@@ -37,18 +50,30 @@ type PortraitPalette = {
 };
 
 const CHARACTERS: Character[] = [
-  { id: "francesgaz", name: "FranCesGaz", job: "Arch Bishop", level: 225 },
-  { id: "junoirextreme", name: "JunoirExtreme", job: "Windhawk", level: 225 },
-  { id: "archangelpluz", name: "ArchAngelpluz", job: "Cardinal", level: 225 },
-  { id: "queen0feria", name: "Queen0Feria", job: "Arch Mage", level: 225 },
-  { id: "izanoalp", name: "IzanoALP", job: "Shadow Cross", level: 225 },
-  { id: "reginaalp", name: "ReginaALP", job: "Imperial Guard", level: 225 },
-  { id: "candyselleralp", name: "CandYSellerALP", job: "Biolo", level: 225 },
-  { id: "khrasedraalp", name: "KhrasedraALP", job: "Dragon Knight", level: 225 },
-  { id: "soulalp", name: "SoulALP", job: "Soul Ascetic", level: 225 },
-  { id: "power0franz", name: "PoWer0FranZ", job: "Meister", level: 225 },
-  { id: "jessigaalp", name: "JessiGazALP", job: "Inquisitor", level: 225 },
-  { id: "soufflextreme", name: "SouffleExtreme", job: "Troubadour", level: 225 },
+  { id: "francesgaz", name: "FranCesGaz", job: "Arch Bishop", level: 225, imageSrc: francesGazImage },
+  { id: "junoirextreme", name: "JunoirExtreme", job: "Windhawk", level: 225, imageSrc: junoirExtremeImage },
+  { id: "archangelpluz", name: "ArchAngelpluz", job: "Cardinal", level: 225, imageSrc: archAngelpluzImage },
+  { id: "queen0feria", name: "Queen0Feria", job: "Arch Mage", level: 225, imageSrc: queen0FeriaImage },
+  { id: "izanoalp", name: "IzanoALP", job: "Shadow Cross", level: 225, imageSrc: izanoAlpImage },
+  { id: "reginaalp", name: "ReginaALP", job: "Imperial Guard", level: 225, imageSrc: reginaAlpImage },
+  {
+    id: "candyselleralp",
+    name: "CandYSellerALP",
+    job: "Biolo",
+    level: 225,
+    imageSrc: candySellerAlpImage,
+  },
+  {
+    id: "khrasedraalp",
+    name: "KhrasedraALP",
+    job: "Dragon Knight",
+    level: 225,
+    imageSrc: khrasedraAlpImage,
+  },
+  { id: "soulalp", name: "SoulALP", job: "Soul Ascetic", level: 225, imageSrc: soulAlpImage },
+  { id: "power0franz", name: "PoWer0FranZ", job: "Meister", level: 225, imageSrc: power0FranzImage },
+  { id: "jessigaalp", name: "JessiGazALP", job: "Inquisitor", level: 225, imageSrc: jessiGazAlpImage },
+  { id: "soufflextreme", name: "SouffleExtreme", job: "Troubadour", level: 225, imageSrc: souffleExtremeImage },
 ];
 
 const INITIAL_STAGES: TimerStage[] = [
@@ -300,18 +325,26 @@ function CharacterPortrait({
   compact?: boolean;
 }) {
   const palette = PORTRAITS[character.id] ?? DEFAULT_PORTRAIT;
-  const sizeClass = compact ? "h-12 w-10" : "h-16 w-14";
+  const sizeClass = compact ? "h-12 w-10" : "h-20 w-16";
 
   if (character.imageSrc) {
     return (
       <div
         aria-label={`${character.name} portrait`}
-        className={`${sizeClass} shrink-0 rounded-lg border border-white/10 bg-cover bg-center bg-no-repeat shadow-inner shadow-black/30 ${
+        className={`${sizeClass} shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-inner shadow-black/30 ${
           muted ? "opacity-45 grayscale" : ""
         }`}
         role="img"
-        style={{ backgroundImage: `url(${character.imageSrc})` }}
-      />
+      >
+        <Image
+          alt=""
+          className="h-full w-full object-contain"
+          draggable={false}
+          sizes={compact ? "40px" : "64px"}
+          src={character.imageSrc}
+          unoptimized
+        />
+      </div>
     );
   }
 
