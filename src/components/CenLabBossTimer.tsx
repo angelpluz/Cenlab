@@ -170,6 +170,14 @@ function formatTime(seconds: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
+function toEightBitBinary(value: number): string {
+  return value.toString(2).padStart(8, "0");
+}
+
+function formatSpacedBinary(binary: string): string {
+  return `${binary.slice(0, 4)} ${binary.slice(4)}`;
+}
+
 function getCharacterName(characterId: string): string {
   return CHARACTERS.find((character) => character.id === characterId)?.name ?? characterId;
 }
@@ -362,6 +370,7 @@ function CharacterPortrait({
 export default function CenLabBossTimer() {
   const [runs, setRuns] = useState<CharacterRunMap>({});
   const [usedIds, setUsedIds] = useState<string[]>([]);
+  const [decimalInput, setDecimalInput] = useState("0");
   const intervalsRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
 
   const clearCharacterTimer = useCallback((characterId: string) => {
@@ -549,6 +558,17 @@ export default function CenLabBossTimer() {
   const availableCount = CHARACTERS.filter(
     (character) => !usedIds.includes(character.id) && !runs[character.id]
   ).length;
+  const parsedDecimal = decimalInput.trim() === "" ? null : Number(decimalInput);
+  const isDecimalValid =
+    parsedDecimal !== null &&
+    Number.isInteger(parsedDecimal) &&
+    parsedDecimal >= 0 &&
+    parsedDecimal <= 255;
+  const binaryRaw = isDecimalValid ? toEightBitBinary(parsedDecimal) : "00000000";
+  const binarySpaced = formatSpacedBinary(binaryRaw);
+  const upperBits = binaryRaw.slice(0, 4);
+  const lowerBits = binaryRaw.slice(4);
+  const bitValues = binaryRaw.split("");
 
   const nextActionText = (() => {
     if (completeRunCount > 0) return "Finish completed runs to mark those characters used.";
@@ -568,6 +588,83 @@ export default function CenLabBossTimer() {
             Boss Timer & Character Tracker
           </p>
         </header>
+
+        <section className="mb-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 shadow-lg backdrop-blur-sm">
+          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[180px_minmax(220px,1fr)_120px_120px_minmax(260px,1.2fr)] lg:items-end">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-emerald-300">Binary Converter</h2>
+                <span className="rounded-full bg-emerald-950/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+                  8-bit
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">Decimal to binary</p>
+            </div>
+
+            <div>
+              <label
+                className="block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                htmlFor="decimal-input"
+              >
+                Decimal
+              </label>
+              <input
+                id="decimal-input"
+                inputMode="numeric"
+                max={255}
+                min={0}
+                onChange={(event) => setDecimalInput(event.target.value.replace(/[^\d]/g, ""))}
+                placeholder="0"
+                type="text"
+                value={decimalInput}
+                className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-lg font-bold text-slate-100 outline-none transition placeholder:text-slate-700 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">Binary 8-bit</p>
+              <p className="mt-1 font-mono text-xl font-black tracking-wide text-emerald-100">
+                {isDecimalValid ? binarySpaced : "---- ----"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Upper</p>
+                <p className="mt-1 font-mono text-base font-black text-cyan-200">
+                  {isDecimalValid ? upperBits : "----"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Lower</p>
+                <p className="mt-1 font-mono text-base font-black text-violet-200">
+                  {isDecimalValid ? lowerBits : "----"}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <div className="grid grid-cols-8 gap-1">
+                {bitValues.map((bit, index) => (
+                  <div
+                    key={`bit-${index + 1}`}
+                    className={`rounded-md border px-1 py-1.5 text-center ${
+                      bit === "1" && isDecimalValid
+                        ? "border-emerald-400/60 bg-emerald-500/15 text-emerald-100"
+                        : "border-slate-800 bg-slate-950/60 text-slate-500"
+                    }`}
+                  >
+                    <p className="text-[9px] font-bold uppercase tracking-wide">B{index + 1}</p>
+                    <p className="font-mono text-sm font-black">{isDecimalValid ? bit : "-"}</p>
+                  </div>
+                ))}
+              </div>
+              {!isDecimalValid ? (
+                <p className="mt-2 text-xs font-medium text-rose-300">Use an integer from 0 to 255.</p>
+              ) : null}
+            </div>
+          </div>
+        </section>
 
         <div className="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-[minmax(0,780px)_minmax(520px,1fr)]">
           <div className="order-2 min-w-0 space-y-5 lg:order-1">
