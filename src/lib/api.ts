@@ -6,8 +6,7 @@ import type {
   OgchMutationApiResponse,
 } from "@/lib/ogch-types";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "https://api.alprasoft-corp.com";
+export const API_BASE_URL = "/api/ogch";
 
 async function readJson<T>(response: Response): Promise<T> {
   return (await response.json().catch(() => ({}))) as T;
@@ -42,7 +41,7 @@ async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function getOgchCharacters(): Promise<OgchCharacterProgress[]> {
-  const response = await fetchApi<OgchCharactersApiResponse>("/api/ogch/characters", {
+  const response = await fetchApi<OgchCharactersApiResponse>("/characters", {
     cache: "no-store",
   });
 
@@ -50,21 +49,21 @@ export async function getOgchCharacters(): Promise<OgchCharacterProgress[]> {
 }
 
 export async function completeOgchRun(characterId: string): Promise<OgchMutationApiResponse> {
-  return fetchApi<OgchMutationApiResponse>("/api/ogch/complete", {
+  return fetchApi<OgchMutationApiResponse>("/complete", {
     method: "POST",
     body: JSON.stringify({ characterId }),
   });
 }
 
 export async function manualAdjustOgchProgress(payload: ManualAdjustPayload): Promise<OgchMutationApiResponse> {
-  return fetchApi<OgchMutationApiResponse>("/api/ogch/manual-adjust", {
+  return fetchApi<OgchMutationApiResponse>("/manual-adjust", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export async function resetOgchCooldown(characterId: string): Promise<OgchMutationApiResponse> {
-  return fetchApi<OgchMutationApiResponse>("/api/ogch/reset-cooldown", {
+  return fetchApi<OgchMutationApiResponse>("/reset-cooldown", {
     method: "POST",
     body: JSON.stringify({ characterId }),
   });
