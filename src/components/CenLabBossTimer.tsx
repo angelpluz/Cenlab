@@ -1,6 +1,7 @@
 "use client";
 
 import Image, { type StaticImageData } from "next/image";
+import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import francesGazImage from "@/char/Screenshot_25690604095103.png";
 import junoirExtremeImage from "@/char/Screenshot_25690604095121.png";
@@ -613,13 +614,30 @@ export default function CenLabBossTimer() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
       <div className="mx-auto box-border w-full max-w-[1440px] px-4 py-5 sm:px-6 lg:px-6 lg:py-3">
-        <header className="mb-5 text-center lg:mb-4">
-          <h1 className="text-3xl font-extrabold tracking-tight text-cyan-400 sm:text-4xl lg:text-3xl">
-            Central Laboratory
-          </h1>
-          <p className="mt-1 text-sm text-slate-400 sm:text-base">
-            Boss Timer & Character Tracker
-          </p>
+        <header className="mb-5 flex flex-col items-center gap-3 text-center lg:mb-4 lg:flex-row lg:justify-between lg:text-left">
+          <nav className="grid w-full grid-cols-2 gap-2 lg:w-auto">
+            <Link
+              className="inline-flex items-center justify-center rounded-lg border border-cyan-500/50 bg-cyan-950/45 px-4 py-2 text-sm font-bold text-cyan-100"
+              href="/cen-lab"
+            >
+              Cen Lab Timer
+            </Link>
+            <Link
+              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-violet-500/40 hover:text-violet-200"
+              href="/ogch"
+            >
+              OGCH Tracker
+            </Link>
+          </nav>
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-cyan-400 sm:text-4xl lg:text-3xl">
+              Central Laboratory
+            </h1>
+            <p className="mt-1 text-sm text-slate-400 sm:text-base">
+              Boss Timer & Character Tracker
+            </p>
+          </div>
+          <div className="hidden lg:block lg:w-[278px]" />
         </header>
 
         <section className="mb-4 rounded-xl border border-slate-800 bg-slate-900/60 p-3 shadow-lg backdrop-blur-sm">
