@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
 import { formatBangkokDateTime, formatExp, getLiveCooldownStatus, getRemainingCooldownSeconds } from "@/lib/ogch";
+import { getCharacterImage } from "@/lib/character-images";
 import OgchCooldownBadge from "@/components/ogch/OgchCooldownBadge";
 import OgchProgressBar from "@/components/ogch/OgchProgressBar";
 
@@ -29,17 +31,46 @@ export default function OgchCharacterCard({
       ? character.remainingCooldownSeconds
       : getRemainingCooldownSeconds(character.nextAvailableAt, now);
   const canComplete = cooldownStatus === "available" && !isMutating;
+  const characterImage = getCharacterImage(character.id, character.name);
 
   return (
     <article className="rounded-xl border border-slate-800 bg-slate-900/65 p-3 shadow-lg shadow-black/10 transition hover:border-cyan-500/40">
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="truncate text-base font-bold text-slate-100">{character.name}</h3>
-          <p className="mt-0.5 truncate text-xs text-slate-400">
-            Lv.{character.baseLevel} {character.job}
-          </p>
+        <div className="flex min-w-0 items-center gap-3">
+          {characterImage ? (
+            <div
+              aria-label={`${character.name} portrait`}
+              className="h-20 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-inner shadow-black/30"
+              role="img"
+            >
+              <Image
+                alt=""
+                className="h-full w-full object-contain"
+                draggable={false}
+                sizes="64px"
+                src={characterImage}
+                unoptimized
+              />
+            </div>
+          ) : (
+            <div
+              aria-label={`${character.name} portrait unavailable`}
+              className="flex h-20 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-950/50 font-mono text-xl font-black text-slate-600"
+              role="img"
+            >
+              {character.name.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h3 className="truncate text-base font-bold text-slate-100">{character.name}</h3>
+            <p className="mt-0.5 truncate text-xs text-slate-400">
+              Lv.{character.baseLevel} {character.job}
+            </p>
+          </div>
         </div>
-        <OgchCooldownBadge status={cooldownStatus} remainingSeconds={remainingSeconds} />
+        <div className="shrink-0">
+          <OgchCooldownBadge status={cooldownStatus} remainingSeconds={remainingSeconds} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">

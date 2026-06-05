@@ -1,0 +1,42 @@
+import type { StaticImageData } from "next/image";
+import francesGazImage from "@/char/Screenshot_25690604095103.png";
+import junoirExtremeImage from "@/char/Screenshot_25690604095121.png";
+import archAngelpluzImage from "@/char/Screenshot_25690604095128.png";
+import queen0FeriaImage from "@/char/Screenshot_25690604095133.png";
+import izanoAlpImage from "@/char/Screenshot_25690604095139.png";
+import reginaAlpImage from "@/char/Screenshot_25690604095146.png";
+import candySellerAlpImage from "@/char/Screenshot_25690604095153.png";
+import khrasedraAlpImage from "@/char/Screenshot_25690604095200.png";
+import soulAlpImage from "@/char/Screenshot_25690604095206.png";
+import power0FranzImage from "@/char/Screenshot_25690604095211.png";
+import jessiGazAlpImage from "@/char/Screenshot_25690604095216.png";
+import souffleExtremeImage from "@/char/Screenshot_25690604095221.png";
+
+export const CHARACTER_IMAGES = {
+  francesgaz: francesGazImage,
+  junoirextreme: junoirExtremeImage,
+  archangelpluz: archAngelpluzImage,
+  queen0feria: queen0FeriaImage,
+  izanoalp: izanoAlpImage,
+  reginaalp: reginaAlpImage,
+  candyselleralp: candySellerAlpImage,
+  khrasedraalp: khrasedraAlpImage,
+  soulalp: soulAlpImage,
+  power0franz: power0FranzImage,
+  jessigaalp: jessiGazAlpImage,
+  soufflextreme: souffleExtremeImage,
+} satisfies Record<string, StaticImageData>;
+
+const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {
+  ...CHARACTER_IMAGES,
+  jessigazalp: jessiGazAlpImage,
+};
+
+function normalizeCharacterKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export function getCharacterImage(id: string, name?: string): StaticImageData | undefined {
+  return CHARACTER_IMAGE_ALIASES[normalizeCharacterKey(id)] ??
+    (name ? CHARACTER_IMAGE_ALIASES[normalizeCharacterKey(name)] : undefined);
+}
