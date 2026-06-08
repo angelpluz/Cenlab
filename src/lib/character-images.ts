@@ -11,6 +11,16 @@ import soulAlpImage from "@/char/Screenshot_25690604095206.png";
 import power0FranzImage from "@/char/Screenshot_25690604095211.png";
 import jessiGazAlpImage from "@/char/Screenshot_25690604095216.png";
 import souffleExtremeImage from "@/char/Screenshot_25690604095221.png";
+import chronosImage from "@/char/bishop/b1.jpg";
+import molloreenaImage from "@/char/bishop/b2.jpg";
+import kimreiImage from "@/char/bishop/b3.jpg";
+import hazeleImage from "@/char/bishop/b4.jpg";
+import andromecheImage from "@/char/bishop/b5.jpg";
+import felisharImage from "@/char/bishop/b6.jpg";
+import karellaImage from "@/char/bishop/b7.jpg";
+import queenightImage from "@/char/bishop/b8.jpg";
+import xenodiceImage from "@/char/bishop/b9.jpg";
+import pinaayaImage from "@/char/bishop/b10.jpg";
 
 export const CHARACTER_IMAGES = {
   francesgaz: francesGazImage,
@@ -25,6 +35,16 @@ export const CHARACTER_IMAGES = {
   power0franz: power0FranzImage,
   jessigaalp: jessiGazAlpImage,
   soufflextreme: souffleExtremeImage,
+  chronos: chronosImage,
+  molloreena: molloreenaImage,
+  kimrei: kimreiImage,
+  hazele: hazeleImage,
+  andromeche: andromecheImage,
+  felishar: felisharImage,
+  karella: karellaImage,
+  queenight: queenightImage,
+  xenodice: xenodiceImage,
+  pinaaya: pinaayaImage,
 } satisfies Record<string, StaticImageData>;
 
 const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {
