@@ -252,7 +252,7 @@ export default function OgchTracker() {
             <p className="mt-1 text-sm text-slate-400">Dungeon Run Tracker</p>
             <p className="mt-1 text-xs text-slate-600">API: {API_BASE_URL}</p>
           </div>
-          <nav className="grid w-full grid-cols-2 gap-2 sm:w-auto">
+          <nav className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
             <Link
               className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
               href="/cen-lab"
@@ -264,6 +264,12 @@ export default function OgchTracker() {
               href="/ogch"
             >
               OGCH Tracker
+            </Link>
+            <Link
+              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
+              href="/ogch/bishop"
+            >
+              Bishop Rounds
             </Link>
           </nav>
         </header>

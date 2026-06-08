@@ -604,7 +604,7 @@ export default function CenLabBossTimer() {
     <div className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
       <div className="mx-auto box-border w-full max-w-[1440px] px-4 py-5 sm:px-6 lg:px-6 lg:py-3">
         <header className="mb-5 flex flex-col items-center gap-3 text-center lg:mb-4 lg:flex-row lg:justify-between lg:text-left">
-          <nav className="grid w-full grid-cols-2 gap-2 lg:w-auto">
+          <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto">
             <Link
               className="inline-flex items-center justify-center rounded-lg border border-cyan-500/50 bg-cyan-950/45 px-4 py-2 text-sm font-bold text-cyan-100"
               href="/cen-lab"
@@ -616,6 +616,12 @@ export default function CenLabBossTimer() {
               href="/ogch"
             >
               OGCH Tracker
+            </Link>
+            <Link
+              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
+              href="/ogch/bishop"
+            >
+              Bishop Rounds
             </Link>
           </nav>
           <div>
