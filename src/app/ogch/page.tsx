@@ -16,6 +16,13 @@ const JOB_PAGES = [
     summary: "Separate round page for the added bishop lineup.",
     detail: "10 bishop characters, next scheduled run on 10/06/2026.",
   },
+  {
+    name: "Bard&Dancer",
+    href: "/ogch/dancer",
+    tone: "border-pink-500/25 bg-pink-950/20 text-pink-100",
+    summary: "Separate round page for the bard and dancer lineup.",
+    detail: "8 characters, next scheduled run on 10/06/2026.",
+  },
 ] as const;
 
 export default function OgchPage() {
@@ -30,7 +37,7 @@ export default function OgchPage() {
           <OgchNav active="overview" />
         </header>
 
-        <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="grid grid-cols-1 gap-4 xl:grid-cols-3">
           {JOB_PAGES.map((job) => (
             <Link
               key={job.name}

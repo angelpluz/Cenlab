@@ -21,6 +21,14 @@ import karellaImage from "@/char/bishop/b7.jpg";
 import queenightImage from "@/char/bishop/b8.jpg";
 import xenodiceImage from "@/char/bishop/b9.jpg";
 import pinaayaImage from "@/char/bishop/b10.jpg";
+import reefaImage from "@/char/dancer/d1.jpg";
+import viornaImage from "@/char/dancer/d2.jpg";
+import catharinaImage from "@/char/dancer/d3.jpg";
+import achillaImage from "@/char/dancer/d4.jpg";
+import drakImage from "@/char/dancer/d5.jpg";
+import hideImage from "@/char/dancer/d6.jpg";
+import rragImage from "@/char/dancer/d7.jpg";
+import beeImage from "@/char/dancer/d8.jpg";
 
 export const CHARACTER_IMAGES = {
   francesgaz: francesGazImage,
@@ -45,6 +53,14 @@ export const CHARACTER_IMAGES = {
   queenight: queenightImage,
   xenodice: xenodiceImage,
   pinaaya: pinaayaImage,
+  reefa: reefaImage,
+  viorna: viornaImage,
+  catharina: catharinaImage,
+  achilla: achillaImage,
+  drak: drakImage,
+  hide: hideImage,
+  rrag: rragImage,
+  bee: beeImage,
 } satisfies Record<string, StaticImageData>;
 
 const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {
