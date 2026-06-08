@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import OgchCharacterCard from "@/components/ogch/OgchCharacterCard";
+import OgchNav from "@/components/ogch/OgchNav";
 import {
   API_BASE_URL,
   completeOgchRun,
@@ -249,29 +249,10 @@ export default function OgchTracker() {
         <header className="mb-5 flex flex-col gap-3 border-b border-slate-800 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-black tracking-normal text-cyan-300 sm:text-4xl">OGCH</h1>
-            <p className="mt-1 text-sm text-slate-400">Dungeon Run Tracker</p>
+            <p className="mt-1 text-sm text-slate-400">Windhawk Dungeon Run Tracker</p>
             <p className="mt-1 text-xs text-slate-600">API: {API_BASE_URL}</p>
           </div>
-          <nav className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
-              href="/cen-lab"
-            >
-              Cen Lab Timer
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-cyan-500/50 bg-cyan-950/45 px-4 py-2 text-sm font-bold text-cyan-100"
-              href="/ogch"
-            >
-              OGCH Tracker
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
-              href="/ogch/bishop"
-            >
-              Bishop Rounds
-            </Link>
-          </nav>
+          <OgchNav active="windhawk" />
         </header>
 
         {notice ? (

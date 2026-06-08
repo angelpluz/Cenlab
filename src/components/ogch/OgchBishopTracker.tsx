@@ -1,5 +1,5 @@
 import Image, { type StaticImageData } from "next/image";
-import Link from "next/link";
+import OgchNav from "@/components/ogch/OgchNav";
 import bishop1Image from "@/char/bishop/b1.jpg";
 import bishop2Image from "@/char/bishop/b2.jpg";
 import bishop3Image from "@/char/bishop/b3.jpg";
@@ -46,26 +46,7 @@ export default function OgchBishopTracker() {
             <h1 className="mt-2 text-3xl font-black tracking-normal text-cyan-300 sm:text-4xl">Bishop Rotation</h1>
             <p className="mt-1 text-sm text-slate-400">Separate roster for the added job lineup</p>
           </div>
-          <nav className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
-              href="/cen-lab"
-            >
-              Cen Lab Timer
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-violet-500/40 hover:text-violet-200"
-              href="/ogch"
-            >
-              OGCH Tracker
-            </Link>
-            <Link
-              className="inline-flex items-center justify-center rounded-lg border border-cyan-500/50 bg-cyan-950/45 px-4 py-2 text-sm font-bold text-cyan-100"
-              href="/ogch/bishop"
-            >
-              Bishop Rounds
-            </Link>
-          </nav>
+          <OgchNav active="bishop" />
         </header>
 
         <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
