@@ -15,12 +15,18 @@ const NAV_ITEMS = [
 export default function OgchNav({ active }: OgchNavProps) {
   return (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
-      <nav className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-6">
+      <nav className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-7">
         <Link
           className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
           href="/cen-lab"
         >
           Cen Lab Timer
+        </Link>
+        <Link
+          className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-sky-500/40 hover:text-sky-200"
+          href="/water-dungeon"
+        >
+          Water
         </Link>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === active;
