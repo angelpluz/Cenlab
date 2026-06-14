@@ -21,6 +21,7 @@ import karellaImage from "@/char/bishop/b7.jpg";
 import queenightImage from "@/char/bishop/b8.jpg";
 import xenodiceImage from "@/char/bishop/b9.jpg";
 import pinaayaImage from "@/char/bishop/b10.jpg";
+import vanesfrancaImage from "@/char/bishop/b11.jpg";
 import reefaImage from "@/char/dancer/d1.jpg";
 import viornaImage from "@/char/dancer/d2.jpg";
 import catharinaImage from "@/char/dancer/d3.jpg";
@@ -53,6 +54,7 @@ export const CHARACTER_IMAGES = {
   queenight: queenightImage,
   xenodice: xenodiceImage,
   pinaaya: pinaayaImage,
+  vanesfranca: vanesfrancaImage,
   reefa: reefaImage,
   viorna: viornaImage,
   catharina: catharinaImage,
@@ -66,6 +68,10 @@ export const CHARACTER_IMAGES = {
 const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {
   ...CHARACTER_IMAGES,
   jessigazalp: jessiGazAlpImage,
+  queenofferia: queen0FeriaImage,
+  poweroffranz: power0FranzImage,
+  souffleextreme: souffleExtremeImage,
+  pdrakid08: drakImage,
 };
 
 function normalizeCharacterKey(value: string): string {

@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import LogoutButton from "@/components/auth/LogoutButton";
+import { getCharacterImage } from "@/lib/character-images";
 import {
   WATER_DUNGEON_CHARACTERS,
   WATER_DUNGEON_GROUPS,
@@ -708,16 +710,41 @@ function WaterDungeonCard({
   const { character, hasNoDate, isOverdue, remainingSeconds, status } = item;
   const canComplete = status === "available" && !isMutating;
   const statusText = isOverdue ? "Overdue" : hasNoDate && status === "available" ? "No Date" : STATUS_LABELS[status];
+  const characterImage = getCharacterImage(character.id, character.name);
 
   return (
     <article className="rounded-lg border border-slate-800 bg-slate-900/65 p-3 shadow-lg shadow-black/10 transition hover:border-sky-500/40">
-      <div className="mb-3 flex min-w-0 items-start justify-between gap-3">
+      <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+        {characterImage ? (
+          <div
+            aria-label={`${character.name} portrait`}
+            className="row-span-2 h-20 w-16 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-inner shadow-black/30 sm:row-span-1"
+            role="img"
+          >
+            <Image
+              alt=""
+              className="h-full w-full object-contain"
+              draggable={false}
+              sizes="64px"
+              src={characterImage}
+              unoptimized
+            />
+          </div>
+        ) : (
+          <div
+            aria-label={`${character.name} portrait unavailable`}
+            className="row-span-2 flex h-20 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-slate-700 bg-slate-950/50 font-mono text-xl font-black text-slate-600 sm:row-span-1"
+            role="img"
+          >
+            {character.name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0">
           <h3 className="truncate text-base font-bold text-slate-100">{character.name}</h3>
           <p className="mt-0.5 truncate text-xs text-slate-400">{character.groupLabel}</p>
         </div>
         <span
-          className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${
+          className={`col-start-2 shrink-0 justify-self-start rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide sm:col-start-auto sm:justify-self-end ${
             isOverdue ? "border-pink-500/40 bg-pink-950/35 text-pink-200" : STATUS_CLASSES[status]
           }`}
         >
