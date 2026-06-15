@@ -14,10 +14,22 @@ import {
   addOgchCooldown,
   formatBangkokDateTime,
   formatExp,
+  formatRemainingTime,
   getLiveCooldownStatus,
   getRemainingCooldownSeconds,
 } from "@/lib/ogch";
 import type { OgchCharacterProgress, OgchMutationApiResponse } from "@/lib/ogch-types";
+import {
+  OGCH_STATIC_ROSTER_EVENT,
+  completeOgchStaticRosterMembers,
+  getOgchStaticRosterStorageKey,
+  readOgchPartySelections,
+  readOgchStaticRoster,
+  writeOgchPartySelections,
+  type OgchPartyMember,
+  type OgchPartyMemberDisplay,
+  type OgchStaticRosterJob,
+} from "@/lib/ogch-static-rosters";
 
 type FilterKey = "all" | "available" | "cooldown" | "readySoon" | "lv10" | "needProgress";
 type SortKey = "nextAvailable" | "ogchLevel" | "clearCount" | "name";
@@ -25,6 +37,14 @@ type SortKey = "nextAvailable" | "ogchLevel" | "clearCount" | "name";
 type LiveCharacter = {
   character: OgchCharacterProgress;
   cooldownStatus: ReturnType<typeof getLiveCooldownStatus>;
+  remainingSeconds: number;
+};
+
+type PartyRosterItem = {
+  character: OgchCharacterProgress;
+  cooldownStatus: ReturnType<typeof getLiveCooldownStatus>;
+  job: OgchStaticRosterJob;
+  jobLabel: string;
   remainingSeconds: number;
 };
 
@@ -71,6 +91,13 @@ export default function OgchTracker() {
   const [manualLastCompletedAt, setManualLastCompletedAt] = useState("");
   const [manualNextAvailableAt, setManualNextAvailableAt] = useState("");
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [partySelections, setPartySelections] = useState<Record<string, OgchPartyMember[]>>({});
+  const [partyTarget, setPartyTarget] = useState<OgchCharacterProgress | null>(null);
+  const [partySearch, setPartySearch] = useState("");
+  const [staticPartyRoster, setStaticPartyRoster] = useState<Record<OgchStaticRosterJob, OgchCharacterProgress[]>>({
+    bishop: [],
+    dancer: [],
+  });
 
   const refreshCharacters = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
@@ -89,6 +116,39 @@ export default function OgchTracker() {
   useEffect(() => {
     void refreshCharacters();
   }, [refreshCharacters]);
+
+  const refreshStaticPartyRoster = useCallback(() => {
+    setStaticPartyRoster({
+      bishop: readOgchStaticRoster("bishop"),
+      dancer: readOgchStaticRoster("dancer"),
+    });
+  }, []);
+
+  useEffect(() => {
+    setPartySelections(readOgchPartySelections());
+    refreshStaticPartyRoster();
+
+    function handleRosterEvent() {
+      refreshStaticPartyRoster();
+    }
+
+    function handleStorageEvent(event: StorageEvent) {
+      if (
+        event.key === getOgchStaticRosterStorageKey("bishop") ||
+        event.key === getOgchStaticRosterStorageKey("dancer")
+      ) {
+        refreshStaticPartyRoster();
+      }
+    }
+
+    window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, [refreshStaticPartyRoster]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -169,20 +229,95 @@ export default function OgchTracker() {
     });
   }, [filter, liveCharacters, sort]);
 
+  const resolvedPartySelections = useMemo<Record<string, OgchPartyMemberDisplay[]>>(() => {
+    const charactersByJob = {
+      bishop: new Map(staticPartyRoster.bishop.map((character) => [character.id, character])),
+      dancer: new Map(staticPartyRoster.dancer.map((character) => [character.id, character])),
+    };
+
+    return Object.fromEntries(
+      Object.entries(partySelections).map(([leaderId, members]) => [
+        leaderId,
+        members.flatMap((member) => {
+          const character = charactersByJob[member.job].get(member.characterId);
+          if (!character) return [];
+
+          return {
+            characterId: character.id,
+            job: member.job,
+            jobLabel: character.job,
+            key: `${member.job}:${character.id}`,
+            name: character.name,
+          };
+        }),
+      ])
+    );
+  }, [partySelections, staticPartyRoster]);
+
+  const partyRosterItems = useMemo<PartyRosterItem[]>(() => {
+    const now = new Date(nowMs);
+    const query = partySearch.trim().toLowerCase();
+
+    return (["bishop", "dancer"] as const)
+      .flatMap((job) =>
+        staticPartyRoster[job].map((character) => ({
+          character,
+          cooldownStatus: getLiveCooldownStatus(character.nextAvailableAt, character.cooldownStatus, now),
+          job,
+          jobLabel: character.job,
+          remainingSeconds:
+            character.nextAvailableAt === null
+              ? character.remainingCooldownSeconds
+              : getRemainingCooldownSeconds(character.nextAvailableAt, now),
+        }))
+      )
+      .filter((item) => {
+        if (!query) return true;
+        return `${item.character.name} ${item.jobLabel}`.toLowerCase().includes(query);
+      })
+      .sort(
+        (a, b) =>
+          a.jobLabel.localeCompare(b.jobLabel) ||
+          a.character.name.localeCompare(b.character.name)
+      );
+  }, [nowMs, partySearch, staticPartyRoster]);
+
+  const updatePartySelection = useCallback(
+    (leaderId: string, updater: (currentMembers: OgchPartyMember[]) => OgchPartyMember[]) => {
+      setPartySelections((currentSelections) => {
+        const nextMembers = updater(currentSelections[leaderId] ?? []);
+        const nextSelections = {
+          ...currentSelections,
+          [leaderId]: nextMembers,
+        };
+
+        if (nextMembers.length === 0) {
+          delete nextSelections[leaderId];
+        }
+
+        writeOgchPartySelections(nextSelections);
+        return nextSelections;
+      });
+    },
+    []
+  );
+
   const runMutation = useCallback(
     async (
       characterId: string,
       action: () => Promise<OgchMutationApiResponse>,
       successFallback: string
-    ) => {
+    ): Promise<boolean> => {
       setMutatingId(characterId);
 
       try {
         const data = await action();
         setNotice(data.message ?? successFallback);
         await refreshCharacters(true);
+        return true;
       } catch (requestError) {
         setError(requestError instanceof Error ? requestError.message : "OGCH mutation failed.");
+        return false;
       } finally {
         setMutatingId(null);
       }
@@ -197,16 +332,61 @@ export default function OgchTracker() {
     setManualNextAvailableAt(toDateTimeLocalInput(character.nextAvailableAt));
   }, []);
 
+  const openPartyBuilder = useCallback(
+    (character: OgchCharacterProgress) => {
+      refreshStaticPartyRoster();
+      setPartyTarget(character);
+      setPartySearch("");
+    },
+    [refreshStaticPartyRoster]
+  );
+
+  const togglePartyMember = useCallback(
+    (leaderId: string, member: OgchPartyMember) => {
+      updatePartySelection(leaderId, (currentMembers) => {
+        const isSelected = currentMembers.some(
+          (currentMember) => currentMember.job === member.job && currentMember.characterId === member.characterId
+        );
+
+        if (isSelected) {
+          return currentMembers.filter(
+            (currentMember) =>
+              currentMember.job !== member.job || currentMember.characterId !== member.characterId
+          );
+        }
+
+        return [
+          ...currentMembers.filter((currentMember) => currentMember.job !== member.job),
+          member,
+        ];
+      });
+    },
+    [updatePartySelection]
+  );
+
   const confirmComplete = useCallback(async () => {
     if (!pendingComplete) return;
 
-    await runMutation(
+    const completedAt = new Date(nowMs);
+    const partyMembers = partySelections[pendingComplete.id] ?? [];
+    const completed = await runMutation(
       pendingComplete.id,
       () => completeOgchRun(pendingComplete.id),
       "OGCH completed. Next run available in 3 days."
     );
+
+    if (completed && partyMembers.length > 0) {
+      const completedMembers = completeOgchStaticRosterMembers(partyMembers, completedAt);
+      refreshStaticPartyRoster();
+      setNotice(
+        completedMembers.length > 0
+          ? `OGCH completed. Party stamped: ${completedMembers.map((member) => member.name).join(", ")}.`
+          : "OGCH completed. Next run available in 3 days."
+      );
+    }
+
     setPendingComplete(null);
-  }, [pendingComplete, runMutation]);
+  }, [nowMs, partySelections, pendingComplete, refreshStaticPartyRoster, runMutation]);
 
   const submitManualEdit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -242,6 +422,12 @@ export default function OgchTracker() {
   );
 
   const pendingNextAvailableAt = pendingComplete ? addOgchCooldown(new Date(nowMs)) : null;
+  const pendingPartyMembers = pendingComplete ? resolvedPartySelections[pendingComplete.id] ?? [] : [];
+  const partyTargetMembers = partyTarget ? partySelections[partyTarget.id] ?? [] : [];
+  const partyTargetDisplays = partyTarget ? resolvedPartySelections[partyTarget.id] ?? [] : [];
+  const selectedPartyKeys = new Set(
+    partyTargetMembers.map((member) => `${member.job}:${member.characterId}`)
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-6 lg:px-8">
@@ -328,8 +514,10 @@ export default function OgchTracker() {
                 isMutating={mutatingId === character.id}
                 nowMs={nowMs}
                 onComplete={setPendingComplete}
+                onManageParty={openPartyBuilder}
                 onManualEdit={openManualEdit}
                 onResetCooldown={resetCooldown}
+                partyMembers={resolvedPartySelections[character.id] ?? []}
               />
             ))}
           </section>
@@ -353,6 +541,21 @@ export default function OgchTracker() {
               </span>
               .
             </p>
+            {pendingPartyMembers.length > 0 ? (
+              <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-950/20 p-3 text-sm text-sky-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-300">Also Stamp Party</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {pendingPartyMembers.map((member) => (
+                    <span
+                      key={member.key}
+                      className="rounded-full border border-sky-500/25 bg-slate-950/50 px-2 py-1 text-xs font-semibold"
+                    >
+                      {member.jobLabel}: {member.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button
                 onClick={() => setPendingComplete(null)}
@@ -366,6 +569,124 @@ export default function OgchTracker() {
                 className="rounded-lg bg-gradient-to-r from-cyan-600 to-violet-600 px-4 py-2 text-sm font-black text-white transition hover:from-cyan-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {partyTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl border border-sky-500/30 bg-slate-900 shadow-2xl shadow-sky-950/30">
+            <div className="border-b border-slate-800 p-5">
+              <h2 className="text-xl font-black text-sky-200">Party Setup</h2>
+              <p className="mt-1 text-sm font-semibold text-slate-300">
+                Leader: {partyTarget.name}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {partyTargetDisplays.length > 0 ? (
+                  partyTargetDisplays.map((member) => (
+                    <span
+                      key={member.key}
+                      className="rounded-full border border-sky-500/25 bg-sky-950/30 px-2 py-1 text-xs font-semibold text-sky-100"
+                    >
+                      {member.jobLabel}: {member.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs font-semibold text-slate-500">No members selected.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-5">
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                Search Bishop / Bard&Dancer
+                <input
+                  className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm normal-case tracking-normal text-slate-100 outline-none transition placeholder:text-slate-700 focus:border-sky-500"
+                  onChange={(event) => setPartySearch(event.target.value)}
+                  placeholder="Character name"
+                  type="search"
+                  value={partySearch}
+                />
+              </label>
+
+              <div className="mt-4 max-h-[48vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {partyRosterItems.map((item) => {
+                    const memberKey = `${item.job}:${item.character.id}`;
+                    const isSelected = selectedPartyKeys.has(memberKey);
+                    const selectedSameJob = partyTargetMembers.some((member) => member.job === item.job);
+                    const canAdd = item.cooldownStatus === "available";
+
+                    return (
+                      <div
+                        key={memberKey}
+                        className={`rounded-lg border p-3 ${
+                          isSelected
+                            ? "border-sky-500/45 bg-sky-950/25"
+                            : "border-slate-800 bg-slate-950/45"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-100">{item.character.name}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">{item.jobLabel}</p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase ${
+                              item.cooldownStatus === "available"
+                                ? "border-emerald-500/35 bg-emerald-950/35 text-emerald-200"
+                                : "border-orange-500/35 bg-orange-950/35 text-orange-200"
+                            }`}
+                          >
+                            {item.cooldownStatus === "available"
+                              ? "Ready"
+                              : formatRemainingTime(item.remainingSeconds)}
+                          </span>
+                        </div>
+                        <button
+                          className="mt-3 w-full rounded-lg border border-sky-500/35 bg-sky-950/25 px-3 py-2 text-xs font-bold text-sky-100 transition hover:bg-sky-900/30 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-950/30 disabled:text-slate-600"
+                          disabled={!isSelected && !canAdd}
+                          onClick={() =>
+                            togglePartyMember(partyTarget.id, {
+                              characterId: item.character.id,
+                              job: item.job,
+                            })
+                          }
+                          type="button"
+                        >
+                          {isSelected ? "Remove" : selectedSameJob ? "Replace" : canAdd ? "Add" : "On Cooldown"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {partyRosterItems.length === 0 ? (
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/45 p-6 text-center text-sm font-semibold text-slate-500">
+                    No party members match this search.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-800 p-5">
+              <button
+                onClick={() => {
+                  updatePartySelection(partyTarget.id, () => []);
+                  setPartyTarget(null);
+                }}
+                className="rounded-lg border border-rose-500/35 bg-rose-950/25 px-4 py-2 text-sm font-bold text-rose-200 transition hover:bg-rose-950/45"
+                type="button"
+              >
+                Clear Party
+              </button>
+              <button
+                onClick={() => setPartyTarget(null)}
+                className="rounded-lg bg-gradient-to-r from-sky-600 to-violet-600 px-4 py-2 text-sm font-black text-white transition hover:from-sky-500 hover:to-violet-500"
+                type="button"
+              >
+                Done
               </button>
             </div>
           </div>

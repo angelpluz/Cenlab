@@ -8,12 +8,17 @@ import {
   formatBangkokDateTime,
   formatExp,
   getLiveCooldownStatus,
-  getNextOgchLevelRequirement,
-  getOgchExpByLevel,
-  getOgchLevel,
-  getProgressToNextLevel,
   getRemainingCooldownSeconds,
 } from "@/lib/ogch";
+import {
+  OGCH_STATIC_ROSTER_EVENT,
+  buildOgchStaticCharacter,
+  getOgchStaticRosterStorageKey,
+  readOgchStaticRoster,
+  writeOgchStaticRoster,
+  type OgchStaticRosterJob,
+  type StaticRosterCharacterSeed,
+} from "@/lib/ogch-static-rosters";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
 
 type FilterKey = "all" | "available" | "cooldown" | "readySoon" | "lv10" | "needProgress";
@@ -25,14 +30,8 @@ type LiveCharacter = {
   remainingSeconds: number;
 };
 
-export type StaticRosterCharacterSeed = {
-  id: string;
-  name: string;
-  clearCount: number;
-};
-
 type OgchStaticRosterTrackerProps = {
-  activeNav: "bishop" | "dancer";
+  activeNav: OgchStaticRosterJob;
   introLabel: string;
   jobLabel: string;
   nextAvailableAt: string;
@@ -69,47 +68,15 @@ function fromDateTimeLocalInput(value: string): string | null {
   return new Date(value).toISOString();
 }
 
-function buildStaticCharacter(
-  seed: StaticRosterCharacterSeed,
-  jobLabel: string,
-  defaultNextAvailableAt: string,
-  overrides?: Partial<Pick<OgchCharacterProgress, "clearCount" | "lastCompletedAt" | "nextAvailableAt" | "cooldownStatus">>
-): OgchCharacterProgress {
-  const clearCount = overrides?.clearCount ?? seed.clearCount;
-  const ogchLevel = getOgchLevel(clearCount);
-  const progress = getProgressToNextLevel(clearCount);
-
-  return {
-    id: seed.id,
-    name: seed.name,
-    job: jobLabel,
-    baseLevel: 225,
-    clearCount,
-    ogchLevel,
-    expReward: getOgchExpByLevel(ogchLevel),
-    nextLevelRequirement: getNextOgchLevelRequirement(clearCount),
-    progressToNextLevel: {
-      current: progress.clearsIntoLevel,
-      required: progress.clearsNeededForLevel,
-      percentage: progress.percent,
-    },
-    lastCompletedAt: overrides?.lastCompletedAt ?? null,
-    nextAvailableAt: overrides?.nextAvailableAt ?? defaultNextAvailableAt,
-    cooldownStatus: overrides?.cooldownStatus ?? "onCooldown",
-    remainingCooldownSeconds: 0,
-  };
-}
-
 export default function OgchStaticRosterTracker({
   activeNav,
   introLabel,
   jobLabel,
   nextAvailableAt,
   sourceLabel,
-  characters: seedCharacters,
 }: OgchStaticRosterTrackerProps) {
   const [characters, setCharacters] = useState<OgchCharacterProgress[]>(() =>
-    seedCharacters.map((character) => buildStaticCharacter(character, jobLabel, nextAvailableAt))
+    readOgchStaticRoster(activeNav)
   );
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("nextAvailable");
@@ -126,6 +93,30 @@ export default function OgchStaticRosterTracker({
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    function refreshStoredRoster() {
+      setCharacters(readOgchStaticRoster(activeNav));
+    }
+
+    function handleRosterEvent(event: Event) {
+      const detail = (event as CustomEvent<{ job?: OgchStaticRosterJob }>).detail;
+      if (!detail?.job || detail.job === activeNav) refreshStoredRoster();
+    }
+
+    function handleStorageEvent(event: StorageEvent) {
+      if (event.key === getOgchStaticRosterStorageKey(activeNav)) refreshStoredRoster();
+    }
+
+    refreshStoredRoster();
+    window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, [activeNav]);
 
   useEffect(() => {
     if (!notice) return;
@@ -211,9 +202,13 @@ export default function OgchStaticRosterTracker({
     characterId: string,
     updater: (current: OgchCharacterProgress) => OgchCharacterProgress
   ) {
-    setCharacters((currentCharacters) =>
-      currentCharacters.map((character) => (character.id === characterId ? updater(character) : character))
-    );
+    setCharacters((currentCharacters) => {
+      const nextCharacters = currentCharacters.map((character) =>
+        character.id === characterId ? updater(character) : character
+      );
+      writeOgchStaticRoster(activeNav, nextCharacters);
+      return nextCharacters;
+    });
   }
 
   function confirmComplete() {
@@ -223,7 +218,7 @@ export default function OgchStaticRosterTracker({
     const completedAt = new Date(nowMs);
 
     updateCharacter(pendingComplete.id, (character) =>
-      buildStaticCharacter(
+      buildOgchStaticCharacter(
         {
           id: character.id,
           name: character.name,
@@ -253,7 +248,7 @@ export default function OgchStaticRosterTracker({
     const nextManualAvailableAt = fromDateTimeLocalInput(manualNextAvailableAt);
 
     updateCharacter(manualTarget.id, (character) =>
-      buildStaticCharacter(
+      buildOgchStaticCharacter(
         {
           id: character.id,
           name: character.name,
@@ -280,7 +275,7 @@ export default function OgchStaticRosterTracker({
 
     setMutatingId(character.id);
     updateCharacter(character.id, (currentCharacter) =>
-      buildStaticCharacter(
+      buildOgchStaticCharacter(
         {
           id: currentCharacter.id,
           name: currentCharacter.name,

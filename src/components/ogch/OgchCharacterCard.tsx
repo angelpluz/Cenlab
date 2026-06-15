@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
+import type { OgchPartyMemberDisplay } from "@/lib/ogch-static-rosters";
 import { formatBangkokDateTime, formatExp, getLiveCooldownStatus, getRemainingCooldownSeconds } from "@/lib/ogch";
 import { getCharacterImage } from "@/lib/character-images";
 import OgchCooldownBadge from "@/components/ogch/OgchCooldownBadge";
@@ -13,7 +14,9 @@ type OgchCharacterCardProps = {
   isMutating: boolean;
   onComplete: (character: OgchCharacterProgress) => void;
   onManualEdit: (character: OgchCharacterProgress) => void;
+  onManageParty?: (character: OgchCharacterProgress) => void;
   onResetCooldown: (character: OgchCharacterProgress) => void;
+  partyMembers?: OgchPartyMemberDisplay[];
 };
 
 export default function OgchCharacterCard({
@@ -22,7 +25,9 @@ export default function OgchCharacterCard({
   isMutating,
   onComplete,
   onManualEdit,
+  onManageParty,
   onResetCooldown,
+  partyMembers = [],
 }: OgchCharacterCardProps) {
   const now = new Date(nowMs);
   const cooldownStatus = getLiveCooldownStatus(character.nextAvailableAt, character.cooldownStatus, now);
@@ -90,6 +95,36 @@ export default function OgchCharacterCard({
       <div className="mt-3">
         <OgchProgressBar ogchLevel={character.ogchLevel} progress={character.progressToNextLevel} />
       </div>
+
+      {onManageParty ? (
+        <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-950/15 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-sky-300">Party Members</p>
+            <button
+              onClick={() => onManageParty(character)}
+              disabled={isMutating}
+              className="rounded-md border border-sky-500/35 bg-sky-950/35 px-2 py-1 text-[11px] font-bold text-sky-100 transition hover:bg-sky-900/35 disabled:cursor-not-allowed disabled:opacity-40"
+              type="button"
+            >
+              {partyMembers.length > 0 ? "Edit Party" : "Add Party"}
+            </button>
+          </div>
+          {partyMembers.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {partyMembers.map((member) => (
+                <span
+                  key={member.key}
+                  className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200"
+                >
+                  {member.jobLabel}: {member.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">No bishop or bard selected.</p>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
         <div className="rounded-lg border border-slate-800/80 bg-slate-950/40 p-2">
