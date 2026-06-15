@@ -159,6 +159,7 @@ export default function WaterDungeonTracker() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [groupFilter, setGroupFilter] = useState<"all" | WaterDungeonGroupId>("all");
   const [sort, setSort] = useState<SortKey>("nextAvailable");
+  const [searchQuery, setSearchQuery] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [pendingComplete, setPendingComplete] = useState<WaterDungeonCharacter | null>(null);
   const [manualTarget, setManualTarget] = useState<WaterDungeonCharacter | null>(null);
@@ -243,15 +244,33 @@ export default function WaterDungeonTracker() {
   }, [liveCharacters]);
 
   const visibleCharacters = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
     const filtered = liveCharacters.filter((item) => {
       if (groupFilter !== "all" && item.character.groupId !== groupFilter) return false;
 
-      if (filter === "available") return item.status === "available";
-      if (filter === "cooldown") return item.status === "onCooldown";
-      if (filter === "readySoon") return item.status === "readySoon";
-      if (filter === "overdue") return item.isOverdue;
-      if (filter === "noDate") return item.hasNoDate && item.status !== "blocked";
-      if (filter === "blocked") return item.status === "blocked";
+      if (filter === "available" && item.status !== "available") return false;
+      if (filter === "cooldown" && item.status !== "onCooldown") return false;
+      if (filter === "readySoon" && item.status !== "readySoon") return false;
+      if (filter === "overdue" && !item.isOverdue) return false;
+      if (filter === "noDate" && (!item.hasNoDate || item.status === "blocked")) return false;
+      if (filter === "blocked" && item.status !== "blocked") return false;
+
+      if (normalizedSearch) {
+        const searchText = [
+          item.character.name,
+          item.character.groupLabel,
+          item.character.note ?? "",
+          STATUS_LABELS[item.status],
+          item.isOverdue ? "overdue" : "",
+          item.hasNoDate ? "no date" : "",
+          formatWaterDungeonBangkokDate(item.character.nextAvailableAt),
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return searchText.includes(normalizedSearch);
+      }
       return true;
     });
 
@@ -282,7 +301,7 @@ export default function WaterDungeonTracker() {
         a.character.name.localeCompare(b.character.name)
       );
     });
-  }, [filter, groupFilter, liveCharacters, sort]);
+  }, [filter, groupFilter, liveCharacters, searchQuery, sort]);
 
   const runMutation = useCallback(
     async (
@@ -494,22 +513,27 @@ export default function WaterDungeonTracker() {
         </section>
 
         <section className="mb-5 rounded-lg border border-slate-800 bg-slate-900/60 p-3 shadow-lg shadow-black/10">
-          <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {FILTERS.map((item) => (
+          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1fr)_auto] xl:items-end">
+            <label className="min-w-0 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Search
+              <div className="mt-1 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <input
+                  className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-100 outline-none transition placeholder:text-slate-700 focus:border-sky-500"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Name, group, note, status"
+                  type="search"
+                  value={searchQuery}
+                />
                 <button
-                  key={item.key}
-                  onClick={() => setFilter(item.key)}
-                  className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${
-                    filter === item.key
-                      ? "border-sky-500/50 bg-sky-950/50 text-sky-100"
-                      : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
-                  }`}
+                  className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs font-bold normal-case tracking-normal text-slate-300 transition hover:border-sky-500/40 hover:text-sky-100 disabled:cursor-not-allowed disabled:opacity-40"
+                  disabled={!searchQuery}
+                  onClick={() => setSearchQuery("")}
+                  type="button"
                 >
-                  {item.label}
+                  Clear
                 </button>
-              ))}
-            </div>
+              </div>
+            </label>
 
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -541,6 +565,28 @@ export default function WaterDungeonTracker() {
                 </select>
               </label>
             </div>
+          </div>
+
+          <div className="mt-3 flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {FILTERS.map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => setFilter(item.key)}
+                  className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${
+                    filter === item.key
+                      ? "border-sky-500/50 bg-sky-950/50 text-sky-100"
+                      : "border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs font-semibold text-slate-500">
+              Showing <span className="font-mono text-slate-200">{visibleCharacters.length}</span> /{" "}
+              <span className="font-mono text-slate-200">{summary.total}</span>
+            </p>
           </div>
         </section>
 
