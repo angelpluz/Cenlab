@@ -15,6 +15,17 @@ export type WaterDungeonCharacter = {
   status: WaterDungeonStatus;
 };
 
+export type WaterDungeonPartyMember = {
+  characterId: string;
+};
+
+export type WaterDungeonPartyMemberDisplay = WaterDungeonPartyMember & {
+  key: string;
+  name: string;
+  level: number;
+  groupLabel: string;
+};
+
 export type WaterDungeonCharactersApiResponse = {
   success: boolean;
   data: WaterDungeonCharacter[];

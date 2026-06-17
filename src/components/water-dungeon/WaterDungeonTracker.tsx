@@ -15,6 +15,8 @@ import type { PersonalCharacterProfile } from "@/lib/personal-data-types";
 import {
   WATER_DUNGEON_CHARACTERS,
   WATER_DUNGEON_GROUPS,
+  WATER_DUNGEON_PARTY_EVENT,
+  WATER_DUNGEON_PARTY_STORAGE_KEY,
   WATER_DUNGEON_STORAGE_KEY,
   addWaterDungeonCooldown,
   formatWaterDungeonBangkokDate,
@@ -22,6 +24,8 @@ import {
   formatWaterDungeonRemainingTime,
   getLiveWaterDungeonStatus,
   getWaterDungeonRemainingSeconds,
+  readWaterDungeonPartySelections,
+  writeWaterDungeonPartySelections,
 } from "@/lib/water-dungeon";
 import {
   WATER_DUNGEON_API_BASE_URL,
@@ -35,6 +39,8 @@ import type {
   WaterDungeonGroupId,
   WaterDungeonManualAdjustPayload,
   WaterDungeonMutationApiResponse,
+  WaterDungeonPartyMember,
+  WaterDungeonPartyMemberDisplay,
   WaterDungeonStatus,
 } from "@/lib/water-dungeon-types";
 
@@ -48,6 +54,10 @@ type LiveCharacter = {
   remainingSeconds: number;
   isOverdue: boolean;
   hasNoDate: boolean;
+};
+
+type PartyRosterItem = LiveCharacter & {
+  isLeader: boolean;
 };
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -198,13 +208,16 @@ export default function WaterDungeonTracker() {
   const [searchQuery, setSearchQuery] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [pendingComplete, setPendingComplete] = useState<WaterDungeonCharacter | null>(null);
+  const [partySelections, setPartySelections] = useState<Record<string, WaterDungeonPartyMember[]>>({});
+  const [partyTarget, setPartyTarget] = useState<WaterDungeonCharacter | null>(null);
+  const [partySearch, setPartySearch] = useState("");
   const [manualTarget, setManualTarget] = useState<WaterDungeonCharacter | null>(null);
   const [manualClearCount, setManualClearCount] = useState("0");
   const [manualLastCompletedAt, setManualLastCompletedAt] = useState("");
   const [manualNextAvailableAt, setManualNextAvailableAt] = useState("");
   const [manualNote, setManualNote] = useState("");
   const [manualBlocked, setManualBlocked] = useState(false);
-  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [mutatingIds, setMutatingIds] = useState<string[]>([]);
 
   const loadCharacters = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
@@ -245,6 +258,25 @@ export default function WaterDungeonTracker() {
 
     return () => {
       window.removeEventListener(PERSONAL_DATA_EVENT, refreshPersonalProfiles);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, []);
+
+  useEffect(() => {
+    function refreshPartySelections() {
+      setPartySelections(readWaterDungeonPartySelections());
+    }
+
+    function handleStorageEvent(event: StorageEvent) {
+      if (event.key === WATER_DUNGEON_PARTY_STORAGE_KEY) refreshPartySelections();
+    }
+
+    refreshPartySelections();
+    window.addEventListener(WATER_DUNGEON_PARTY_EVENT, refreshPartySelections);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(WATER_DUNGEON_PARTY_EVENT, refreshPartySelections);
       window.removeEventListener("storage", handleStorageEvent);
     };
   }, []);
@@ -364,6 +396,103 @@ export default function WaterDungeonTracker() {
     });
   }, [filter, groupFilter, liveCharacters, searchQuery, sort]);
 
+  const liveCharactersById = useMemo(
+    () => new Map(liveCharacters.map((item) => [item.character.id, item])),
+    [liveCharacters]
+  );
+
+  const resolvedPartySelections = useMemo<Record<string, WaterDungeonPartyMemberDisplay[]>>(() => {
+    return Object.fromEntries(
+      Object.entries(partySelections).map(([leaderId, members]) => [
+        leaderId,
+        members.flatMap((member) => {
+          const item = liveCharactersById.get(member.characterId);
+          if (!item) return [];
+
+          return {
+            characterId: item.character.id,
+            groupLabel: item.character.groupLabel,
+            key: `${leaderId}:${item.character.id}`,
+            level: item.character.level,
+            name: item.character.name,
+          };
+        }),
+      ])
+    );
+  }, [liveCharactersById, partySelections]);
+
+  const partyRosterItems = useMemo<PartyRosterItem[]>(() => {
+    if (!partyTarget) return [];
+
+    const query = partySearch.trim().toLowerCase();
+
+    return liveCharacters
+      .map((item) => ({
+        ...item,
+        isLeader: item.character.id === partyTarget.id,
+      }))
+      .filter((item) => {
+        if (item.isLeader) return false;
+        if (!query) return true;
+
+        return [
+          item.character.name,
+          item.character.level.toString(),
+          `lv ${item.character.level}`,
+          item.character.groupLabel,
+          item.character.note ?? "",
+          STATUS_LABELS[item.status],
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
+      })
+      .sort(
+        (a, b) =>
+          a.character.groupLabel.localeCompare(b.character.groupLabel) ||
+          getSortTimestamp(a.character) - getSortTimestamp(b.character) ||
+          a.character.name.localeCompare(b.character.name)
+      );
+  }, [liveCharacters, partySearch, partyTarget]);
+
+  const updatePartySelection = useCallback(
+    (leaderId: string, updater: (currentMembers: WaterDungeonPartyMember[]) => WaterDungeonPartyMember[]) => {
+      const nextMembers = updater(partySelections[leaderId] ?? []);
+      const nextSelections = {
+        ...partySelections,
+        [leaderId]: nextMembers,
+      };
+
+      if (nextMembers.length === 0) {
+        delete nextSelections[leaderId];
+      }
+
+      setPartySelections(nextSelections);
+      writeWaterDungeonPartySelections(nextSelections);
+    },
+    [partySelections]
+  );
+
+  const openPartyBuilder = useCallback((character: WaterDungeonCharacter) => {
+    setPartyTarget(character);
+    setPartySearch("");
+  }, []);
+
+  const togglePartyMember = useCallback(
+    (leaderId: string, member: WaterDungeonPartyMember) => {
+      updatePartySelection(leaderId, (currentMembers) => {
+        const isSelected = currentMembers.some((currentMember) => currentMember.characterId === member.characterId);
+
+        if (isSelected) {
+          return currentMembers.filter((currentMember) => currentMember.characterId !== member.characterId);
+        }
+
+        return [...currentMembers, member];
+      });
+    },
+    [updatePartySelection]
+  );
+
   const runMutation = useCallback(
     async (
       characterId: string,
@@ -371,7 +500,7 @@ export default function WaterDungeonTracker() {
       localUpdater: (character: WaterDungeonCharacter) => WaterDungeonCharacter,
       successFallback: string
     ) => {
-      setMutatingId(characterId);
+      setMutatingIds([characterId]);
       setError(null);
 
       if (dataSource === "database") {
@@ -382,7 +511,7 @@ export default function WaterDungeonTracker() {
         } catch (requestError) {
           setError(requestError instanceof Error ? requestError.message : "Water Dungeon mutation failed.");
         } finally {
-          setMutatingId(null);
+          setMutatingIds([]);
         }
         return;
       }
@@ -395,7 +524,7 @@ export default function WaterDungeonTracker() {
         return nextCharacters;
       });
       setNotice(successFallback);
-      setMutatingId(null);
+      setMutatingIds([]);
     },
     [dataSource, loadCharacters]
   );
@@ -410,27 +539,73 @@ export default function WaterDungeonTracker() {
   }, []);
 
   const pendingNextAvailableAt = pendingComplete ? addWaterDungeonCooldown(new Date(nowMs)) : null;
+  const pendingPartyMembers = pendingComplete ? resolvedPartySelections[pendingComplete.id] ?? [] : [];
+  const pendingStampPartyMembers = pendingPartyMembers.filter(
+    (member) => liveCharactersById.get(member.characterId)?.status === "available"
+  );
 
   const confirmComplete = useCallback(async () => {
     if (!pendingComplete) return;
 
     const completedAt = new Date(nowMs);
     const nextAvailableAt = addWaterDungeonCooldown(completedAt).toISOString();
-
-    await runMutation(
-      pendingComplete.id,
-      () => completeWaterDungeonRun(pendingComplete.id),
-      (character) => ({
-        ...character,
-        clearCount: character.clearCount + 1,
-        lastCompletedAt: completedAt.toISOString(),
-        nextAvailableAt,
-        status: "onCooldown",
-      }),
-      `Water Dungeon stamped for ${pendingComplete.name}.`
+    const stampIds = Array.from(
+      new Set([pendingComplete.id, ...pendingStampPartyMembers.map((member) => member.characterId)])
     );
+    const stampedNames = stampIds.map((characterId) => {
+      const character = liveCharactersById.get(characterId)?.character;
+      return character?.name ?? characterId;
+    });
+
+    setMutatingIds(stampIds);
+    setError(null);
+
+    if (dataSource === "database") {
+      try {
+        for (const characterId of stampIds) {
+          await completeWaterDungeonRun(characterId);
+        }
+
+        setNotice(`Water Dungeon stamped: ${stampedNames.join(", ")}.`);
+        await loadCharacters(true);
+        setPendingComplete(null);
+      } catch (requestError) {
+        setError(requestError instanceof Error ? requestError.message : "Water Dungeon party stamp failed.");
+        await loadCharacters(true);
+      } finally {
+        setMutatingIds([]);
+      }
+
+      return;
+    }
+
+    setCharacters((currentCharacters) => {
+      const stampedStatus: WaterDungeonStatus = "onCooldown";
+      const nextCharacters = currentCharacters.map((character) =>
+        stampIds.includes(character.id)
+          ? {
+              ...character,
+              clearCount: character.clearCount + 1,
+              lastCompletedAt: completedAt.toISOString(),
+              nextAvailableAt,
+              status: stampedStatus,
+            }
+          : character
+      );
+      persistLocalCharacters(nextCharacters);
+      return nextCharacters;
+    });
+    setNotice(`Water Dungeon stamped: ${stampedNames.join(", ")}.`);
+    setMutatingIds([]);
     setPendingComplete(null);
-  }, [nowMs, pendingComplete, runMutation]);
+  }, [
+    dataSource,
+    liveCharactersById,
+    loadCharacters,
+    nowMs,
+    pendingComplete,
+    pendingStampPartyMembers,
+  ]);
 
   const submitManualEdit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -502,6 +677,10 @@ export default function WaterDungeonTracker() {
     setCharacters(seedCharacters);
     setNotice("Local Water Dungeon data reset.");
   }, [dataSource, personalProfiles]);
+
+  const partyTargetMembers = partyTarget ? partySelections[partyTarget.id] ?? [] : [];
+  const partyTargetDisplays = partyTarget ? resolvedPartySelections[partyTarget.id] ?? [] : [];
+  const selectedPartyKeys = new Set(partyTargetMembers.map((member) => member.characterId));
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-6 lg:px-8">
@@ -679,10 +858,12 @@ export default function WaterDungeonTracker() {
               <WaterDungeonCard
                 key={item.character.id}
                 item={item}
-                isMutating={mutatingId === item.character.id}
+                isMutating={mutatingIds.includes(item.character.id)}
                 onComplete={setPendingComplete}
+                onManageParty={openPartyBuilder}
                 onManualEdit={openManualEdit}
                 onResetCooldown={resetCooldown}
+                partyMembers={resolvedPartySelections[item.character.id] ?? []}
               />
             ))}
           </section>
@@ -706,6 +887,25 @@ export default function WaterDungeonTracker() {
               </span>
               .
             </p>
+            {pendingPartyMembers.length > 0 ? (
+              <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-950/20 p-3 text-sm text-sky-100">
+                <p className="text-xs font-bold uppercase tracking-wide text-sky-300">Also Stamp Party</p>
+                {pendingStampPartyMembers.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {pendingStampPartyMembers.map((member) => (
+                      <span
+                        key={member.key}
+                        className="rounded-full border border-sky-500/25 bg-slate-950/50 px-2 py-1 text-xs font-semibold"
+                      >
+                        Lv.{member.level} {member.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs font-semibold text-slate-500">Tagged members are not ready right now.</p>
+                )}
+              </div>
+            ) : null}
             <div className="mt-5 grid grid-cols-2 gap-2">
               <button
                 onClick={() => setPendingComplete(null)}
@@ -715,10 +915,129 @@ export default function WaterDungeonTracker() {
               </button>
               <button
                 onClick={() => void confirmComplete()}
-                disabled={mutatingId === pendingComplete.id}
+                disabled={mutatingIds.includes(pendingComplete.id)}
                 className="rounded-lg bg-gradient-to-r from-sky-600 to-violet-600 px-4 py-2 text-sm font-black text-white transition hover:from-sky-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {partyTarget ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-lg border border-sky-500/30 bg-slate-900 shadow-2xl shadow-sky-950/30">
+            <div className="border-b border-slate-800 p-5">
+              <h2 className="text-xl font-black text-sky-200">Party Tags</h2>
+              <p className="mt-1 text-sm font-semibold text-slate-300">Leader: {partyTarget.name}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {partyTargetDisplays.length > 0 ? (
+                  partyTargetDisplays.map((member) => (
+                    <span
+                      key={member.key}
+                      className="rounded-full border border-sky-500/25 bg-sky-950/30 px-2 py-1 text-xs font-semibold text-sky-100"
+                    >
+                      Lv.{member.level} {member.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs font-semibold text-slate-500">No party members tagged.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="p-5">
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                Search Water Party
+                <input
+                  className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm normal-case tracking-normal text-slate-100 outline-none transition placeholder:text-slate-700 focus:border-sky-500"
+                  onChange={(event) => setPartySearch(event.target.value)}
+                  placeholder="Name, level, group"
+                  type="search"
+                  value={partySearch}
+                />
+              </label>
+
+              <div className="mt-4 max-h-[48vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                  {partyRosterItems.map((item) => {
+                    const isSelected = selectedPartyKeys.has(item.character.id);
+                    const canAdd = item.status === "available";
+
+                    return (
+                      <div
+                        key={item.character.id}
+                        className={`rounded-lg border p-3 ${
+                          isSelected
+                            ? "border-sky-500/45 bg-sky-950/25"
+                            : "border-slate-800 bg-slate-950/45"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-slate-100">{item.character.name}</p>
+                            <p className="mt-0.5 truncate text-xs text-slate-500">
+                              Lv.{item.character.level} {item.character.groupLabel}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase ${
+                              item.status === "available"
+                                ? "border-emerald-500/35 bg-emerald-950/35 text-emerald-200"
+                                : item.status === "blocked"
+                                ? "border-rose-500/35 bg-rose-950/35 text-rose-200"
+                                : "border-orange-500/35 bg-orange-950/35 text-orange-200"
+                            }`}
+                          >
+                            {item.status === "available"
+                              ? "Ready"
+                              : item.status === "blocked"
+                              ? "No Slot"
+                              : formatWaterDungeonRemainingTime(item.remainingSeconds)}
+                          </span>
+                        </div>
+                        <button
+                          className="mt-3 w-full rounded-lg border border-sky-500/35 bg-sky-950/25 px-3 py-2 text-xs font-bold text-sky-100 transition hover:bg-sky-900/30 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-950/30 disabled:text-slate-600"
+                          disabled={!isSelected && !canAdd}
+                          onClick={() =>
+                            togglePartyMember(partyTarget.id, {
+                              characterId: item.character.id,
+                            })
+                          }
+                          type="button"
+                        >
+                          {isSelected ? "Remove Tag" : canAdd ? "Tag Party" : "Not Ready"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                {partyRosterItems.length === 0 ? (
+                  <div className="rounded-lg border border-slate-800 bg-slate-950/45 p-6 text-center text-sm font-semibold text-slate-500">
+                    No Water Dungeon characters match this search.
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-800 p-5">
+              <button
+                onClick={() => {
+                  updatePartySelection(partyTarget.id, () => []);
+                  setPartyTarget(null);
+                }}
+                className="rounded-lg border border-rose-500/35 bg-rose-950/25 px-4 py-2 text-sm font-bold text-rose-200 transition hover:bg-rose-950/45"
+                type="button"
+              >
+                Clear Tags
+              </button>
+              <button
+                onClick={() => setPartyTarget(null)}
+                className="rounded-lg bg-gradient-to-r from-sky-600 to-violet-600 px-4 py-2 text-sm font-black text-white transition hover:from-sky-500 hover:to-violet-500"
+                type="button"
+              >
+                Done
               </button>
             </div>
           </div>
@@ -793,7 +1112,7 @@ export default function WaterDungeonTracker() {
                 Cancel
               </button>
               <button
-                disabled={mutatingId === manualTarget.id}
+                disabled={mutatingIds.includes(manualTarget.id)}
                 type="submit"
                 className="rounded-lg bg-gradient-to-r from-violet-600 to-pink-600 px-4 py-2 text-sm font-black text-white transition hover:from-violet-500 hover:to-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -811,14 +1130,18 @@ function WaterDungeonCard({
   item,
   isMutating,
   onComplete,
+  onManageParty,
   onManualEdit,
   onResetCooldown,
+  partyMembers = [],
 }: {
   item: LiveCharacter;
   isMutating: boolean;
   onComplete: (character: WaterDungeonCharacter) => void;
+  onManageParty: (character: WaterDungeonCharacter) => void;
   onManualEdit: (character: WaterDungeonCharacter) => void;
   onResetCooldown: (character: WaterDungeonCharacter) => void;
+  partyMembers?: WaterDungeonPartyMemberDisplay[];
 }) {
   const { character, hasNoDate, isOverdue, remainingSeconds, status } = item;
   const canComplete = status === "available" && !isMutating;
@@ -900,6 +1223,34 @@ function WaterDungeonCard({
           {character.note}
         </div>
       ) : null}
+
+      <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-950/15 p-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-sky-300">Party Tags</p>
+          <button
+            onClick={() => onManageParty(character)}
+            disabled={isMutating}
+            className="rounded-md border border-sky-500/35 bg-sky-950/35 px-2 py-1 text-[11px] font-bold text-sky-100 transition hover:bg-sky-900/35 disabled:cursor-not-allowed disabled:opacity-40"
+            type="button"
+          >
+            {partyMembers.length > 0 ? "Edit Party" : "Add Party"}
+          </button>
+        </div>
+        {partyMembers.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {partyMembers.map((member) => (
+              <span
+                key={member.key}
+                className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200"
+              >
+                Lv.{member.level} {member.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-slate-500">No tagged party members.</p>
+        )}
+      </div>
 
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <button

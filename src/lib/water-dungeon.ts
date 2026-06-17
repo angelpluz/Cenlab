@@ -1,4 +1,9 @@
-import type { WaterDungeonCharacter, WaterDungeonGroupId, WaterDungeonStatus } from "@/lib/water-dungeon-types";
+import type {
+  WaterDungeonCharacter,
+  WaterDungeonGroupId,
+  WaterDungeonPartyMember,
+  WaterDungeonStatus,
+} from "@/lib/water-dungeon-types";
 import { findPersonalDataProfile, getPersonalDataSeedProfiles } from "@/lib/personal-data";
 
 type WaterDungeonSeed = {
@@ -13,6 +18,8 @@ type WaterDungeonSeed = {
 export const WATER_DUNGEON_COOLDOWN_SECONDS = 3 * 24 * 60 * 60;
 export const WATER_DUNGEON_READY_SOON_SECONDS = 12 * 60 * 60;
 export const WATER_DUNGEON_STORAGE_KEY = "cenlab.water-dungeon.roster.v1";
+export const WATER_DUNGEON_PARTY_STORAGE_KEY = "cenlab.water-dungeon.party.v1";
+export const WATER_DUNGEON_PARTY_EVENT = "cenlab:water-dungeon-party";
 
 export const WATER_DUNGEON_GROUPS: Record<WaterDungeonGroupId, string> = {
   main: "Main Roster",
@@ -168,4 +175,31 @@ export function formatWaterDungeonBangkokDate(value: Date | string | null | unde
     month: "short",
     day: "2-digit",
   }).format(typeof value === "string" ? new Date(value) : value);
+}
+
+function notifyWaterDungeonPartyChange() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(WATER_DUNGEON_PARTY_EVENT));
+}
+
+export function readWaterDungeonPartySelections(): Record<string, WaterDungeonPartyMember[]> {
+  if (typeof window === "undefined") return {};
+
+  const stored = window.localStorage.getItem(WATER_DUNGEON_PARTY_STORAGE_KEY);
+  if (!stored) return {};
+
+  try {
+    const parsed = JSON.parse(stored) as Record<string, WaterDungeonPartyMember[]>;
+    if (!parsed || typeof parsed !== "object") return {};
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+export function writeWaterDungeonPartySelections(selections: Record<string, WaterDungeonPartyMember[]>) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(WATER_DUNGEON_PARTY_STORAGE_KEY, JSON.stringify(selections));
+  notifyWaterDungeonPartyChange();
 }
