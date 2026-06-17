@@ -4,6 +4,7 @@ import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LogoutButton from "@/components/auth/LogoutButton";
+import { CENLAB_BOSSES, type CenLabBoss } from "@/lib/cenlab-bosses";
 import { CHARACTER_IMAGES } from "@/lib/character-images";
 import {
   PERSONAL_DATA_EVENT,
@@ -415,8 +416,89 @@ function CharacterPortrait({
   );
 }
 
+function BossReferencePanel({
+  bosses,
+  onSelectBoss,
+  selectedBossId,
+}: {
+  bosses: CenLabBoss[];
+  onSelectBoss: (bossId: string) => void;
+  selectedBossId: string;
+}) {
+  const selectedBoss = bosses.find((boss) => boss.id === selectedBossId) ?? bosses[0];
+
+  if (!selectedBoss) return null;
+
+  return (
+    <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 shadow-lg backdrop-blur-sm lg:p-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-cyan-300">Current Boss</h2>
+          <p className="mt-1 truncate text-xs text-slate-500">Boss image reference</p>
+        </div>
+        <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-950/30 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-200">
+          {bosses.length} bosses
+        </span>
+      </div>
+
+      <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-950/15 p-3">
+        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-inner shadow-black/30">
+          <Image
+            alt=""
+            className="h-full w-full object-contain p-1"
+            draggable={false}
+            sizes="96px"
+            src={selectedBoss.imageSrc}
+            unoptimized
+          />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-300">Selected</p>
+          <p className="mt-1 text-lg font-black leading-tight text-slate-100 [overflow-wrap:anywhere]">
+            {selectedBoss.name}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid max-h-[360px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+        {bosses.map((boss) => {
+          const isSelected = boss.id === selectedBoss.id;
+
+          return (
+            <button
+              key={boss.id}
+              className={`min-w-0 rounded-lg border p-2 text-left transition ${
+                isSelected
+                  ? "border-cyan-400/70 bg-cyan-950/35"
+                  : "border-slate-800 bg-slate-950/45 hover:border-cyan-500/35"
+              }`}
+              onClick={() => onSelectBoss(boss.id)}
+              type="button"
+            >
+              <div className="mx-auto flex aspect-square w-full max-w-[92px] items-center justify-center overflow-hidden rounded-md border border-white/10 bg-slate-950/60">
+                <Image
+                  alt=""
+                  className="h-full w-full object-contain p-1"
+                  draggable={false}
+                  sizes="92px"
+                  src={boss.imageSrc}
+                  unoptimized
+                />
+              </div>
+              <p className="mt-2 min-h-[32px] text-center text-[11px] font-bold leading-tight text-slate-200 [overflow-wrap:anywhere]">
+                {boss.name}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function CenLabBossTimer() {
   const [characters, setCharacters] = useState<Character[]>(() => readCenLabCharacters());
+  const [selectedBossId, setSelectedBossId] = useState(() => CENLAB_BOSSES[0]?.id ?? "");
   const [runs, setRuns] = useState<CharacterRunMap>({});
   const [usedIds, setUsedIds] = useState<string[]>([]);
   const [decimalInput, setDecimalInput] = useState("0");
@@ -910,6 +992,12 @@ export default function CenLabBossTimer() {
           </div>
 
           <div className="order-1 min-w-0 space-y-4 lg:sticky lg:top-4 lg:order-2 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1">
+            <BossReferencePanel
+              bosses={CENLAB_BOSSES}
+              onSelectBoss={setSelectedBossId}
+              selectedBossId={selectedBossId}
+            />
+
             <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 shadow-lg backdrop-blur-sm lg:p-3">
               <h2 className="mb-3 text-lg font-bold text-cyan-300">Run Summary</h2>
 
