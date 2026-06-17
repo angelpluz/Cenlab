@@ -30,6 +30,13 @@ import {
   type OgchPartyMemberDisplay,
   type OgchStaticRosterJob,
 } from "@/lib/ogch-static-rosters";
+import {
+  PERSONAL_DATA_EVENT,
+  PERSONAL_DATA_STORAGE_KEY,
+  findPersonalDataProfile,
+  readPersonalDataProfiles,
+} from "@/lib/personal-data";
+import type { PersonalCharacterProfile } from "@/lib/personal-data-types";
 
 type FilterKey = "all" | "available" | "cooldown" | "readySoon" | "lv10" | "needProgress";
 type SortKey = "nextAvailable" | "ogchLevel" | "clearCount" | "name";
@@ -47,6 +54,23 @@ type PartyRosterItem = {
   jobLabel: string;
   remainingSeconds: number;
 };
+
+function applyPersonalProfilesToOgchCharacters(
+  characters: OgchCharacterProgress[],
+  profiles: PersonalCharacterProfile[]
+): OgchCharacterProgress[] {
+  return characters.map((character) => {
+    const profile = findPersonalDataProfile(profiles, character.id, character.name);
+
+    if (!profile) return { ...character };
+
+    return {
+      ...character,
+      name: profile.name,
+      baseLevel: profile.level,
+    };
+  });
+}
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -105,7 +129,7 @@ export default function OgchTracker() {
 
     try {
       const data = await getOgchCharacters();
-      setCharacters(data);
+      setCharacters(applyPersonalProfilesToOgchCharacters(data, readPersonalDataProfiles()));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Could not load OGCH data.");
     } finally {
@@ -132,6 +156,13 @@ export default function OgchTracker() {
       refreshStaticPartyRoster();
     }
 
+    function handlePersonalDataEvent() {
+      setCharacters((currentCharacters) =>
+        applyPersonalProfilesToOgchCharacters(currentCharacters, readPersonalDataProfiles())
+      );
+      refreshStaticPartyRoster();
+    }
+
     function handleStorageEvent(event: StorageEvent) {
       if (
         event.key === getOgchStaticRosterStorageKey("bishop") ||
@@ -139,13 +170,17 @@ export default function OgchTracker() {
       ) {
         refreshStaticPartyRoster();
       }
+
+      if (event.key === PERSONAL_DATA_STORAGE_KEY) handlePersonalDataEvent();
     }
 
     window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+    window.addEventListener(PERSONAL_DATA_EVENT, handlePersonalDataEvent);
     window.addEventListener("storage", handleStorageEvent);
 
     return () => {
       window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+      window.removeEventListener(PERSONAL_DATA_EVENT, handlePersonalDataEvent);
       window.removeEventListener("storage", handleStorageEvent);
     };
   }, [refreshStaticPartyRoster]);

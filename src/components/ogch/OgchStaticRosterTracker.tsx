@@ -19,6 +19,7 @@ import {
   type OgchStaticRosterJob,
   type StaticRosterCharacterSeed,
 } from "@/lib/ogch-static-rosters";
+import { PERSONAL_DATA_EVENT, PERSONAL_DATA_STORAGE_KEY } from "@/lib/personal-data";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
 
 type FilterKey = "all" | "available" | "cooldown" | "readySoon" | "lv10" | "needProgress";
@@ -105,15 +106,22 @@ export default function OgchStaticRosterTracker({
     }
 
     function handleStorageEvent(event: StorageEvent) {
-      if (event.key === getOgchStaticRosterStorageKey(activeNav)) refreshStoredRoster();
+      if (
+        event.key === getOgchStaticRosterStorageKey(activeNav) ||
+        event.key === PERSONAL_DATA_STORAGE_KEY
+      ) {
+        refreshStoredRoster();
+      }
     }
 
     refreshStoredRoster();
     window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+    window.addEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
     window.addEventListener("storage", handleStorageEvent);
 
     return () => {
       window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+      window.removeEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
       window.removeEventListener("storage", handleStorageEvent);
     };
   }, [activeNav]);

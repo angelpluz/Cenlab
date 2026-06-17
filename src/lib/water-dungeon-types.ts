@@ -5,6 +5,7 @@ export type WaterDungeonGroupId = "main" | "alp" | "dancer" | "friends";
 export type WaterDungeonCharacter = {
   id: string;
   name: string;
+  level: number;
   groupId: WaterDungeonGroupId;
   groupLabel: string;
   clearCount: number;

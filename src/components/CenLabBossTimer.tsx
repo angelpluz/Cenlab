@@ -5,6 +5,13 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { CHARACTER_IMAGES } from "@/lib/character-images";
+import {
+  PERSONAL_DATA_EVENT,
+  PERSONAL_DATA_STORAGE_KEY,
+  findPersonalDataProfile,
+  readPersonalDataProfiles,
+} from "@/lib/personal-data";
+import type { PersonalCharacterProfile } from "@/lib/personal-data-types";
 
 type StageId = "stage1" | "stage2" | "stage3";
 
@@ -40,7 +47,7 @@ type PortraitPalette = {
   skin: string;
 };
 
-const CHARACTERS: Character[] = [
+const CHARACTER_SEEDS: Character[] = [
   { id: "francesgaz", name: "FranCesGaz", job: "Arch Bishop", level: 225, imageSrc: CHARACTER_IMAGES.francesgaz },
   { id: "junoirextreme", name: "JunoirExtreme", job: "Windhawk", level: 225, imageSrc: CHARACTER_IMAGES.junoirextreme },
   { id: "archangelpluz", name: "ArchAngelpluz", job: "Cardinal", level: 225, imageSrc: CHARACTER_IMAGES.archangelpluz },
@@ -194,8 +201,25 @@ function formatSpacedBinary(binary: string): string {
   return `${binary.slice(0, 4)} ${binary.slice(4)}`;
 }
 
-function getCharacterName(characterId: string): string {
-  return CHARACTERS.find((character) => character.id === characterId)?.name ?? characterId;
+function applyPersonalProfilesToCenLabCharacters(
+  characters: Character[],
+  profiles: PersonalCharacterProfile[]
+): Character[] {
+  return characters.map((character) => {
+    const profile = findPersonalDataProfile(profiles, character.id, character.name);
+
+    if (!profile) return { ...character };
+
+    return {
+      ...character,
+      name: profile.name,
+      level: profile.level,
+    };
+  });
+}
+
+function readCenLabCharacters() {
+  return applyPersonalProfilesToCenLabCharacters(CHARACTER_SEEDS, readPersonalDataProfiles());
 }
 
 function getRunStatus(run?: CharacterRun, isUsed = false): string {
@@ -392,6 +416,7 @@ function CharacterPortrait({
 }
 
 export default function CenLabBossTimer() {
+  const [characters, setCharacters] = useState<Character[]>(() => readCenLabCharacters());
   const [runs, setRuns] = useState<CharacterRunMap>({});
   const [usedIds, setUsedIds] = useState<string[]>([]);
   const [decimalInput, setDecimalInput] = useState("0");
@@ -410,6 +435,25 @@ export default function CenLabBossTimer() {
     return () => {
       Object.values(intervalsRef.current).forEach((interval) => clearInterval(interval));
       intervalsRef.current = {};
+    };
+  }, []);
+
+  useEffect(() => {
+    function refreshCharacters() {
+      setCharacters(readCenLabCharacters());
+    }
+
+    function handleStorageEvent(event: StorageEvent) {
+      if (event.key === PERSONAL_DATA_STORAGE_KEY) refreshCharacters();
+    }
+
+    refreshCharacters();
+    window.addEventListener(PERSONAL_DATA_EVENT, refreshCharacters);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(PERSONAL_DATA_EVENT, refreshCharacters);
+      window.removeEventListener("storage", handleStorageEvent);
     };
   }, []);
 
@@ -571,15 +615,15 @@ export default function CenLabBossTimer() {
 
   const activeRunItems = useMemo(
     () =>
-      CHARACTERS.map((character) => ({
+      characters.map((character) => ({
         character,
         run: runs[character.id],
       })).filter((item): item is { character: Character; run: CharacterRun } => Boolean(item.run)),
-    [runs]
+    [characters, runs]
   );
 
   const completeRunCount = activeRunItems.filter(({ run }) => isRunComplete(run)).length;
-  const availableCount = CHARACTERS.filter(
+  const availableCount = characters.filter(
     (character) => !usedIds.includes(character.id) && !runs[character.id]
   ).length;
   const parsedDecimal = decimalInput.trim() === "" ? null : Number(decimalInput);
@@ -606,7 +650,7 @@ export default function CenLabBossTimer() {
       <div className="mx-auto box-border w-full max-w-[1440px] px-4 py-5 sm:px-6 lg:px-6 lg:py-3">
         <header className="mb-5 flex flex-col items-center gap-3 text-center lg:mb-4 lg:flex-row lg:justify-between lg:text-left">
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-start">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-5 lg:w-auto">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-6 lg:w-auto">
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-cyan-500/50 bg-cyan-950/45 px-4 py-2 text-sm font-bold text-cyan-100"
                 href="/cen-lab"
@@ -624,6 +668,12 @@ export default function CenLabBossTimer() {
                 href="/water-dungeon"
               >
                 Water Dungeon
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-200"
+                href="/personal-data"
+              >
+                Personal Data
               </Link>
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
@@ -745,7 +795,7 @@ export default function CenLabBossTimer() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {CHARACTERS.map((character) => {
+                {characters.map((character) => {
                   const run = runs[character.id];
                   const isUsed = usedIds.includes(character.id);
                   const isComplete = run ? isRunComplete(run) : false;
@@ -885,7 +935,7 @@ export default function CenLabBossTimer() {
                 <div className="rounded-lg border border-slate-800/70 bg-slate-950/40 p-3 lg:p-2.5">
                   <p className="text-xs text-slate-500">Used</p>
                   <p className="mt-1 font-mono text-2xl font-black text-rose-200 lg:text-xl">
-                    {usedIds.length}/{CHARACTERS.length}
+                    {usedIds.length}/{characters.length}
                   </p>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import {
   getProgressToNextLevel,
 } from "@/lib/ogch";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
+import { findPersonalDataProfile, readPersonalDataProfiles } from "@/lib/personal-data";
 
 export type OgchStaticRosterJob = "bishop" | "dancer";
 
@@ -104,15 +105,16 @@ export function buildOgchStaticCharacter(
   defaultNextAvailableAt: string,
   overrides?: Partial<Pick<OgchCharacterProgress, "clearCount" | "lastCompletedAt" | "nextAvailableAt" | "cooldownStatus">>
 ): OgchCharacterProgress {
+  const personalProfile = findPersonalDataProfile(readPersonalDataProfiles(), seed.id, seed.name);
   const clearCount = overrides?.clearCount ?? seed.clearCount;
   const ogchLevel = getOgchLevel(clearCount);
   const progress = getProgressToNextLevel(clearCount);
 
   return {
     id: seed.id,
-    name: seed.name,
+    name: personalProfile?.name ?? seed.name,
     job: jobLabel,
-    baseLevel: 225,
+    baseLevel: personalProfile?.level ?? 225,
     clearCount,
     ogchLevel,
     expReward: getOgchExpByLevel(ogchLevel),

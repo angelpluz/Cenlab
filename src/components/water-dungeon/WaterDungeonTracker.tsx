@@ -6,6 +6,13 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { getCharacterImage } from "@/lib/character-images";
 import {
+  PERSONAL_DATA_EVENT,
+  PERSONAL_DATA_STORAGE_KEY,
+  findPersonalDataProfile,
+  readPersonalDataProfiles,
+} from "@/lib/personal-data";
+import type { PersonalCharacterProfile } from "@/lib/personal-data-types";
+import {
   WATER_DUNGEON_CHARACTERS,
   WATER_DUNGEON_GROUPS,
   WATER_DUNGEON_STORAGE_KEY,
@@ -82,14 +89,40 @@ const STATUS_CLASSES: Record<WaterDungeonStatus, string> = {
   blocked: "border-rose-500/40 bg-rose-950/35 text-rose-200",
 };
 
-function getSeedCharacters() {
-  return WATER_DUNGEON_CHARACTERS.map((character) => ({ ...character }));
+function applyPersonalProfiles(
+  characters: WaterDungeonCharacter[],
+  profiles: PersonalCharacterProfile[]
+): WaterDungeonCharacter[] {
+  return characters.map((character) => {
+    const profile = findPersonalDataProfile(profiles, character.id, character.name);
+
+    if (!profile) return { ...character };
+
+    return {
+      ...character,
+      name: profile.name,
+      level: profile.level,
+      groupId: profile.groupId,
+      groupLabel: profile.groupLabel,
+      note: character.note ?? profile.note,
+    };
+  });
 }
 
-function mergeStoredCharacters(storedCharacters: WaterDungeonCharacter[]) {
+function getSeedCharacters(profiles: PersonalCharacterProfile[] = readPersonalDataProfiles()) {
+  return applyPersonalProfiles(
+    WATER_DUNGEON_CHARACTERS.map((character) => ({ ...character })),
+    profiles
+  );
+}
+
+function mergeStoredCharacters(
+  storedCharacters: WaterDungeonCharacter[],
+  profiles: PersonalCharacterProfile[] = readPersonalDataProfiles()
+) {
   const storedById = new Map(storedCharacters.map((character) => [character.id, character]));
 
-  return WATER_DUNGEON_CHARACTERS.map((seedCharacter) => {
+  return applyPersonalProfiles(WATER_DUNGEON_CHARACTERS.map((seedCharacter) => {
     const storedCharacter = storedById.get(seedCharacter.id);
 
     if (!storedCharacter) {
@@ -104,25 +137,25 @@ function mergeStoredCharacters(storedCharacters: WaterDungeonCharacter[]) {
       note: storedCharacter.note,
       status: storedCharacter.status,
     };
-  });
+  }), profiles);
 }
 
-function readLocalCharacters() {
+function readLocalCharacters(profiles: PersonalCharacterProfile[] = readPersonalDataProfiles()) {
   if (typeof window === "undefined") {
-    return getSeedCharacters();
+    return getSeedCharacters(profiles);
   }
 
   const stored = window.localStorage.getItem(WATER_DUNGEON_STORAGE_KEY);
   if (!stored) {
-    return getSeedCharacters();
+    return getSeedCharacters(profiles);
   }
 
   try {
     const parsed = JSON.parse(stored) as WaterDungeonCharacter[];
-    if (!Array.isArray(parsed)) return getSeedCharacters();
-    return mergeStoredCharacters(parsed);
+    if (!Array.isArray(parsed)) return getSeedCharacters(profiles);
+    return mergeStoredCharacters(parsed, profiles);
   } catch {
-    return getSeedCharacters();
+    return getSeedCharacters(profiles);
   }
 }
 
@@ -151,7 +184,10 @@ function getSortTimestamp(character: WaterDungeonCharacter) {
 }
 
 export default function WaterDungeonTracker() {
-  const [characters, setCharacters] = useState<WaterDungeonCharacter[]>(() => getSeedCharacters());
+  const [personalProfiles, setPersonalProfiles] = useState<PersonalCharacterProfile[]>(() =>
+    readPersonalDataProfiles()
+  );
+  const [characters, setCharacters] = useState<WaterDungeonCharacter[]>(() => getSeedCharacters(personalProfiles));
   const [dataSource, setDataSource] = useState<DataSource>("loading");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,13 +209,15 @@ export default function WaterDungeonTracker() {
   const loadCharacters = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
     setError(null);
+    const profiles = readPersonalDataProfiles();
+    setPersonalProfiles(profiles);
 
     try {
       const databaseCharacters = await getWaterDungeonCharacters();
-      setCharacters(databaseCharacters);
+      setCharacters(applyPersonalProfiles(databaseCharacters, profiles));
       setDataSource("database");
     } catch {
-      setCharacters(readLocalCharacters());
+      setCharacters(readLocalCharacters(profiles));
       setDataSource("local");
     } finally {
       if (!quiet) setIsLoading(false);
@@ -189,6 +227,27 @@ export default function WaterDungeonTracker() {
   useEffect(() => {
     void loadCharacters();
   }, [loadCharacters]);
+
+  useEffect(() => {
+    function refreshPersonalProfiles() {
+      const profiles = readPersonalDataProfiles();
+      setPersonalProfiles(profiles);
+      setCharacters((currentCharacters) => applyPersonalProfiles(currentCharacters, profiles));
+    }
+
+    function handleStorageEvent(event: StorageEvent) {
+      if (event.key === PERSONAL_DATA_STORAGE_KEY) refreshPersonalProfiles();
+    }
+
+    refreshPersonalProfiles();
+    window.addEventListener(PERSONAL_DATA_EVENT, refreshPersonalProfiles);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(PERSONAL_DATA_EVENT, refreshPersonalProfiles);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -259,6 +318,8 @@ export default function WaterDungeonTracker() {
       if (normalizedSearch) {
         const searchText = [
           item.character.name,
+          item.character.level.toString(),
+          `lv ${item.character.level}`,
           item.character.groupLabel,
           item.character.note ?? "",
           STATUS_LABELS[item.status],
@@ -436,11 +497,11 @@ export default function WaterDungeonTracker() {
     if (dataSource !== "local") return;
     if (!window.confirm("Reset local Water Dungeon data to the seeded roster?")) return;
 
-    const seedCharacters = getSeedCharacters();
+    const seedCharacters = getSeedCharacters(personalProfiles);
     persistLocalCharacters(seedCharacters);
     setCharacters(seedCharacters);
     setNotice("Local Water Dungeon data reset.");
-  }, [dataSource]);
+  }, [dataSource, personalProfiles]);
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-6 lg:px-8">
@@ -455,7 +516,7 @@ export default function WaterDungeonTracker() {
           </div>
 
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-end">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-5 lg:w-auto">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-6 lg:w-auto">
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
                 href="/cen-lab"
@@ -473,6 +534,12 @@ export default function WaterDungeonTracker() {
                 href="/water-dungeon"
               >
                 Water
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-emerald-500/40 hover:text-emerald-200"
+                href="/personal-data"
+              >
+                Personal
               </Link>
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-pink-500/40 hover:text-pink-200"
@@ -520,7 +587,7 @@ export default function WaterDungeonTracker() {
                 <input
                   className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold normal-case tracking-normal text-slate-100 outline-none transition placeholder:text-slate-700 focus:border-sky-500"
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Name, group, note, status"
+                  placeholder="Name, level, group, note, status"
                   type="search"
                   value={searchQuery}
                 />
@@ -787,7 +854,9 @@ function WaterDungeonCard({
         )}
         <div className="min-w-0">
           <h3 className="truncate text-base font-bold text-slate-100">{character.name}</h3>
-          <p className="mt-0.5 truncate text-xs text-slate-400">{character.groupLabel}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-400">
+            Lv.{character.level} {character.groupLabel}
+          </p>
         </div>
         <span
           className={`col-start-2 shrink-0 justify-self-start rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide sm:col-start-auto sm:justify-self-end ${

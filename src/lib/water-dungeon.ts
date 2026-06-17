@@ -1,4 +1,5 @@
 import type { WaterDungeonCharacter, WaterDungeonGroupId, WaterDungeonStatus } from "@/lib/water-dungeon-types";
+import { findPersonalDataProfile, getPersonalDataSeedProfiles } from "@/lib/personal-data";
 
 type WaterDungeonSeed = {
   id: string;
@@ -63,7 +64,7 @@ const WATER_DUNGEON_SEEDS: WaterDungeonSeed[] = [
     name: "REEFA",
     groupId: "dancer",
     nextAvailableAt: null,
-    note: "id 4, Lv 219, no slot yet",
+    note: "id 4, no slot yet",
     status: "blocked",
   },
   { id: "penezia-id-7", name: "PENEZIA", groupId: "dancer", nextAvailableAt: toBangkokDateTime(17, 6), note: "id 7" },
@@ -77,23 +78,32 @@ const WATER_DUNGEON_SEEDS: WaterDungeonSeed[] = [
     name: "Pแดร๊ค",
     groupId: "friends",
     nextAvailableAt: null,
-    note: "id 08, Lv 214, no slot yet",
+    note: "id 08, no slot yet",
     status: "blocked",
   },
   { id: "u-ranus", name: "U-ranus", groupId: "friends", nextAvailableAt: toBangkokDateTime(17, 6) },
+  { id: "devera-id-07", name: "Devera", groupId: "friends", nextAvailableAt: null, note: "id 07" },
 ];
 
-export const WATER_DUNGEON_CHARACTERS: WaterDungeonCharacter[] = WATER_DUNGEON_SEEDS.map((seed) => ({
-  id: seed.id,
-  name: seed.name,
-  groupId: seed.groupId,
-  groupLabel: WATER_DUNGEON_GROUPS[seed.groupId],
-  clearCount: 0,
-  lastCompletedAt: null,
-  nextAvailableAt: seed.nextAvailableAt,
-  note: seed.note ?? null,
-  status: seed.status ?? "available",
-}));
+const PERSONAL_SEED_PROFILES = getPersonalDataSeedProfiles();
+
+export const WATER_DUNGEON_CHARACTERS: WaterDungeonCharacter[] = WATER_DUNGEON_SEEDS.map((seed) => {
+  const personalProfile = findPersonalDataProfile(PERSONAL_SEED_PROFILES, seed.id, seed.name);
+  const groupId = personalProfile?.groupId ?? seed.groupId;
+
+  return {
+    id: seed.id,
+    name: personalProfile?.name ?? seed.name,
+    level: personalProfile?.level ?? 1,
+    groupId,
+    groupLabel: personalProfile?.groupLabel ?? WATER_DUNGEON_GROUPS[groupId],
+    clearCount: 0,
+    lastCompletedAt: null,
+    nextAvailableAt: seed.nextAvailableAt,
+    note: seed.note ?? personalProfile?.note ?? null,
+    status: seed.status ?? "available",
+  };
+});
 
 export function addWaterDungeonCooldown(date: Date): Date {
   return new Date(date.getTime() + WATER_DUNGEON_COOLDOWN_SECONDS * 1000);
