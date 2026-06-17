@@ -434,63 +434,45 @@ function BossReferencePanel({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-lg font-bold text-cyan-300">Current Boss</h2>
-          <p className="mt-1 truncate text-xs text-slate-500">Boss image reference</p>
+          <p className="mt-1 truncate text-xs text-slate-500">Select the current Central Laboratory boss.</p>
         </div>
         <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-950/30 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-200">
           {bosses.length} bosses
         </span>
       </div>
 
-      <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-950/15 p-3">
-        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-slate-950/70 shadow-inner shadow-black/30">
-          <Image
-            alt=""
-            className="h-full w-full object-contain p-1"
-            draggable={false}
-            sizes="96px"
-            src={selectedBoss.imageSrc}
-            unoptimized
-          />
-        </div>
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-300">Selected</p>
-          <p className="mt-1 text-lg font-black leading-tight text-slate-100 [overflow-wrap:anywhere]">
-            {selectedBoss.name}
-          </p>
-        </div>
+      <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+        Boss
+        <select
+          className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold normal-case tracking-normal text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+          onChange={(event) => onSelectBoss(event.target.value)}
+          value={selectedBoss.id}
+        >
+          {bosses.map((boss) => (
+            <option key={boss.id} value={boss.id}>
+              {boss.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="mt-3 rounded-lg border border-cyan-500/20 bg-cyan-950/15 p-3">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-300">Selected</p>
+        <p className="mt-1 text-xl font-black leading-tight text-slate-100 [overflow-wrap:anywhere]">
+          {selectedBoss.name}
+        </p>
       </div>
 
-      <div className="mt-3 grid max-h-[360px] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
-        {bosses.map((boss) => {
-          const isSelected = boss.id === selectedBoss.id;
-
-          return (
-            <button
-              key={boss.id}
-              className={`min-w-0 rounded-lg border p-2 text-left transition ${
-                isSelected
-                  ? "border-cyan-400/70 bg-cyan-950/35"
-                  : "border-slate-800 bg-slate-950/45 hover:border-cyan-500/35"
-              }`}
-              onClick={() => onSelectBoss(boss.id)}
-              type="button"
-            >
-              <div className="mx-auto flex aspect-square w-full max-w-[92px] items-center justify-center overflow-hidden rounded-md border border-white/10 bg-slate-950/60">
-                <Image
-                  alt=""
-                  className="h-full w-full object-contain p-1"
-                  draggable={false}
-                  sizes="92px"
-                  src={boss.imageSrc}
-                  unoptimized
-                />
-              </div>
-              <p className="mt-2 min-h-[32px] text-center text-[11px] font-bold leading-tight text-slate-200 [overflow-wrap:anywhere]">
-                {boss.name}
-              </p>
-            </button>
-          );
-        })}
+      <div className="mt-3 flex min-h-[260px] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-950/70 p-3 shadow-inner shadow-black/30 sm:min-h-[340px] lg:min-h-[380px]">
+        <Image
+          alt={selectedBoss.name}
+          className="h-auto max-h-[520px] w-full object-contain"
+          draggable={false}
+          priority
+          sizes="(max-width: 1024px) 100vw, 520px"
+          src={selectedBoss.imageSrc}
+          unoptimized
+        />
       </div>
     </section>
   );
