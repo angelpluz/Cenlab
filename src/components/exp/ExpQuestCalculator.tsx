@@ -92,16 +92,22 @@ const BUFFS: { key: BuffKey; label: string; bonus: number }[] = [
 ];
 
 function createWaterDungeonRows(knownRows: Record<number, KnownWaterDungeonExp> = {}): WaterDungeonExpRow[] {
+  const baseDifficultyRow = knownRows[1];
+
+  function scaleExp(value: number | null | undefined, multiplier: number): number | null {
+    return value === null || value === undefined ? null : value * multiplier;
+  }
+
   return Array.from({ length: 5 }, (_, index) => {
     const difficulty = index + 1;
     const knownRow = knownRows[difficulty];
 
     return {
       difficulty,
-      monsterBaseExp: knownRow?.monsterBaseExp ?? null,
-      monsterJobExp: knownRow?.monsterJobExp ?? null,
-      fifthFloorBaseExp: knownRow?.fifthFloorBaseExp ?? null,
-      fifthFloorJobExp: knownRow?.fifthFloorJobExp ?? null,
+      monsterBaseExp: knownRow?.monsterBaseExp ?? scaleExp(baseDifficultyRow?.monsterBaseExp, difficulty),
+      monsterJobExp: knownRow?.monsterJobExp ?? scaleExp(baseDifficultyRow?.monsterJobExp, difficulty),
+      fifthFloorBaseExp: knownRow?.fifthFloorBaseExp ?? scaleExp(baseDifficultyRow?.fifthFloorBaseExp, difficulty),
+      fifthFloorJobExp: knownRow?.fifthFloorJobExp ?? scaleExp(baseDifficultyRow?.fifthFloorJobExp, difficulty),
       meteoriteDustChance: knownRow?.meteoriteDustChance ?? null,
     };
   });
@@ -1360,7 +1366,7 @@ function WaterDungeonExpCalculator() {
             </a>
           </p>
         </div>
-        <p className="text-sm font-semibold text-slate-400">Rank 0-10 data</p>
+        <p className="text-sm font-semibold text-slate-400">Difficulty Level = EXP multiplier</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -1475,7 +1481,9 @@ function WaterDungeonExpCalculator() {
         <div className="overflow-hidden rounded-lg border border-slate-800">
           <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
             <h3 className="font-black text-sky-100">Water Dungeon Table</h3>
-            <p className="mt-1 text-sm text-slate-500">Unknown values are kept as ? until more data is added.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Known EXP cells are multiplied by difficulty; unknown values stay as ?.
+            </p>
           </div>
           <div className="overflow-auto">
             <table className="min-w-[860px] divide-y divide-slate-800 text-left text-sm">
