@@ -61,6 +61,14 @@ export type RathenaItemBonusKey =
 
 export type RathenaItemBonuses = Partial<Record<RathenaItemBonusKey, number>>;
 
+export type RathenaItemGrade = "D" | "C" | "B" | "A";
+
+export type RathenaItemBonusRule = {
+  minRefine?: number;
+  minGrade?: RathenaItemGrade;
+  bonuses: RathenaItemBonuses;
+};
+
 export type RathenaCalculatorItem = {
   id: number;
   aegisName: string;
@@ -80,6 +88,7 @@ export type RathenaCalculatorItem = {
   refineable?: boolean;
   gradable?: boolean;
   bonuses?: RathenaItemBonuses;
+  bonusRules?: RathenaItemBonusRule[];
   scriptPreview?: string[];
 };
 

@@ -51,6 +51,13 @@ const BONUS_KEY_MAP = {
   bAspdRate: "aspdPercent",
 };
 
+const GRADE_RANK = {
+  D: 1,
+  C: 2,
+  B: 3,
+  A: 4,
+};
+
 const LOCATION_SLOT_MAP = {
   Head_Top: "head-top",
   Head_Mid: "head-mid",
@@ -144,6 +151,99 @@ function parseTopLevelBonuses(script) {
   return bonuses;
 }
 
+function mergeRuleCondition(conditions) {
+  return conditions.reduce(
+    (merged, condition) => ({
+      minGrade:
+        condition.minGrade &&
+        (!merged.minGrade || GRADE_RANK[condition.minGrade] > GRADE_RANK[merged.minGrade])
+          ? condition.minGrade
+          : merged.minGrade,
+      minRefine:
+        condition.minRefine && condition.minRefine > (merged.minRefine || 0)
+          ? condition.minRefine
+          : merged.minRefine,
+    }),
+    {}
+  );
+}
+
+function parseIfCondition(line) {
+  const refineMatch = line.match(/\.@r\s*>=\s*(\d+)/);
+  if (refineMatch) {
+    return { minRefine: Number(refineMatch[1]) };
+  }
+
+  const gradeMatch = line.match(/\.@g\s*>=\s*ENCHANTGRADE_([DCBA])/);
+  if (gradeMatch) {
+    return { minGrade: gradeMatch[1] };
+  }
+
+  return null;
+}
+
+function parseNumericBonus(line) {
+  const match = line.match(/^bonus\s+(b[A-Za-z0-9_]+),\s*(-?\d+)\s*;/);
+  if (!match) return null;
+
+  const bonusKey = BONUS_KEY_MAP[match[1]];
+  if (!bonusKey) return null;
+
+  return { key: bonusKey, value: Number(match[2]) };
+}
+
+function countMatches(value, pattern) {
+  return (value.match(pattern) || []).length;
+}
+
+function parseConditionalBonusRules(script) {
+  if (typeof script !== "string") return undefined;
+
+  const rules = [];
+  const conditionStack = [];
+  let depth = 0;
+
+  for (const rawLine of script.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const leadingCloseCount = (line.match(/^}+/)?.[0].length || 0);
+    if (leadingCloseCount > 0) {
+      depth = Math.max(0, depth - leadingCloseCount);
+      while (conditionStack.length > 0 && depth <= conditionStack[conditionStack.length - 1].openDepth) {
+        conditionStack.pop();
+      }
+    }
+
+    const parsedBonus = parseNumericBonus(line);
+    if (parsedBonus && conditionStack.length > 0) {
+      const condition = mergeRuleCondition(conditionStack.map((entry) => entry.condition));
+      if (condition.minRefine || condition.minGrade) {
+        rules.push({
+          ...condition,
+          bonuses: {
+            [parsedBonus.key]: parsedBonus.value,
+          },
+        });
+      }
+    }
+
+    const condition = parseIfCondition(line);
+    const openCount = countMatches(line, /\{/g);
+    const closeCount = countMatches(line, /\}/g) - leadingCloseCount;
+    if (condition && openCount > 0) {
+      conditionStack.push({ condition, openDepth: depth });
+    }
+
+    depth = Math.max(0, depth + openCount - Math.max(0, closeCount));
+    while (conditionStack.length > 0 && depth <= conditionStack[conditionStack.length - 1].openDepth) {
+      conditionStack.pop();
+    }
+  }
+
+  return rules.length > 0 ? rules : undefined;
+}
+
 function scriptPreview(script) {
   if (typeof script !== "string") return undefined;
 
@@ -166,6 +266,7 @@ function shouldInclude(entry, category, bonuses, sourceKind) {
 function mapEntry(entry, sourceKind) {
   const category = itemCategory(entry);
   const bonuses = parseTopLevelBonuses(entry.Script);
+  const bonusRules = parseConditionalBonusRules(entry.Script);
 
   if (!shouldInclude(entry, category, bonuses, sourceKind)) return null;
 
@@ -207,6 +308,7 @@ function mapEntry(entry, sourceKind) {
     refineable: entry.Refineable === true || undefined,
     gradable: entry.Gradable === true || undefined,
     bonuses: Object.keys(baseBonuses).length > 0 ? baseBonuses : undefined,
+    bonusRules,
     scriptPreview: scriptPreview(entry.Script),
   });
 }

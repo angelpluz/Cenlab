@@ -14,6 +14,7 @@ import type {
   RathenaItemBonuses,
   RathenaItemBonusKey,
   RathenaItemCategory,
+  RathenaItemGrade,
 } from "@/lib/rathena-item-types";
 
 const STORAGE_KEY = "cenlab.stat-calculator.v1";
@@ -108,12 +109,155 @@ const PERCENT_BONUS_KEYS = new Set<RathenaItemBonusKey>([
 type PrimaryStatKey = (typeof PRIMARY_STAT_FIELDS)[number]["key"];
 type TraitStatKey = (typeof TRAIT_STAT_FIELDS)[number]["key"];
 type ModifierKey = (typeof MODIFIER_FIELDS)[number]["key"];
+type GearGrade = "none" | RathenaItemGrade;
+
+const GEAR_GRADE_OPTIONS: { value: GearGrade; label: string }[] = [
+  { value: "none", label: "ungrade" },
+  { value: "D", label: "Grade D" },
+  { value: "C", label: "Grade C" },
+  { value: "B", label: "Grade B" },
+  { value: "A", label: "Grade A" },
+];
+
+const GRADE_RANK: Record<GearGrade, number> = {
+  none: 0,
+  D: 1,
+  C: 2,
+  B: 3,
+  A: 4,
+};
+
+const GEAR_SLOT_DEFS = [
+  {
+    key: "weapon",
+    label: "Weapon",
+    category: "weapon",
+    slots: ["weapon"],
+    optionLabels: ["Card 1", "Card 2", "Enchant 1", "Enchant 2", "Enchant 3", "Enchant 4"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "headTop",
+    label: "Head Top",
+    category: "armor",
+    slots: ["head-top"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2", "Enchant 3"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "headMid",
+    label: "Head Mid",
+    category: "armor",
+    slots: ["head-mid"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "headLow",
+    label: "Head Low",
+    category: "armor",
+    slots: ["head-low"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "armor",
+    label: "Armor",
+    category: "armor",
+    slots: ["armor"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2", "Enchant 3"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "garment",
+    label: "Garment",
+    category: "armor",
+    slots: ["garment"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2", "Enchant 3"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "shoes",
+    label: "Shoes",
+    category: "armor",
+    slots: ["shoes"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2", "Enchant 3"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "accessoryRight",
+    label: "Right Accessory",
+    category: "armor",
+    slots: ["accessory"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "accessoryLeft",
+    label: "Left Accessory",
+    category: "armor",
+    slots: ["accessory"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "shield",
+    label: "Shield",
+    category: "armor",
+    slots: ["shield"],
+    optionLabels: ["Card", "Enchant 1", "Enchant 2"],
+    refineable: true,
+    gradable: true,
+  },
+  {
+    key: "ammo",
+    label: "Ammo",
+    category: "ammo",
+    slots: ["ammo"],
+    optionLabels: ["Option 1", "Option 2"],
+    refineable: false,
+    gradable: false,
+  },
+] as const;
+
+type GearSlotDef = (typeof GEAR_SLOT_DEFS)[number];
+type GearSlotKey = GearSlotDef["key"];
+
+type GearSlotState = {
+  itemId: number | null;
+  refine: number;
+  grade: GearGrade;
+  optionIds: (number | null)[];
+};
+
+type GearLoadout = Record<GearSlotKey, GearSlotState>;
+
+type ConfiguredItem = {
+  grade: GearGrade;
+  item: RathenaCalculatorItem;
+  refine: number;
+  sourceLabel: string;
+};
+
+type PickerTarget =
+  | { kind: "main"; slotKey: GearSlotKey }
+  | { kind: "option"; optionIndex: number; slotKey: GearSlotKey };
 
 type StatBuild = {
   profileId: string;
   baseLevel: number;
   jobLevel: number;
-  itemIds: number[];
+  extraItemIds: number[];
+  gear: GearLoadout;
   primaryStats: Record<PrimaryStatKey, number>;
   traitStats: Record<TraitStatKey, number>;
   modifiers: Record<ModifierKey, number>;
@@ -180,11 +324,24 @@ const DEFAULT_MODIFIERS: Record<ModifierKey, number> = {
   sMatkBonus: 0,
 };
 
+function createDefaultGearLoadout(): GearLoadout {
+  return GEAR_SLOT_DEFS.reduce((next, slotDef) => {
+    next[slotDef.key] = {
+      itemId: null,
+      refine: 0,
+      grade: "none",
+      optionIds: slotDef.optionLabels.map(() => null),
+    };
+    return next;
+  }, {} as GearLoadout);
+}
+
 const DEFAULT_BUILD: StatBuild = {
   profileId: "",
   baseLevel: 250,
   jobLevel: 50,
-  itemIds: [],
+  extraItemIds: [],
+  gear: createDefaultGearLoadout(),
   primaryStats: DEFAULT_PRIMARY_STATS,
   traitStats: DEFAULT_TRAIT_STATS,
   modifiers: DEFAULT_MODIFIERS,
@@ -221,21 +378,53 @@ function mergeNumberRecord<T extends string>(
   }, {} as Record<T, number>);
 }
 
+function normalizeItemIds(value: unknown): number[] {
+  const rawIds = Array.isArray(value) ? value : [];
+
+  return Array.from(
+    new Set(
+      rawIds
+        .map((id) => (typeof id === "number" ? Math.floor(id) : Number(id)))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    )
+  ).slice(0, 120);
+}
+
+function normalizeGearGrade(value: unknown): GearGrade {
+  return value === "D" || value === "C" || value === "B" || value === "A" ? value : "none";
+}
+
+function normalizeGearLoadout(value: unknown): GearLoadout {
+  const source = typeof value === "object" && value !== null ? (value as Partial<Record<GearSlotKey, unknown>>) : {};
+
+  return GEAR_SLOT_DEFS.reduce((next, slotDef) => {
+    const rawSlot =
+      typeof source[slotDef.key] === "object" && source[slotDef.key] !== null
+        ? (source[slotDef.key] as Partial<GearSlotState>)
+        : {};
+    const rawOptions = Array.isArray(rawSlot.optionIds) ? rawSlot.optionIds : [];
+
+    next[slotDef.key] = {
+      itemId: normalizeItemIds([rawSlot.itemId])[0] ?? null,
+      refine: slotDef.refineable ? floorClamp(typeof rawSlot.refine === "number" ? rawSlot.refine : 0, 0, 20) : 0,
+      grade: slotDef.gradable ? normalizeGearGrade(rawSlot.grade) : "none",
+      optionIds: slotDef.optionLabels.map((_, index) => normalizeItemIds([rawOptions[index]])[0] ?? null),
+    };
+
+    return next;
+  }, {} as GearLoadout);
+}
+
 function normalizeBuild(value: unknown): StatBuild {
   const source = typeof value === "object" && value !== null ? (value as Partial<StatBuild>) : {};
-  const rawItemIds = Array.isArray(source.itemIds) ? source.itemIds : [];
+  const legacySource = source as Partial<StatBuild> & { itemIds?: unknown };
 
   return {
     profileId: typeof source.profileId === "string" ? source.profileId : DEFAULT_BUILD.profileId,
     baseLevel: floorClamp(typeof source.baseLevel === "number" ? source.baseLevel : DEFAULT_BUILD.baseLevel, 1, 260),
     jobLevel: floorClamp(typeof source.jobLevel === "number" ? source.jobLevel : DEFAULT_BUILD.jobLevel, 1, 70),
-    itemIds: Array.from(
-      new Set(
-        rawItemIds
-          .map((id) => (typeof id === "number" ? Math.floor(id) : Number(id)))
-          .filter((id) => Number.isInteger(id) && id > 0)
-      )
-    ).slice(0, 80),
+    extraItemIds: normalizeItemIds(source.extraItemIds ?? legacySource.itemIds),
+    gear: normalizeGearLoadout(source.gear),
     primaryStats: mergeNumberRecord(DEFAULT_PRIMARY_STATS, source.primaryStats, 1, 130),
     traitStats: mergeNumberRecord(DEFAULT_TRAIT_STATS, source.traitStats, 0, 110),
     modifiers: mergeNumberRecord(DEFAULT_MODIFIERS, source.modifiers, 0, 5000),
@@ -259,16 +448,32 @@ function addBonus(current: number, bonuses: RathenaItemBonuses, key: RathenaItem
   return current + (bonuses[key] || 0);
 }
 
-function combineItemBonuses(items: RathenaCalculatorItem[]): RathenaItemBonuses {
+function mergeBonuses(target: RathenaItemBonuses, source?: RathenaItemBonuses) {
+  if (!source) return;
+
+  for (const [rawKey, value] of Object.entries(source)) {
+    if (typeof value !== "number") continue;
+    const key = rawKey as RathenaItemBonusKey;
+    target[key] = (target[key] || 0) + value;
+  }
+}
+
+function isBonusRuleActive(rule: NonNullable<RathenaCalculatorItem["bonusRules"]>[number], entry: ConfiguredItem): boolean {
+  if (rule.minRefine && entry.refine < rule.minRefine) return false;
+  if (rule.minGrade && GRADE_RANK[entry.grade] < GRADE_RANK[rule.minGrade]) return false;
+  return true;
+}
+
+function combineConfiguredItemBonuses(entries: ConfiguredItem[]): RathenaItemBonuses {
   const combined: RathenaItemBonuses = {};
 
-  for (const item of items) {
-    if (!item.bonuses) continue;
+  for (const entry of entries) {
+    mergeBonuses(combined, entry.item.bonuses);
 
-    for (const [rawKey, value] of Object.entries(item.bonuses)) {
-      if (typeof value !== "number") continue;
-      const key = rawKey as RathenaItemBonusKey;
-      combined[key] = (combined[key] || 0) + value;
+    for (const rule of entry.item.bonusRules || []) {
+      if (isBonusRuleActive(rule, entry)) {
+        mergeBonuses(combined, rule.bonuses);
+      }
     }
   }
 
@@ -308,6 +513,82 @@ function applyItemBonuses(build: StatBuild, bonuses: RathenaItemBonuses): StatBu
       pAtkBonus: floorClamp(addBonus(build.modifiers.pAtkBonus, bonuses, "pAtkBonus"), 0, 5000),
       sMatkBonus: floorClamp(addBonus(build.modifiers.sMatkBonus, bonuses, "sMatkBonus"), 0, 5000),
     },
+  };
+}
+
+function getLoadoutItemIds(build: StatBuild): number[] {
+  const ids: number[] = [...build.extraItemIds];
+
+  for (const slotDef of GEAR_SLOT_DEFS) {
+    const slot = build.gear[slotDef.key];
+    if (slot.itemId) ids.push(slot.itemId);
+    for (const optionId of slot.optionIds) {
+      if (optionId) ids.push(optionId);
+    }
+  }
+
+  return Array.from(new Set(ids));
+}
+
+function getConfiguredItems(build: StatBuild, itemMap: Map<number, RathenaCalculatorItem>): ConfiguredItem[] {
+  const entries: ConfiguredItem[] = [];
+
+  for (const slotDef of GEAR_SLOT_DEFS) {
+    const slot = build.gear[slotDef.key];
+    const mainItem = slot.itemId ? itemMap.get(slot.itemId) : undefined;
+
+    if (mainItem) {
+      entries.push({
+        grade: slot.grade,
+        item: mainItem,
+        refine: slot.refine,
+        sourceLabel: slotDef.label,
+      });
+    }
+
+    slot.optionIds.forEach((optionId, index) => {
+      const optionItem = optionId ? itemMap.get(optionId) : undefined;
+      if (!optionItem) return;
+
+      entries.push({
+        grade: "none",
+        item: optionItem,
+        refine: 0,
+        sourceLabel: `${slotDef.label} ${slotDef.optionLabels[index]}`,
+      });
+    });
+  }
+
+  for (const extraItemId of build.extraItemIds) {
+    const item = itemMap.get(extraItemId);
+    if (!item) continue;
+
+    entries.push({
+      grade: "none",
+      item,
+      refine: 0,
+      sourceLabel: "Extra",
+    });
+  }
+
+  return entries;
+}
+
+function getGearSlotDef(slotKey: GearSlotKey): GearSlotDef {
+  return GEAR_SLOT_DEFS.find((slotDef) => slotDef.key === slotKey) || GEAR_SLOT_DEFS[0];
+}
+
+function getPickerConfig(target: PickerTarget | null): { category: RathenaItemCategory | "all"; slot?: string } | null {
+  if (!target) return null;
+  const slotDef = getGearSlotDef(target.slotKey);
+
+  if (target.kind === "option") {
+    return { category: "card" };
+  }
+
+  return {
+    category: slotDef.category as RathenaItemCategory,
+    slot: slotDef.slots[0],
   };
 }
 
@@ -354,20 +635,23 @@ export default function StatCalculator() {
   const [profiles, setProfiles] = useState<PersonalCharacterProfile[]>(() => readPersonalDataProfiles());
   const [build, setBuild] = useState<StatBuild>(() => readStoredBuild());
   const [itemQuery, setItemQuery] = useState("");
-  const [itemCategory, setItemCategory] = useState<RathenaItemCategory | "all">("all");
   const [itemResults, setItemResults] = useState<RathenaCalculatorItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<RathenaCalculatorItem[]>([]);
   const [itemTotal, setItemTotal] = useState(0);
   const [isSearchingItems, setIsSearchingItems] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
 
   const selectedProfile = profiles.find((profile) => profile.id === build.profileId);
-  const itemBonuses = useMemo(() => combineItemBonuses(selectedItems), [selectedItems]);
+  const selectedItemMap = useMemo(() => new Map(selectedItems.map((item) => [item.id, item])), [selectedItems]);
+  const configuredItems = useMemo(() => getConfiguredItems(build, selectedItemMap), [build, selectedItemMap]);
+  const itemBonuses = useMemo(() => combineConfiguredItemBonuses(configuredItems), [configuredItems]);
   const effectiveBuild = useMemo(() => applyItemBonuses(build, itemBonuses), [build, itemBonuses]);
   const derivedStats = useMemo(() => calculateDerivedStats(effectiveBuild), [effectiveBuild]);
   const castRemaining = Math.max(0, 100 - derivedStats.variableCastReduction);
   const primaryTotal = PRIMARY_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.primaryStats[field.key], 0);
   const traitTotal = TRAIT_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.traitStats[field.key], 0);
-  const selectedItemIds = build.itemIds.join(",");
+  const selectedItemIds = getLoadoutItemIds(build).join(",");
+  const pickerConfig = useMemo(() => getPickerConfig(pickerTarget), [pickerTarget]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
@@ -402,12 +686,20 @@ export default function StatCalculator() {
   useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
+      if (!pickerConfig) {
+        setItemResults([]);
+        setItemTotal(0);
+        setIsSearchingItems(false);
+        return;
+      }
+
       setIsSearchingItems(true);
       const params = new URLSearchParams({
-        category: itemCategory,
+        category: pickerConfig.category,
         limit: "36",
         q: itemQuery,
       });
+      if (pickerConfig.slot) params.set("slot", pickerConfig.slot);
 
       try {
         const response = await fetch(`/api/items/search?${params.toString()}`, {
@@ -430,7 +722,7 @@ export default function StatCalculator() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [itemCategory, itemQuery]);
+  }, [itemQuery, pickerConfig]);
 
   useEffect(() => {
     function refreshProfiles() {
@@ -499,35 +791,69 @@ export default function StatCalculator() {
     );
   }
 
-  function addItem(itemId: number) {
+  function updateGearSlot(slotKey: GearSlotKey, patch: Partial<GearSlotState>) {
     setBuild((current) =>
       normalizeBuild({
         ...current,
-        itemIds: current.itemIds.includes(itemId) ? current.itemIds : [...current.itemIds, itemId],
+        gear: {
+          ...current.gear,
+          [slotKey]: {
+            ...current.gear[slotKey],
+            ...patch,
+          },
+        },
       })
     );
   }
 
-  function removeItem(itemId: number) {
+  function updateGearOption(slotKey: GearSlotKey, optionIndex: number, itemId: number | null) {
+    const currentSlot = build.gear[slotKey];
+    const optionIds = currentSlot.optionIds.map((optionId, index) => (index === optionIndex ? itemId : optionId));
+    updateGearSlot(slotKey, { optionIds });
+  }
+
+  function clearGearSlot(slotKey: GearSlotKey) {
+    const slotDef = getGearSlotDef(slotKey);
+    updateGearSlot(slotKey, {
+      itemId: null,
+      refine: 0,
+      grade: "none",
+      optionIds: slotDef.optionLabels.map(() => null),
+    });
+  }
+
+  function clearGear() {
     setBuild((current) =>
       normalizeBuild({
         ...current,
-        itemIds: current.itemIds.filter((id) => id !== itemId),
+        extraItemIds: [],
+        gear: createDefaultGearLoadout(),
       })
     );
   }
 
-  function clearItems() {
-    setBuild((current) =>
-      normalizeBuild({
-        ...current,
-        itemIds: [],
-      })
-    );
+  function openPicker(target: PickerTarget) {
+    setPickerTarget(target);
+    setItemQuery("");
+  }
+
+  function pickItem(itemId: number) {
+    if (!pickerTarget) return;
+
+    if (pickerTarget.kind === "main") {
+      updateGearSlot(pickerTarget.slotKey, { itemId });
+    } else {
+      updateGearOption(pickerTarget.slotKey, pickerTarget.optionIndex, itemId);
+    }
+
+    setPickerTarget(null);
+    setItemQuery("");
   }
 
   function resetBuild() {
     setBuild(DEFAULT_BUILD);
+    setPickerTarget(null);
+    setItemQuery("");
   }
 
   return (
@@ -667,20 +993,25 @@ export default function StatCalculator() {
           </aside>
 
           <section className="space-y-5">
-            <ItemLoadoutPanel
+            <EquipmentBuilderPanel
               bonuses={itemBonuses}
-              category={itemCategory}
+              configuredItems={configuredItems}
+              gear={build.gear}
               isLoading={isSearchingItems}
+              itemMap={selectedItemMap}
+              pickerTarget={pickerTarget}
               query={itemQuery}
               results={itemResults}
               resultTotal={itemTotal}
-              selectedIds={build.itemIds}
-              selectedItems={selectedItems}
-              onAdd={addItem}
-              onCategoryChange={setItemCategory}
-              onClear={clearItems}
+              onClear={clearGear}
+              onClearSlot={clearGearSlot}
+              onClosePicker={() => setPickerTarget(null)}
+              onOpenPicker={openPicker}
+              onPickItem={pickItem}
               onQueryChange={setItemQuery}
-              onRemove={removeItem}
+              onUpdateGrade={(slotKey, grade) => updateGearSlot(slotKey, { grade })}
+              onUpdateOption={updateGearOption}
+              onUpdateRefine={(slotKey, refine) => updateGearSlot(slotKey, { refine })}
             />
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/20">
@@ -748,6 +1079,315 @@ export default function StatCalculator() {
       </div>
     </main>
   );
+}
+
+function EquipmentBuilderPanel({
+  bonuses,
+  configuredItems,
+  gear,
+  isLoading,
+  itemMap,
+  onClear,
+  onClearSlot,
+  onClosePicker,
+  onOpenPicker,
+  onPickItem,
+  onQueryChange,
+  onUpdateGrade,
+  onUpdateOption,
+  onUpdateRefine,
+  pickerTarget,
+  query,
+  resultTotal,
+  results,
+}: {
+  bonuses: RathenaItemBonuses;
+  configuredItems: ConfiguredItem[];
+  gear: GearLoadout;
+  isLoading: boolean;
+  itemMap: Map<number, RathenaCalculatorItem>;
+  onClear: () => void;
+  onClearSlot: (slotKey: GearSlotKey) => void;
+  onClosePicker: () => void;
+  onOpenPicker: (target: PickerTarget) => void;
+  onPickItem: (itemId: number) => void;
+  onQueryChange: (query: string) => void;
+  onUpdateGrade: (slotKey: GearSlotKey, grade: GearGrade) => void;
+  onUpdateOption: (slotKey: GearSlotKey, optionIndex: number, itemId: number | null) => void;
+  onUpdateRefine: (slotKey: GearSlotKey, refine: number) => void;
+  pickerTarget: PickerTarget | null;
+  query: string;
+  resultTotal: number;
+  results: RathenaCalculatorItem[];
+}) {
+  const bonusEntries = (Object.entries(bonuses) as [RathenaItemBonusKey, number][])
+    .filter(([, value]) => value !== 0)
+    .sort(([a], [b]) => ITEM_BONUS_LABELS[a].localeCompare(ITEM_BONUS_LABELS[b]));
+  const activeTargetLabel = pickerTarget ? getPickerTargetLabel(pickerTarget) : "";
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
+      <div className="flex flex-col gap-3 border-b border-slate-800 bg-slate-950/55 p-4 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-cyan-200">Equipment Builder</h2>
+          <p className="mt-1 text-sm text-slate-400">Slot loadout, refine, grade, cards and enchants</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-lg border border-cyan-500/25 bg-cyan-950/25 px-3 py-2 text-xs font-black text-cyan-100">
+            {configuredItems.length} active items
+          </span>
+          <button
+            className="rounded-lg border border-rose-500/35 bg-rose-950/25 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-950/45 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={configuredItems.length === 0}
+            type="button"
+            onClick={onClear}
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      {pickerTarget ? (
+        <div className="border-b border-cyan-500/20 bg-cyan-950/15 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <label className="block min-w-0 flex-1">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300/80">
+                Pick {activeTargetLabel}
+              </span>
+              <input
+                className="mt-2 w-full rounded-lg border border-cyan-500/30 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
+                placeholder="Search item, card, enchant..."
+                type="search"
+                value={query}
+                onChange={(event) => onQueryChange(event.target.value)}
+              />
+            </label>
+
+            <button
+              className="rounded-lg border border-slate-700 bg-slate-950/70 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-100"
+              type="button"
+              onClick={onClosePicker}
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/70">
+            <div className="flex items-center justify-between border-b border-slate-800 px-3 py-2">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+                {isLoading ? "Searching" : `${formatNumber(resultTotal)} results`}
+              </p>
+              <p className="text-xs font-semibold text-slate-500">showing {results.length}</p>
+            </div>
+
+            <div className="grid max-h-[330px] grid-cols-1 gap-0 overflow-y-auto md:grid-cols-2 xl:grid-cols-3">
+              {results.length === 0 ? (
+                <div className="p-4 text-sm font-semibold text-slate-500">No item found.</div>
+              ) : (
+                results.map((item) => (
+                  <button
+                    key={item.id}
+                    className="border-b border-slate-800 p-3 text-left transition hover:bg-cyan-950/25 md:border-r"
+                    type="button"
+                    onClick={() => onPickItem(item.id)}
+                  >
+                    <ItemSummary compact item={item} />
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="overflow-x-auto">
+        <div className="min-w-[1060px] divide-y divide-slate-800">
+          <div className="grid grid-cols-[118px_260px_112px_76px_repeat(6,minmax(128px,1fr))_48px] bg-slate-950/40 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+            <div>Slot</div>
+            <div>Item</div>
+            <div>Grade</div>
+            <div>Refine</div>
+            <div>Option 1</div>
+            <div>Option 2</div>
+            <div>Option 3</div>
+            <div>Option 4</div>
+            <div>Option 5</div>
+            <div>Option 6</div>
+            <div />
+          </div>
+
+          {GEAR_SLOT_DEFS.map((slotDef) => {
+            const slot = gear[slotDef.key];
+            const mainItem = slot.itemId ? itemMap.get(slot.itemId) : undefined;
+
+            return (
+              <div
+                key={slotDef.key}
+                className="grid grid-cols-[118px_260px_112px_76px_repeat(6,minmax(128px,1fr))_48px] items-stretch gap-0 px-3 py-2"
+              >
+                <div className="flex items-center pr-2 text-sm font-black text-slate-300">{slotDef.label}</div>
+
+                <GearPickCell
+                  item={mainItem}
+                  label={`Choose ${slotDef.label}`}
+                  onClear={() => onClearSlot(slotDef.key)}
+                  onPick={() => onOpenPicker({ kind: "main", slotKey: slotDef.key })}
+                  prefix={formatGearPrefix(slot)}
+                />
+
+                <select
+                  className="mx-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-xs font-bold text-slate-100 outline-none transition focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={!slotDef.gradable}
+                  value={slot.grade}
+                  onChange={(event) => onUpdateGrade(slotDef.key, event.target.value as GearGrade)}
+                >
+                  {GEAR_GRADE_OPTIONS.map((grade) => (
+                    <option key={grade.value} value={grade.value}>
+                      {grade.label}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  className="mx-1 rounded-md border border-slate-700 bg-slate-950 px-2 py-2 text-center font-mono text-xs font-black text-slate-100 outline-none transition focus:border-cyan-400 disabled:cursor-not-allowed disabled:opacity-45"
+                  disabled={!slotDef.refineable}
+                  max={20}
+                  min={0}
+                  type="number"
+                  value={slot.refine}
+                  onChange={(event) => onUpdateRefine(slotDef.key, floorClamp(Number(event.target.value), 0, 20))}
+                />
+
+                {Array.from({ length: 6 }).map((_, index) => {
+                  const optionLabel = slotDef.optionLabels[index];
+                  const optionId = slot.optionIds[index];
+                  const optionItem = optionId ? itemMap.get(optionId) : undefined;
+
+                  return (
+                    <GearPickCell
+                      key={`${slotDef.key}-${index}`}
+                      compact
+                      disabled={!optionLabel}
+                      item={optionItem}
+                      label={optionLabel || "-"}
+                      onClear={() => onUpdateOption(slotDef.key, index, null)}
+                      onPick={() => onOpenPicker({ kind: "option", optionIndex: index, slotKey: slotDef.key })}
+                    />
+                  );
+                })}
+
+                <button
+                  className="mx-1 rounded-md border border-rose-500/25 bg-rose-950/20 text-sm font-black text-rose-100 transition hover:bg-rose-950/40"
+                  type="button"
+                  aria-label={`Clear ${slotDef.label}`}
+                  onClick={() => onClearSlot(slotDef.key)}
+                >
+                  x
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 border-t border-slate-800 bg-slate-950/35 p-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300/80">Parsed Bonuses</p>
+          {bonusEntries.length === 0 ? (
+            <p className="mt-2 text-sm font-semibold text-slate-500">No active parsed bonuses.</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {bonusEntries.map(([key, value]) => (
+                <span
+                  key={key}
+                  className="rounded-lg border border-emerald-500/25 bg-emerald-950/30 px-2.5 py-1 text-xs font-black text-emerald-100"
+                >
+                  {ITEM_BONUS_LABELS[key]} {formatBonusValue(key, value)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-amber-500/20 bg-amber-950/10 p-3 text-xs font-semibold text-amber-100/80">
+          Refine and grade activate simple numeric rAthena rules such as +7, +10, Grade D/C/B/A. Complex formulas,
+          set bonuses, skill damage, race, size, and custom server options are kept as preview data for the next pass.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GearPickCell({
+  compact = false,
+  disabled = false,
+  item,
+  label,
+  onClear,
+  onPick,
+  prefix,
+}: {
+  compact?: boolean;
+  disabled?: boolean;
+  item?: RathenaCalculatorItem;
+  label: string;
+  onClear: () => void;
+  onPick: () => void;
+  prefix?: string;
+}) {
+  if (disabled) {
+    return (
+      <div className="mx-1 flex min-w-0 items-center rounded-md border border-slate-800 bg-slate-950/35 px-2 py-2 text-xs font-semibold text-slate-700">
+        -
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-1 grid min-w-0 grid-cols-[minmax(0,1fr)_28px] overflow-hidden rounded-md border border-slate-700 bg-slate-950">
+      <button
+        className="min-w-0 px-2 py-2 text-left text-xs font-bold text-slate-200 transition hover:bg-cyan-950/25"
+        type="button"
+        onClick={onPick}
+      >
+        {item ? (
+          <>
+            <span className="block truncate text-cyan-100">
+              {prefix ? <span className="text-amber-200">{prefix} </span> : null}
+              {item.name}
+            </span>
+            {!compact ? <span className="mt-0.5 block truncate text-[11px] text-slate-500">{formatItemMeta(item)}</span> : null}
+          </>
+        ) : (
+          <span className="block truncate text-slate-500">{label}</span>
+        )}
+      </button>
+
+      <button
+        className="border-l border-slate-800 text-sm font-black text-slate-500 transition hover:bg-rose-950/35 hover:text-rose-100 disabled:cursor-not-allowed disabled:opacity-25"
+        disabled={!item}
+        type="button"
+        aria-label={`Clear ${label}`}
+        onClick={onClear}
+      >
+        x
+      </button>
+    </div>
+  );
+}
+
+function formatGearPrefix(slot: GearSlotState): string {
+  const parts = [];
+  if (slot.grade !== "none") parts.push(`Grade ${slot.grade}`);
+  if (slot.refine > 0) parts.push(`+${slot.refine}`);
+  return parts.join(" ");
+}
+
+function getPickerTargetLabel(target: PickerTarget): string {
+  const slotDef = getGearSlotDef(target.slotKey);
+  if (target.kind === "main") return slotDef.label;
+  return `${slotDef.label} ${slotDef.optionLabels[target.optionIndex]}`;
 }
 
 function ItemLoadoutPanel({
