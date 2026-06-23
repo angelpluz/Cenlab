@@ -41,7 +41,6 @@ type WaterDungeonExpRow = {
   monsterJobExp: number | null;
   fifthFloorBaseExp: number | null;
   fifthFloorJobExp: number | null;
-  meteoriteDustChance: number | null;
 };
 
 type WaterDungeonExpRank = {
@@ -108,7 +107,6 @@ function createWaterDungeonRows(knownRows: Record<number, KnownWaterDungeonExp> 
       monsterJobExp: knownRow?.monsterJobExp ?? scaleExp(baseDifficultyRow?.monsterJobExp, difficulty),
       fifthFloorBaseExp: knownRow?.fifthFloorBaseExp ?? scaleExp(baseDifficultyRow?.fifthFloorBaseExp, difficulty),
       fifthFloorJobExp: knownRow?.fifthFloorJobExp ?? scaleExp(baseDifficultyRow?.fifthFloorJobExp, difficulty),
-      meteoriteDustChance: knownRow?.meteoriteDustChance ?? null,
     };
   });
 }
@@ -130,7 +128,6 @@ const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
         monsterJobExp: 510,
         fifthFloorBaseExp: 6696,
         fifthFloorJobExp: 6480,
-        meteoriteDustChance: null,
       },
     }),
   },
@@ -150,7 +147,6 @@ const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
         monsterJobExp: 1631,
         fifthFloorBaseExp: 22680,
         fifthFloorJobExp: 20520,
-        meteoriteDustChance: null,
       },
     }),
   },
@@ -164,7 +160,6 @@ const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
         monsterJobExp: 2700,
         fifthFloorBaseExp: 37800,
         fifthFloorJobExp: 32400,
-        meteoriteDustChance: null,
       },
     }),
   },
@@ -196,7 +191,6 @@ const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
         monsterJobExp: 191100,
         fifthFloorBaseExp: 2710800,
         fifthFloorJobExp: 1890000,
-        meteoriteDustChance: null,
       },
     }),
   },
@@ -210,7 +204,6 @@ const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
         monsterJobExp: null,
         fifthFloorBaseExp: 3207600,
         fifthFloorJobExp: 2268000,
-        meteoriteDustChance: 70,
       },
     }),
   },
@@ -1372,6 +1365,9 @@ function WaterDungeonExpCalculator() {
       <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="rounded-lg border border-slate-800 bg-slate-950/45 p-4">
+            <p className="mb-4 rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-400">
+              Monster count is manual because the source does not list monsters per floor. Dust is not included in EXP math.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Rank</span>
@@ -1482,11 +1478,11 @@ function WaterDungeonExpCalculator() {
           <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
             <h3 className="font-black text-sky-100">Water Dungeon Table</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Known EXP cells are multiplied by difficulty; unknown values stay as ?.
+              Known EXP cells are multiplied by difficulty; unknown EXP values stay as ?.
             </p>
           </div>
           <div className="overflow-auto">
-            <table className="min-w-[860px] divide-y divide-slate-800 text-left text-sm">
+            <table className="min-w-[760px] divide-y divide-slate-800 text-left text-sm">
               <thead className="bg-slate-950/95 text-xs uppercase tracking-[0.14em] text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Rank</th>
@@ -1494,8 +1490,7 @@ function WaterDungeonExpCalculator() {
                   <th className="px-3 py-3 text-right">Monster Base</th>
                   <th className="px-3 py-3 text-right">Monster Job</th>
                   <th className="px-3 py-3 text-right">5F Base</th>
-                  <th className="px-3 py-3 text-right">5F Job</th>
-                  <th className="px-4 py-3 text-right">Dust</th>
+                  <th className="px-4 py-3 text-right">5F Job</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
@@ -1514,9 +1509,6 @@ function WaterDungeonExpCalculator() {
                         <WaterDungeonExpCell value={row.monsterJobExp} />
                         <WaterDungeonExpCell value={row.fifthFloorBaseExp} />
                         <WaterDungeonExpCell value={row.fifthFloorJobExp} />
-                        <td className="px-4 py-3 text-right font-mono font-black text-slate-200">
-                          {row.meteoriteDustChance === null ? "?" : `${row.meteoriteDustChance}%`}
-                        </td>
                       </tr>
                     );
                   })
