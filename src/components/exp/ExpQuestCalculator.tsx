@@ -725,12 +725,13 @@ export default function ExpQuestCalculator() {
             <p className="mt-1 text-sm text-slate-400">RO quest EXP and run-time projection</p>
           </div>
           <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:w-auto xl:grid-cols-7">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:w-auto xl:grid-cols-8">
               <NavLink href="/cen-lab" label="Cen Lab" tone="cyan" />
               <NavLink href="/ogch" label="OGCH" tone="violet" />
               <NavLink href="/water-dungeon" label="Water" tone="sky" />
               <NavLink href="/personal-data" label="Personal" tone="emerald" />
               <NavLink href="/exp" label="EXP" tone="amber" active />
+              <NavLink href="/stat-calculator" label="Stat" tone="cyan" />
               <NavLink href="/ogch/bishop" label="Bishop" tone="pink" />
               <NavLink href="/cen-lab/calculator" label="Public" tone="emerald" />
             </nav>
