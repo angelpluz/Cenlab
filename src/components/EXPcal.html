@@ -1,0 +1,1030 @@
+<div class="body-wrapper">
+  <div class="text-center">
+    <div class="thumbnail singlepage-image">
+      <img src="/images/ro_exp_quest.jpg">
+    </div>
+  </div>
+  <h1>RO EXP Quest Calculator</h1>
+  <p>เครื่องมือคำนวณค่าประสบการณ์ที่ได้จาก Dialy Quest เพื่อวางแผนในการเล่น</p>
+  <div id="ro_exp_quest" class="row">
+    <div class="col-md-6">
+      <h3>Character</h3>
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-control type">
+            <option value="third">Third class</option>
+            <option value="fourth">Fourth class</option>
+            <option value="doram">Doram</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Level</label>
+        <input type="number" class="form-control sync" id="base_lv" min="100" max="200" value="100">
+        <label>Exp</label>
+        <input type="number" class="form-control sync" id="expr" min="0" max="99.9" step="0.1" value="0">%
+        (<input type="number" class="form-control sync" id="exp" min="0" max="1354202" value="0">)
+      </div>
+      <h3>Exp Adjustment</h3>
+      <div class="form-group">
+        <label>Server</label>
+        <input class="form-control sync exp-adjustment" id="exp_server" type="number" min="100" max="1000" value="100">%
+        <label>Battle Manual</label>
+        <select class="form-control sync exp-adjustment" id="exp_manual">
+          <option value="0">None</option>
+          <option value="25">25%</option>
+          <option value="50">50%</option>
+          <option value="75">75%</option>
+          <option value="100">100%</option>
+          <option value="200">200%</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Buff</label>
+        <div class="checkbox">
+          <label><input type="checkbox" class="sync exp-adjustment" id="morroc"> Satan Morroc 10%</label>
+          <label><input type="checkbox" class="sync exp-adjustment" id="vip"> VIP 20%</label>
+          <label><input type="checkbox" class="sync exp-adjustment" id="silvervine"> Silvervine 30%</label>
+          <label><input type="checkbox" class="sync exp-adjustment" id="kafra"> Kafra 50%</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Options</label>
+        <div class="checkbox">
+          <label><input type="checkbox" class="sync exp-adjustment" id="eden_boost"> Eden Quest Boost Up Event (+100% Lv 1-99, +20% Lv 100+)</label>
+        </div>
+        <div class="checkbox">
+          <label><input type="checkbox" class="sync exp-adjustment" id="eden_boost2"> Eden Quest Boost Up Event (+200% Lv 1-190, +300% Lv 200+)</label>
+        </div>
+        <label>Day</label>
+        <select class="form-control sync weekday" id="weekday">
+          <option value="0">Sat. (weekly reset)</option>
+          <option value="1">Sun.</option>
+          <option value="2">Mon.</option>
+          <option value="3">Tue.</option>
+          <option value="4">Wed.</option>
+          <option value="5">Thu.</option>
+          <option value="6">Fri.</option>
+        </select>
+      </div>
+
+      <h3>Result</h3>
+      <table class="table">
+        <tbody><tr>
+          <th>Day</th>
+          <th>Exp Gained</th>
+          <th>Level / Exp</th>
+          <th></th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><span id="results__0__exp_gained">0</span> (<span id="results__0__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__0__base_lv">100</span> Exp <span id="results__0__expr">0</span>% (<span id="results__0__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="0">Jump</span></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><span id="results__1__exp_gained">0</span> (<span id="results__1__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__1__base_lv">100</span> Exp <span id="results__1__expr">0</span>% (<span id="results__1__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="1">Jump</span></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><span id="results__2__exp_gained">0</span> (<span id="results__2__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__2__base_lv">100</span> Exp <span id="results__2__expr">0</span>% (<span id="results__2__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="2">Jump</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><span id="results__3__exp_gained">0</span> (<span id="results__3__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__3__base_lv">100</span> Exp <span id="results__3__expr">0</span>% (<span id="results__3__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="3">Jump</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><span id="results__4__exp_gained">0</span> (<span id="results__4__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__4__base_lv">100</span> Exp <span id="results__4__expr">0</span>% (<span id="results__4__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="4">Jump</span></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><span id="results__5__exp_gained">0</span> (<span id="results__5__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__5__base_lv">100</span> Exp <span id="results__5__expr">0</span>% (<span id="results__5__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="5">Jump</span></td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><span id="results__6__exp_gained">0</span> (<span id="results__6__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__6__base_lv">100</span> Exp <span id="results__6__expr">0</span>% (<span id="results__6__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="6">Jump</span></td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><span id="results__7__exp_gained">0</span> (<span id="results__7__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__7__base_lv">100</span> Exp <span id="results__7__expr">0</span>% (<span id="results__7__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="7">Jump</span></td>
+        </tr>
+        <tr>
+          <td>9</td>
+          <td><span id="results__8__exp_gained">0</span> (<span id="results__8__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__8__base_lv">100</span> Exp <span id="results__8__expr">0</span>% (<span id="results__8__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="8">Jump</span></td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td><span id="results__9__exp_gained">0</span> (<span id="results__9__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__9__base_lv">100</span> Exp <span id="results__9__expr">0</span>% (<span id="results__9__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="9">Jump</span></td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td><span id="results__10__exp_gained">0</span> (<span id="results__10__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__10__base_lv">100</span> Exp <span id="results__10__expr">0</span>% (<span id="results__10__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="10">Jump</span></td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td><span id="results__11__exp_gained">0</span> (<span id="results__11__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__11__base_lv">100</span> Exp <span id="results__11__expr">0</span>% (<span id="results__11__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="11">Jump</span></td>
+        </tr>
+        <tr>
+          <td>13</td>
+          <td><span id="results__12__exp_gained">0</span> (<span id="results__12__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__12__base_lv">100</span> Exp <span id="results__12__expr">0</span>% (<span id="results__12__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="12">Jump</span></td>
+        </tr>
+        <tr>
+          <td>14</td>
+          <td><span id="results__13__exp_gained">0</span> (<span id="results__13__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__13__base_lv">100</span> Exp <span id="results__13__expr">0</span>% (<span id="results__13__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="13">Jump</span></td>
+        </tr>
+        <tr>
+          <td>15</td>
+          <td><span id="results__14__exp_gained">0</span> (<span id="results__14__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__14__base_lv">100</span> Exp <span id="results__14__expr">0</span>% (<span id="results__14__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="14">Jump</span></td>
+        </tr>
+        <tr>
+          <td>16</td>
+          <td><span id="results__15__exp_gained">0</span> (<span id="results__15__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__15__base_lv">100</span> Exp <span id="results__15__expr">0</span>% (<span id="results__15__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="15">Jump</span></td>
+        </tr>
+        <tr>
+          <td>17</td>
+          <td><span id="results__16__exp_gained">0</span> (<span id="results__16__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__16__base_lv">100</span> Exp <span id="results__16__expr">0</span>% (<span id="results__16__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="16">Jump</span></td>
+        </tr>
+        <tr>
+          <td>18</td>
+          <td><span id="results__17__exp_gained">0</span> (<span id="results__17__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__17__base_lv">100</span> Exp <span id="results__17__expr">0</span>% (<span id="results__17__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="17">Jump</span></td>
+        </tr>
+        <tr>
+          <td>19</td>
+          <td><span id="results__18__exp_gained">0</span> (<span id="results__18__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__18__base_lv">100</span> Exp <span id="results__18__expr">0</span>% (<span id="results__18__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="18">Jump</span></td>
+        </tr>
+        <tr>
+          <td>20</td>
+          <td><span id="results__19__exp_gained">0</span> (<span id="results__19__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__19__base_lv">100</span> Exp <span id="results__19__expr">0</span>% (<span id="results__19__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="19">Jump</span></td>
+        </tr>
+        <tr>
+          <td>21</td>
+          <td><span id="results__20__exp_gained">0</span> (<span id="results__20__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__20__base_lv">100</span> Exp <span id="results__20__expr">0</span>% (<span id="results__20__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="20">Jump</span></td>
+        </tr>
+        <tr>
+          <td>22</td>
+          <td><span id="results__21__exp_gained">0</span> (<span id="results__21__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__21__base_lv">100</span> Exp <span id="results__21__expr">0</span>% (<span id="results__21__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="21">Jump</span></td>
+        </tr>
+        <tr>
+          <td>23</td>
+          <td><span id="results__22__exp_gained">0</span> (<span id="results__22__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__22__base_lv">100</span> Exp <span id="results__22__expr">0</span>% (<span id="results__22__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="22">Jump</span></td>
+        </tr>
+        <tr>
+          <td>24</td>
+          <td><span id="results__23__exp_gained">0</span> (<span id="results__23__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__23__base_lv">100</span> Exp <span id="results__23__expr">0</span>% (<span id="results__23__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="23">Jump</span></td>
+        </tr>
+        <tr>
+          <td>25</td>
+          <td><span id="results__24__exp_gained">0</span> (<span id="results__24__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__24__base_lv">100</span> Exp <span id="results__24__expr">0</span>% (<span id="results__24__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="24">Jump</span></td>
+        </tr>
+        <tr>
+          <td>26</td>
+          <td><span id="results__25__exp_gained">0</span> (<span id="results__25__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__25__base_lv">100</span> Exp <span id="results__25__expr">0</span>% (<span id="results__25__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="25">Jump</span></td>
+        </tr>
+        <tr>
+          <td>27</td>
+          <td><span id="results__26__exp_gained">0</span> (<span id="results__26__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__26__base_lv">100</span> Exp <span id="results__26__expr">0</span>% (<span id="results__26__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="26">Jump</span></td>
+        </tr>
+        <tr>
+          <td>28</td>
+          <td><span id="results__27__exp_gained">0</span> (<span id="results__27__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__27__base_lv">100</span> Exp <span id="results__27__expr">0</span>% (<span id="results__27__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="27">Jump</span></td>
+        </tr>
+        <tr>
+          <td>29</td>
+          <td><span id="results__28__exp_gained">0</span> (<span id="results__28__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__28__base_lv">100</span> Exp <span id="results__28__expr">0</span>% (<span id="results__28__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="28">Jump</span></td>
+        </tr>
+        <tr>
+          <td>30</td>
+          <td><span id="results__29__exp_gained">0</span> (<span id="results__29__expr_gained">0</span>%)</td>
+          <td>Level <span id="results__29__base_lv">100</span> Exp <span id="results__29__expr">0</span>% (<span id="results__29__exp">0</span>)</td>
+          <td><span class="btn btn-default btn-xs jump" data-index="29">Jump</span></td>
+        </tr>
+      </tbody></table>
+    </div>
+    <div class="col-md-6">
+      <h3 data-toggle="collapse" data-target="#quests__0"><i class="fas fa-angle-down"></i> Eden Item Collecting Quests <span class="badge" id="quests__0__active_count"></span></h3>
+      <div id="quests__0" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__0__active"></td><td>1</td><td>30x Fluff</td><td id="quests__0__lists__0__exp">5,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__1__active"></td><td>10</td><td>30x Sticky Web Feet</td><td id="quests__0__lists__1__exp">5,400</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__2__active"></td><td>15</td><td>30x Grasshopper Leg</td><td id="quests__0__lists__2__exp">5,940</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__3__active"></td><td>20</td><td>30x Snail's Shell</td><td id="quests__0__lists__3__exp">7,020</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__4__active"></td><td>25</td><td>30x Bird's Beak</td><td id="quests__0__lists__4__exp">9,720</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__5__active"></td><td>30</td><td>30x Bear Footskin</td><td id="quests__0__lists__5__exp">10,800</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__6__active"></td><td>35</td><td>30x Dead Branch</td><td id="quests__0__lists__6__exp">13,980</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__7__active"></td><td>40</td><td>30x Yoyo Tail</td><td id="quests__0__lists__7__exp">16,200</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__8__active"></td><td>45</td><td>30x Lantern</td><td id="quests__0__lists__8__exp">19,980</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__9__active"></td><td>50</td><td>30x Conch</td><td id="quests__0__lists__9__exp">22,140</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__10__active"></td><td>55</td><td>30x Heart of Mermaid</td><td id="quests__0__lists__10__exp">28,560</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__11__active"></td><td>60</td><td>30x Mane</td><td id="quests__0__lists__11__exp">34,380</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__12__active"></td><td>65</td><td>30x Black Hair</td><td id="quests__0__lists__12__exp">35,640</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__13__active"></td><td>70</td><td>30x Horseshoe</td><td id="quests__0__lists__13__exp">36,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__14__active"></td><td>75</td><td>30x Bug Leg</td><td id="quests__0__lists__14__exp">48,600</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__15__active"></td><td>80</td><td>30x Sand Clump</td><td id="quests__0__lists__15__exp">62,040</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__16__active"></td><td>85</td><td>30x Dry Sand</td><td id="quests__0__lists__16__exp">72,060</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__17__active"></td><td>90</td><td>30x Turtle Shell</td><td id="quests__0__lists__17__exp">78,300</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__18__active"></td><td>95</td><td>30x Little Evil Horn</td><td id="quests__0__lists__18__exp">108,360</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__0__lists__19__active"></td><td>100</td><td>30x Glacial Heart</td><td id="quests__0__lists__19__exp">116,640</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__1"><i class="fas fa-angle-down"></i> Eden Item Hunting Quests (1st Time) <span class="badge" id="quests__1__active_count"></span></h3>
+      <div id="quests__1" class="collapse">
+      <p><strong class="text-danger">* Beginning The Quest With NPC Only</strong></p>
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__0__active"></td><td>100</td><td>10x Lava</td><td id="quests__1__lists__0__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__1__active"></td><td>100</td><td>20x Blue Hair</td><td id="quests__1__lists__1__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__2__active"></td><td>100</td><td>20x Glacial Heart</td><td id="quests__1__lists__2__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__3__active"></td><td>110</td><td>20x Mystic Horn</td><td id="quests__1__lists__3__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__4__active"></td><td>110</td><td>10x Bloody Page</td><td id="quests__1__lists__4__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__5__active"></td><td>110</td><td>10x Worn-Out Magic Scroll</td><td id="quests__1__lists__5__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__1__lists__6__active"></td><td>110</td><td>30x Tattered Clothes</td><td id="quests__1__lists__6__exp">800,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__2"><i class="fas fa-angle-down"></i> Eden Item Hunting Quests <span class="badge" id="quests__2__active_count"></span></h3>
+      <div id="quests__2" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__0__active"></td><td>100</td><td>10x Lava</td><td id="quests__2__lists__0__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__1__active"></td><td>100</td><td>20x Blue Hair</td><td id="quests__2__lists__1__exp">100,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__2__active"></td><td>100</td><td>20x Glacial Heart</td><td id="quests__2__lists__2__exp">100,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__3__active"></td><td>110</td><td>20x Mystic Horn</td><td id="quests__2__lists__3__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__4__active"></td><td>110</td><td>10x Bloody Page</td><td id="quests__2__lists__4__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__5__active"></td><td>110</td><td>10x Worn-Out Magic Scroll</td><td id="quests__2__lists__5__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__2__lists__6__active"></td><td>110</td><td>30x Tattered Clothes</td><td id="quests__2__lists__6__exp">400,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__3"><i class="fas fa-angle-down"></i> Eden Monster Hunting Quests (1st Time) <span class="badge" id="quests__3__active_count"></span></h3>
+      <div id="quests__3" class="collapse">
+        <p><strong class="text-danger">* Beginning The Quest With NPC Only</strong></p>
+        <label>Shortcut</label>
+        <div class="checkbox">
+          <label><input type="checkbox" class="check-all" data-target=".quest-100"> 100</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-110"> 110</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-120"> 120</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-130"> 130</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-140"> 140</label>
+        </div>
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__0__active"></td><td>100</td><td>30x Nightmare Terror</td><td id="quests__3__lists__0__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__1__active"></td><td>100</td><td>30x Ground Deleter 30x Sky Deleter</td><td id="quests__3__lists__1__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__2__active"></td><td>100</td><td>30x Carat</td><td id="quests__3__lists__2__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__3__active"></td><td>100</td><td>30x Arclouse</td><td id="quests__3__lists__3__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__4__active"></td><td>100</td><td>30x Anolian</td><td id="quests__3__lists__4__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__5__active"></td><td>100</td><td>30x Sting</td><td id="quests__3__lists__5__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__6__active"></td><td>100</td><td>30x Majorous</td><td id="quests__3__lists__6__exp">520,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__7__active"></td><td>100</td><td>30x Pinguicula</td><td id="quests__3__lists__7__exp">320,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__8__active"></td><td>100</td><td>30x Luciola Vespa</td><td id="quests__3__lists__8__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__9__active"></td><td>100</td><td>1x Tendrillion</td><td id="quests__3__lists__9__exp">520,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__10__active"></td><td>100</td><td>20x Kobold Axe 20x Kobold Hammer 20x Kobold Mace</td><td id="quests__3__lists__10__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__11__active"></td><td>100</td><td>30x Hill Wind</td><td id="quests__3__lists__11__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__12__active"></td><td>100</td><td>30x Desert Wolf</td><td id="quests__3__lists__12__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__13__active"></td><td>100</td><td>30x Muscipular 30x Drosera</td><td id="quests__3__lists__13__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__14__active"></td><td>100</td><td>30x Magmaring</td><td id="quests__3__lists__14__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__15__active"></td><td>100</td><td>30x Snowier</td><td id="quests__3__lists__15__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__3__lists__16__active"></td><td>100</td><td>30x Ice Titan 10x Gazeti</td><td id="quests__3__lists__16__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__17__active"></td><td>110</td><td>30x Raydric</td><td id="quests__3__lists__17__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__18__active"></td><td>110</td><td>30x Khalitzburg</td><td id="quests__3__lists__18__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__19__active"></td><td>110</td><td>30x Wanderer</td><td id="quests__3__lists__19__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__20__active"></td><td>110</td><td>10x Abysmal Knight</td><td id="quests__3__lists__20__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__21__active"></td><td>110</td><td>30x Dark Pinguicula</td><td id="quests__3__lists__21__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__22__active"></td><td>110</td><td>30x Nepenthes</td><td id="quests__3__lists__22__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__23__active"></td><td>110</td><td>30x Naga</td><td id="quests__3__lists__23__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__24__active"></td><td>110</td><td>30x Cornus</td><td id="quests__3__lists__24__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__25__active"></td><td>110</td><td>20x Centipede Larva</td><td id="quests__3__lists__25__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__26__active"></td><td>110</td><td>30x Ancient Mimic</td><td id="quests__3__lists__26__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__27__active"></td><td>110</td><td>30x Deathword</td><td id="quests__3__lists__27__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__28__active"></td><td>110</td><td>20x Owl Baron</td><td id="quests__3__lists__28__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__29__active"></td><td>110</td><td>20x Venatu (Orange) 20x Venatu (Green)</td><td id="quests__3__lists__29__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__30__active"></td><td>110</td><td>20x Venatu (Red) 20x Venatu (Blue)</td><td id="quests__3__lists__30__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__31__active"></td><td>110</td><td>10x Dimik (Blue) 10x Dimik (Orange)</td><td id="quests__3__lists__31__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__3__lists__32__active"></td><td>110</td><td>10x Dimik (Green) 10x Dimik (Red)</td><td id="quests__3__lists__32__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__33__active"></td><td>120</td><td>20x Skogul</td><td id="quests__3__lists__33__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__34__active"></td><td>120</td><td>20x Frus</td><td id="quests__3__lists__34__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__35__active"></td><td>120</td><td>5x Skeggiold (Blue) 5x Skeggiold (Brown)</td><td id="quests__3__lists__35__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__36__active"></td><td>120</td><td>30x Green Ferus 30x Red Ferus</td><td id="quests__3__lists__36__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__37__active"></td><td>120</td><td>30x Yellow Acidus 30x Blue Acidus</td><td id="quests__3__lists__37__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__38__active"></td><td>120</td><td>1x Hydrolancer</td><td id="quests__3__lists__38__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__39__active"></td><td>120</td><td>30x Baroness of Retribution</td><td id="quests__3__lists__39__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__40__active"></td><td>120</td><td>30x Lady Solace</td><td id="quests__3__lists__40__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__41__active"></td><td>120</td><td>30x Mistress of Shelter</td><td id="quests__3__lists__41__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__42__active"></td><td>120</td><td>30x Dame of Sentinel</td><td id="quests__3__lists__42__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__43__active"></td><td>120</td><td>30x Centipede</td><td id="quests__3__lists__43__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__44__active"></td><td>120</td><td>30x Tatacho</td><td id="quests__3__lists__44__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__45__active"></td><td>120</td><td>30x Ragged Zombie 30x Zombie Slaughter</td><td id="quests__3__lists__45__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__46__active"></td><td>120</td><td>30x Banshee</td><td id="quests__3__lists__46__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__47__active"></td><td>120</td><td>20x Necromancer</td><td id="quests__3__lists__47__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__48__active"></td><td>120</td><td>20x Vanberk 20x Isilla</td><td id="quests__3__lists__48__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__49__active"></td><td>120</td><td>30x Hodremlin</td><td id="quests__3__lists__49__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__50__active"></td><td>120</td><td>20x Agav 20x Echio</td><td id="quests__3__lists__50__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__3__lists__51__active"></td><td>120</td><td>5x Incubus 5x Succubus</td><td id="quests__3__lists__51__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__52__active"></td><td>130</td><td>30x Dolomedes</td><td id="quests__3__lists__52__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__53__active"></td><td>130</td><td>30x Uni-horn Scaraba</td><td id="quests__3__lists__53__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__54__active"></td><td>130</td><td>30x Horn Scaraba</td><td id="quests__3__lists__54__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__55__active"></td><td>130</td><td>30x Antler Scaraba</td><td id="quests__3__lists__55__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__56__active"></td><td>130</td><td>30x Rake Scaraba</td><td id="quests__3__lists__56__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__57__active"></td><td>130</td><td>20x Miming</td><td id="quests__3__lists__57__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__58__active"></td><td>130</td><td>20x Little Fatum</td><td id="quests__3__lists__58__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__59__active"></td><td>130</td><td>30x Egnigem Cenia</td><td id="quests__3__lists__59__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__60__active"></td><td>130</td><td>30x Armeyer Dinze</td><td id="quests__3__lists__60__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__61__active"></td><td>130</td><td>30x Wickebine Tres</td><td id="quests__3__lists__61__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__62__active"></td><td>130</td><td>30x Kavach Icarus</td><td id="quests__3__lists__62__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__63__active"></td><td>130</td><td>30x Errende Ebecee</td><td id="quests__3__lists__63__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__64__active"></td><td>130</td><td>30x Laurell Weinder</td><td id="quests__3__lists__64__exp">1,700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__65__active"></td><td>140</td><td>2x Cecil Damon</td><td id="quests__3__lists__65__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__66__active"></td><td>140</td><td>2x Kathryne Keyron</td><td id="quests__3__lists__66__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__67__active"></td><td>140</td><td>2x Margaretha Sorin</td><td id="quests__3__lists__67__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__68__active"></td><td>140</td><td>2x Seyren Windsor</td><td id="quests__3__lists__68__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__69__active"></td><td>140</td><td>2x Eremes Guile</td><td id="quests__3__lists__69__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__3__lists__70__active"></td><td>140</td><td>2x Howard Alt-Eisen</td><td id="quests__3__lists__70__exp">2,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__71__active"></td><td>130</td><td>30x Incarnation of Morroc (Angel)</td><td id="quests__3__lists__71__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__72__active"></td><td>130</td><td>30x Incarnation of Morroc (Golem)</td><td id="quests__3__lists__72__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__73__active"></td><td>130</td><td>30x Incarnation of Morroc (Human)</td><td id="quests__3__lists__73__exp">1,600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__3__lists__74__active"></td><td>130</td><td>30x Incarnation of Morroc (Ghost)</td><td id="quests__3__lists__74__exp">1,600,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__4"><i class="fas fa-angle-down"></i> Eden Monster Hunting Quests <span class="badge" id="quests__4__active_count"></span></h3>
+      <div id="quests__4" class="collapse">
+        <label>Shortcut</label>
+        <div class="checkbox">
+          <label><input type="checkbox" class="check-all" data-target=".quest-100"> 100</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-110"> 110</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-120"> 120</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-130"> 130</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-140"> 140</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-150"> 150</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-160"> 160</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-170"> 170</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-180"> 180</label>
+          <label><input type="checkbox" class="check-all" data-target=".quest-190"> 190</label>
+        </div>
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__0__active"></td><td>100</td><td>30x Nightmare Terror</td><td id="quests__4__lists__0__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__1__active"></td><td>100</td><td>30x Ground Deleter 30x Sky Deleter</td><td id="quests__4__lists__1__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__2__active"></td><td>100</td><td>30x Carat</td><td id="quests__4__lists__2__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__3__active"></td><td>100</td><td>30x Arclouse</td><td id="quests__4__lists__3__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__4__active"></td><td>100</td><td>30x Anolian</td><td id="quests__4__lists__4__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__5__active"></td><td>100</td><td>30x Sting</td><td id="quests__4__lists__5__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__6__active"></td><td>100</td><td>30x Majorous</td><td id="quests__4__lists__6__exp">260,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__7__active"></td><td>100</td><td>30x Pinguicula</td><td id="quests__4__lists__7__exp">160,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__8__active"></td><td>100</td><td>30x Luciola Vespa</td><td id="quests__4__lists__8__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__9__active"></td><td>100</td><td>1x Tendrillion</td><td id="quests__4__lists__9__exp">260,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__10__active"></td><td>100</td><td>20x Kobold Axe 20x Kobold Hammer 20x Kobold Mace</td><td id="quests__4__lists__10__exp">250,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__11__active"></td><td>100</td><td>30x Hill Wind</td><td id="quests__4__lists__11__exp">150,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__12__active"></td><td>100</td><td>30x Desert Wolf</td><td id="quests__4__lists__12__exp">150,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__13__active"></td><td>100</td><td>30x Muscipular 30x Drosera</td><td id="quests__4__lists__13__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__14__active"></td><td>100</td><td>30x Magmaring</td><td id="quests__4__lists__14__exp">150,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__15__active"></td><td>100</td><td>30x Snowier</td><td id="quests__4__lists__15__exp">150,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-100" id="quests__4__lists__16__active"></td><td>100</td><td>30x Ice Titan 10x Gazeti</td><td id="quests__4__lists__16__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__17__active"></td><td>110</td><td>30x Raydric</td><td id="quests__4__lists__17__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__18__active"></td><td>110</td><td>30x Khalitzburg</td><td id="quests__4__lists__18__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__19__active"></td><td>110</td><td>30x Wanderer</td><td id="quests__4__lists__19__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__20__active"></td><td>110</td><td>10x Abysmal Knight</td><td id="quests__4__lists__20__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__21__active"></td><td>110</td><td>30x Dark Pinguicula</td><td id="quests__4__lists__21__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__22__active"></td><td>110</td><td>30x Nepenthes</td><td id="quests__4__lists__22__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__23__active"></td><td>110</td><td>30x Naga</td><td id="quests__4__lists__23__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__24__active"></td><td>110</td><td>30x Cornus</td><td id="quests__4__lists__24__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__25__active"></td><td>110</td><td>20x Centipede Larva</td><td id="quests__4__lists__25__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__26__active"></td><td>110</td><td>30x Ancient Mimic</td><td id="quests__4__lists__26__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__27__active"></td><td>110</td><td>30x Deathword</td><td id="quests__4__lists__27__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__28__active"></td><td>110</td><td>20x Owl Baron</td><td id="quests__4__lists__28__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__29__active"></td><td>110</td><td>20x Venatu (Orange) 20x Venatu (Green)</td><td id="quests__4__lists__29__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__30__active"></td><td>110</td><td>20x Venatu (Red) 20x Venatu (Blue)</td><td id="quests__4__lists__30__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__31__active"></td><td>110</td><td>10x Dimik (Blue) 10x Dimik (Orange)</td><td id="quests__4__lists__31__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-110" id="quests__4__lists__32__active"></td><td>110</td><td>10x Dimik (Green) 10x Dimik (Red)</td><td id="quests__4__lists__32__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__33__active"></td><td>120</td><td>20x Skogul</td><td id="quests__4__lists__33__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__34__active"></td><td>120</td><td>20x Frus</td><td id="quests__4__lists__34__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__35__active"></td><td>120</td><td>5x Skeggiold (Blue) 5x Skeggiold (Brown)</td><td id="quests__4__lists__35__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__36__active"></td><td>120</td><td>30x Green Ferus 30x Red Ferus</td><td id="quests__4__lists__36__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__37__active"></td><td>120</td><td>30x Yellow Acidus 30x Blue Acidus</td><td id="quests__4__lists__37__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__38__active"></td><td>120</td><td>1x Hydrolancer</td><td id="quests__4__lists__38__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__39__active"></td><td>120</td><td>30x Baroness of Retribution</td><td id="quests__4__lists__39__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__40__active"></td><td>120</td><td>30x Lady Solace</td><td id="quests__4__lists__40__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__41__active"></td><td>120</td><td>30x Mistress of Shelter</td><td id="quests__4__lists__41__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__42__active"></td><td>120</td><td>30x Dame of Sentinel</td><td id="quests__4__lists__42__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__43__active"></td><td>120</td><td>30x Centipede</td><td id="quests__4__lists__43__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__44__active"></td><td>120</td><td>30x Tatacho</td><td id="quests__4__lists__44__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__45__active"></td><td>120</td><td>30x Ragged Zombie 30x Zombie Slaughter</td><td id="quests__4__lists__45__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__46__active"></td><td>120</td><td>30x Banshee</td><td id="quests__4__lists__46__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__47__active"></td><td>120</td><td>20x Necromancer</td><td id="quests__4__lists__47__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__48__active"></td><td>120</td><td>20x Vanberk 20x Isilla</td><td id="quests__4__lists__48__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__49__active"></td><td>120</td><td>30x Hodremlin</td><td id="quests__4__lists__49__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__50__active"></td><td>120</td><td>20x Agav 20x Echio</td><td id="quests__4__lists__50__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-120" id="quests__4__lists__51__active"></td><td>120</td><td>5x Incubus 5x Succubus</td><td id="quests__4__lists__51__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__52__active"></td><td>130</td><td>30x Dolomedes</td><td id="quests__4__lists__52__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__53__active"></td><td>130</td><td>30x Uni-horn Scaraba</td><td id="quests__4__lists__53__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__54__active"></td><td>130</td><td>30x Horn Scaraba</td><td id="quests__4__lists__54__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__55__active"></td><td>130</td><td>30x Antler Scaraba</td><td id="quests__4__lists__55__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__56__active"></td><td>130</td><td>30x Rake Scaraba</td><td id="quests__4__lists__56__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__57__active"></td><td>130</td><td>20x Miming</td><td id="quests__4__lists__57__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__58__active"></td><td>130</td><td>20x Little Fatum</td><td id="quests__4__lists__58__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__59__active"></td><td>130</td><td>30x Egnigem Cenia</td><td id="quests__4__lists__59__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__60__active"></td><td>130</td><td>30x Armeyer Dinze</td><td id="quests__4__lists__60__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__61__active"></td><td>130</td><td>30x Wickebine Tres</td><td id="quests__4__lists__61__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__62__active"></td><td>130</td><td>30x Kavach Icarus</td><td id="quests__4__lists__62__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__63__active"></td><td>130</td><td>30x Errende Ebecee</td><td id="quests__4__lists__63__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__64__active"></td><td>130</td><td>30x Laurell Weinder</td><td id="quests__4__lists__64__exp">850,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__65__active"></td><td>140</td><td>2x Cecil Damon</td><td id="quests__4__lists__65__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__66__active"></td><td>140</td><td>2x Kathryne Keyron</td><td id="quests__4__lists__66__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__67__active"></td><td>140</td><td>2x Margaretha Sorin</td><td id="quests__4__lists__67__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__68__active"></td><td>140</td><td>2x Seyren Windsor</td><td id="quests__4__lists__68__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__69__active"></td><td>140</td><td>2x Eremes Guile</td><td id="quests__4__lists__69__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__70__active"></td><td>140</td><td>2x Howard Alt-Eisen</td><td id="quests__4__lists__70__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__71__active"></td><td>130</td><td>30x Incarnation of Morroc (Angel)</td><td id="quests__4__lists__71__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__72__active"></td><td>130</td><td>30x Incarnation of Morroc (Golem)</td><td id="quests__4__lists__72__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__73__active"></td><td>130</td><td>30x Incarnation of Morroc (Human)</td><td id="quests__4__lists__73__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__74__active"></td><td>130</td><td>30x Incarnation of Morroc (Ghost)</td><td id="quests__4__lists__74__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__75__active"></td><td>130</td><td>60x Monsters in ecl_fild01</td><td id="quests__4__lists__75__exp">1,042,488</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__76__active"></td><td>130</td><td>60x Monsters in ba_bath</td><td id="quests__4__lists__76__exp">1,163,508</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__77__active"></td><td>130</td><td>60x Monsters in ba_lib</td><td id="quests__4__lists__77__exp">1,700,618</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__78__active"></td><td>130</td><td>60x Monsters in ba_pw02</td><td id="quests__4__lists__78__exp">1,685,862</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__79__active"></td><td>130</td><td>60x Monsters in ba_pw01</td><td id="quests__4__lists__79__exp">1,845,139</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-130" id="quests__4__lists__80__active"></td><td>130</td><td>60x Monsters in lasa_dun02</td><td id="quests__4__lists__80__exp">1,110,729</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__81__active"></td><td>140</td><td>30x Cenere 30x Antique Book</td><td id="quests__4__lists__81__exp">2,940,165</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__82__active"></td><td>140</td><td>120x Monsters in lasa_dun03</td><td id="quests__4__lists__82__exp">3,892,320</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__83__active"></td><td>140</td><td>120x Monsters in prt_prison</td><td id="quests__4__lists__83__exp">3,024,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__84__active"></td><td>140</td><td>120x Monsters in prt_q</td><td id="quests__4__lists__84__exp">3,584,280</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-140" id="quests__4__lists__85__active"></td><td>140</td><td>120x Monsters in rockmi1</td><td id="quests__4__lists__85__exp">3,154,932</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-150" id="quests__4__lists__86__active"></td><td>150</td><td>30x Wanderer (Nightmare)</td><td id="quests__4__lists__86__exp">6,092,805</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-150" id="quests__4__lists__87__active"></td><td>150</td><td>30x Smelly Zombie (un_bunker)</td><td id="quests__4__lists__87__exp">1,258,659</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-150" id="quests__4__lists__88__active"></td><td>150</td><td>20x Repair Robot Turbo 30x Green Cenere</td><td id="quests__4__lists__88__exp">1,145,250</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-150" id="quests__4__lists__89__active"></td><td>150</td><td>40x Big Ben 40x Neo-Punk</td><td id="quests__4__lists__89__exp">1,971,508</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-150" id="quests__4__lists__90__active"></td><td>150</td><td>160x Monsters in ba_lost</td><td id="quests__4__lists__90__exp">25,429,197</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-160" id="quests__4__lists__91__active"></td><td>160</td><td>50x Big Bell</td><td id="quests__4__lists__91__exp">7,513,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-160" id="quests__4__lists__92__active"></td><td>160</td><td>40x Gray Goat 40x Gray Wolf Baby</td><td id="quests__4__lists__92__exp">13,866,768</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-160" id="quests__4__lists__93__active"></td><td>160</td><td>80x Monsters in sp_rudus2</td><td id="quests__4__lists__93__exp">13,603,464</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-160" id="quests__4__lists__94__active"></td><td>160</td><td>50x Recon Robot (ver_eju)</td><td id="quests__4__lists__94__exp">21,257,100</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-160" id="quests__4__lists__95__active"></td><td>160</td><td>40x Exploration Rover 40x Exploration Rover Turbo</td><td id="quests__4__lists__95__exp">12,216,160</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-170" id="quests__4__lists__96__active"></td><td>170</td><td>160x Monsters in ba_2whs01</td><td id="quests__4__lists__96__exp">44,954,533</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-170" id="quests__4__lists__97__active"></td><td>170</td><td>80x Monsters in oz_dun01</td><td id="quests__4__lists__97__exp">28,732,040</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-170" id="quests__4__lists__98__active"></td><td>170</td><td>160x Monsters in sp_rudus3</td><td id="quests__4__lists__98__exp">30,639,280</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-170" id="quests__4__lists__99__active"></td><td>175</td><td>40x Rigid Kaho 40x Rigid Earth Deleter 40x Rigid Nightmare Terror</td><td id="quests__4__lists__99__exp">43,520,973</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-180" id="quests__4__lists__100__active"></td><td>180</td><td>160x Monsters in ba_2whs02</td><td id="quests__4__lists__100__exp">33,749,488</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-180" id="quests__4__lists__101__active"></td><td>180</td><td>160x Monsters in gl_cas01_</td><td id="quests__4__lists__101__exp">35,686,094</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-180" id="quests__4__lists__102__active"></td><td>180</td><td>80x Monsters in gw_fild01</td><td id="quests__4__lists__102__exp">26,550,614</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-180" id="quests__4__lists__103__active"></td><td>180</td><td>160x Monsters in ein_dun03</td><td id="quests__4__lists__103__exp">93,011,586</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-190" id="quests__4__lists__104__active"></td><td>190</td><td>240x Monsters in odin_past</td><td id="quests__4__lists__104__exp">98,882,731</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-190" id="quests__4__lists__105__active"></td><td>190</td><td>240x Monsters in abyss_04</td><td id="quests__4__lists__105__exp">79,912,332</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-190" id="quests__4__lists__106__active"></td><td>190</td><td>240x Monsters in ba_pw03</td><td id="quests__4__lists__106__exp">63,975,339</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__5"><i class="fas fa-angle-down"></i> Port Malaya Daily Quests <span class="badge" id="quests__5__active_count"></span></h3>
+      <div id="quests__5" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__0__active"></td><td>100</td><td>1x Offering Bouquet (3x Beautiful Flower 3x Elegant Flower 3x Mysterious Flower)</td><td id="quests__5__lists__0__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__1__active"></td><td>100</td><td>6x Silver Cross (12x Silver Bracelet) 6x Sharpened Bamboo 6x Bags of Salt</td><td id="quests__5__lists__1__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__2__active"></td><td>100</td><td>6x Spiritual Protection</td><td id="quests__5__lists__2__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__3__active"></td><td>100</td><td>5x Cast-Iron Caldron</td><td id="quests__5__lists__3__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__4__active"></td><td>100</td><td>10x Silver Bracelet 10x Tiyanak 10x Manananggal</td><td id="quests__5__lists__4__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__5__active"></td><td>100</td><td>1x Inside-Out Shirt</td><td id="quests__5__lists__5__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__6__active"></td><td>100</td><td>10x Purified Spirit Bone (10x Holy Water)</td><td id="quests__5__lists__6__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__7__active"></td><td>100</td><td>20x Jejeling</td><td id="quests__5__lists__7__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__8__active"></td><td>100</td><td>30x Jejellopy</td><td id="quests__5__lists__8__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__5__lists__9__active"></td><td>100</td><td>10x Bungisngis</td><td id="quests__5__lists__9__exp">200,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__6"><i class="fas fa-angle-down"></i> EP 14.3 Daily Quests <span class="badge" id="quests__6__active_count"></span></h3>
+      <div id="quests__6" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Flame Basin</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__6__lists__0__active"></td><td>140</td><td>1x Vassal of Destruction 1x Vassal of Flame 1x Vassal of Freezing</td><td id="quests__6__lists__0__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__6__lists__1__active"></td><td>140</td><td>3x Mana crystal</td><td id="quests__6__lists__1__exp">350,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__6__lists__2__active"></td><td>140</td><td>10x Angry Mimic 10x Bradium Box</td><td id="quests__6__lists__2__exp">800,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Nightmarish Jitterbug</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__6__lists__3__active"></td><td>120</td><td>Finish Nightmarish Jitterbug</td><td id="quests__6__lists__3__exp">1,500,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__7"><i class="fas fa-angle-down"></i> EP 15.1-15.2 Daily Quests <span class="badge" id="quests__7__active_count"></span></h3>
+      <div id="quests__7" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Verus</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__0__active"></td><td>140</td><td>10x Recon Robot</td><td id="quests__7__lists__0__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__1__active"></td><td>140</td><td>15x Repair Robot 15x Explorer Robot</td><td id="quests__7__lists__1__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__2__active"></td><td>140</td><td>20x Power Control Device</td><td id="quests__7__lists__2__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__3__active"></td><td>140</td><td>10x Enriched Energy (10x Empty Bottle)</td><td id="quests__7__lists__3__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__4__active"></td><td>140</td><td>1x Excavator Report</td><td id="quests__7__lists__4__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__5__active"></td><td>140</td><td>10x Gathered Herb 10x Doom Prayer 10x Illegal Promotion 10x Stone</td><td id="quests__7__lists__5__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__6__active"></td><td>140</td><td>5x Memory Records</td><td id="quests__7__lists__6__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__7__active"></td><td>140</td><td>5x Laboratory Memory Record</td><td id="quests__7__lists__7__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__8__active"></td><td>140</td><td>Finish Talking 4 NPCs</td><td id="quests__7__lists__8__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__9__active"></td><td>140</td><td>30x Green Cenere</td><td id="quests__7__lists__9__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__10__active"></td><td>140</td><td>30x Repair Robot Turbo</td><td id="quests__7__lists__10__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__11__active"></td><td>140</td><td>30x Metalbug</td><td id="quests__7__lists__11__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__12__active"></td><td>140</td><td>1x Record Fragment (Routine 1)</td><td id="quests__7__lists__12__exp">750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__7__lists__13__active"></td><td>140</td><td>1x Record Fragment (Routine 2)</td><td id="quests__7__lists__13__exp">1,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Charleston Crisis</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__7__lists__14__active"></td><td>130</td><td>Finish Charleston Crisis</td><td id="quests__7__lists__14__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__7__lists__15__active"></td><td>130</td><td>50x Roboring</td><td id="quests__7__lists__15__exp">1,000,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__8"><i class="fas fa-angle-down"></i> EP 16.1-18 Main Quests <span class="badge" id="quests__8__active_count"></span></h3>
+      <div id="quests__8" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>EP 16.1</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__0__active"></td><td>100</td><td>Learning About the Families</td><td id="quests__8__lists__0__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__1__active"></td><td>100</td><td>Ritual of Blessing</td><td id="quests__8__lists__1__exp">400,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__2__active"></td><td>100</td><td>Sidequest: Room of Consciousness</td><td id="quests__8__lists__2__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__3__active"></td><td>100</td><td>Sidequest: Geoborg</td><td id="quests__8__lists__3__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__4__active"></td><td>100</td><td>Sidequest: Walther Sidequest</td><td id="quests__8__lists__4__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__5__active"></td><td>100</td><td>Sidequest: Rougenbourg Sidequest</td><td id="quests__8__lists__5__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__8__lists__6__active"></td><td>100</td><td>Sidequest: Wigner Sidequest</td><td id="quests__8__lists__6__exp">1,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>EP 16.2</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__7__active"></td><td>100</td><td>Fight Elena</td><td id="quests__8__lists__7__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__8__active"></td><td>100</td><td>Rebellion Leader</td><td id="quests__8__lists__8__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__9__active"></td><td>100</td><td>Lazy</td><td id="quests__8__lists__9__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__10__active"></td><td>100</td><td>Skia &amp; Kronecker</td><td id="quests__8__lists__10__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__11__active"></td><td>100</td><td>Phillophon Tess</td><td id="quests__8__lists__11__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__12__active"></td><td>100</td><td>Sidequest: Small Leather Bag</td><td id="quests__8__lists__12__exp">600,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__13__active"></td><td>100</td><td>Sidequest: Arinoa Yurhik</td><td id="quests__8__lists__13__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__8__lists__14__active"></td><td>100</td><td>Sidequest: Elena</td><td id="quests__8__lists__14__exp">200,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-3"></td><td colspan="3"><label>EP 17.1</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__15__active"></td><td>110</td><td>Rudus Investigation</td><td id="quests__8__lists__15__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__16__active"></td><td>110</td><td>Securing Regenschirm</td><td id="quests__8__lists__16__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__17__active"></td><td>110</td><td>Bonus: Scattered Document</td><td id="quests__8__lists__17__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__18__active"></td><td>110</td><td>Investigating Rekenber</td><td id="quests__8__lists__18__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__19__active"></td><td>110</td><td>Old Memories</td><td id="quests__8__lists__19__exp">900,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__20__active"></td><td>110</td><td>Helping the Workers</td><td id="quests__8__lists__20__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3 quest-fixed-exp" id="quests__8__lists__21__active"></td><td>110</td><td>Capturing Eliumina</td><td id="quests__8__lists__21__exp">125,912</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__22__active"></td><td>110</td><td>Sidequest: OS Search</td><td id="quests__8__lists__22__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__8__lists__23__active"></td><td>110</td><td>Sidequest: Finding Patrick</td><td id="quests__8__lists__23__exp">900,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3 quest-fixed-exp" id="quests__8__lists__24__active"></td><td>110</td><td>Sidequest: Helping Farm (1st time)</td><td id="quests__8__lists__24__exp">251,824</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-4"></td><td colspan="3"><label>EP 17.2</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__25__active"></td><td>130</td><td>Meet Tamarin</td><td id="quests__8__lists__25__exp">721,935</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__26__active"></td><td>130</td><td>Repeater Check</td><td id="quests__8__lists__26__exp">3,094,008</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__27__active"></td><td>130</td><td>Joining with The Party</td><td id="quests__8__lists__27__exp">3,094,008</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__28__active"></td><td>130</td><td>The Story of a Manager</td><td id="quests__8__lists__28__exp">515,668</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__29__active"></td><td>130</td><td>Operation Pest Control</td><td id="quests__8__lists__29__exp">1,031,336</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__30__active"></td><td>130</td><td>Garden at Dusk</td><td id="quests__8__lists__30__exp">1,547,004</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__31__active"></td><td>130</td><td>Sidequest: Library</td><td id="quests__8__lists__31__exp">1,031,336</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__32__active"></td><td>130</td><td>Sidequest: Bathhouse</td><td id="quests__8__lists__32__exp">1,031,336</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__33__active"></td><td>130</td><td>Sidequest: Hidden Flower Garden</td><td id="quests__8__lists__33__exp">3,094,009</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__34__active"></td><td>130</td><td>Sidequest: Floating Garden</td><td id="quests__8__lists__34__exp">515,668</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__35__active"></td><td>130</td><td>Sidequest: Pitaya Farm</td><td id="quests__8__lists__35__exp">3,094,009</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4 quest-fixed-exp" id="quests__8__lists__36__active"></td><td>160</td><td>Sidequest: Tartaros Storage</td><td id="quests__8__lists__36__exp">3,156,050</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-5"></td><td colspan="3"><label>EP 18</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__37__active"></td><td>170</td><td>Meet Ellie</td><td id="quests__8__lists__37__exp">34,223,265</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__38__active"></td><td>170</td><td>Suspicious Movement</td><td id="quests__8__lists__38__exp">34,223,265</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__39__active"></td><td>170</td><td>Entering Gray Wolf Village</td><td id="quests__8__lists__39__exp">91,262,042</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__40__active"></td><td>170</td><td>Source of Weapons</td><td id="quests__8__lists__40__exp">68,446,531</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__41__active"></td><td>170</td><td>Thor Military Base Instance</td><td id="quests__8__lists__41__exp">68,446,531</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__42__active"></td><td>170</td><td>Rebellion </td><td id="quests__8__lists__42__exp">45,631,020</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__43__active"></td><td>170</td><td>Wolf's Den Instance </td><td id="quests__8__lists__43__exp">68,446,531</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__44__active"></td><td>170</td><td>High Priest Villa Instance </td><td id="quests__8__lists__44__exp">45,631,021</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__45__active"></td><td>170</td><td>Sidequest: Imril</td><td id="quests__8__lists__45__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__46__active"></td><td>170</td><td>Sidequest: Aruin</td><td id="quests__8__lists__46__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__47__active"></td><td>170</td><td>Sidequest: Budan</td><td id="quests__8__lists__47__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__48__active"></td><td>170</td><td>Sidequest: Albert</td><td id="quests__8__lists__48__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__49__active"></td><td>170</td><td>Sidequest: Aheer</td><td id="quests__8__lists__49__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__50__active"></td><td>170</td><td>Sidequest: Goodra</td><td id="quests__8__lists__50__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__51__active"></td><td>170</td><td>Sidequest: Zlane</td><td id="quests__8__lists__51__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__52__active"></td><td>170</td><td>Sidequest: Ezekiel</td><td id="quests__8__lists__52__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__53__active"></td><td>170</td><td>Sidequest: Scania</td><td id="quests__8__lists__53__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5 quest-fixed-exp" id="quests__8__lists__54__active"></td><td>170</td><td>Sidequest: Hazar</td><td id="quests__8__lists__54__exp">22,815,510</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-6"></td><td colspan="3"><label>Project Lumina EP 1</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__55__active"></td><td>230</td><td>Main Quest #1</td><td id="quests__8__lists__55__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__56__active"></td><td>230</td><td>Main Quest #2</td><td id="quests__8__lists__56__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__57__active"></td><td>230</td><td>Main Quest #3</td><td id="quests__8__lists__57__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__58__active"></td><td>230</td><td>Main Quest #4</td><td id="quests__8__lists__58__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__59__active"></td><td>230</td><td>Main Quest #5</td><td id="quests__8__lists__59__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__60__active"></td><td>230</td><td>Main Quest #6</td><td id="quests__8__lists__60__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__61__active"></td><td>230</td><td>Main Quest #7</td><td id="quests__8__lists__61__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__62__active"></td><td>230</td><td>Main Quest #8</td><td id="quests__8__lists__62__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__63__active"></td><td>230</td><td>Main Quest #9</td><td id="quests__8__lists__63__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__64__active"></td><td>230</td><td>Main Quest #10</td><td id="quests__8__lists__64__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__65__active"></td><td>230</td><td>Main Quest #11</td><td id="quests__8__lists__65__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__66__active"></td><td>230</td><td>Main Quest #12</td><td id="quests__8__lists__66__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__67__active"></td><td>230</td><td>Main Quest #13</td><td id="quests__8__lists__67__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__68__active"></td><td>230</td><td>Main Quest #14</td><td id="quests__8__lists__68__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__69__active"></td><td>230</td><td>Main Quest #15</td><td id="quests__8__lists__69__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-fixed-exp" id="quests__8__lists__70__active"></td><td>230</td><td>Main Quest #16</td><td id="quests__8__lists__70__exp">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__9"><i class="fas fa-angle-down"></i> EP 16.1 Daily Quests <span class="badge" id="quests__9__active_count"></span></h3>
+      <div id="quests__9" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Royal Banquet</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__9__lists__0__active"></td><td>100</td><td>Random Items</td><td id="quests__9__lists__0__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__9__lists__1__active"></td><td>100</td><td>15x Sea Stone 1x Witherless Rose</td><td id="quests__9__lists__1__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__9__lists__2__active"></td><td>140</td><td>50x Certain Monster Race</td><td id="quests__9__lists__2__exp">500,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Room of Consciousness</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__9__lists__3__active"></td><td>100</td><td>1x Bijou</td><td id="quests__9__lists__3__exp">400,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-3"></td><td colspan="3"><label>Invaded Prontera</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__9__lists__4__active"></td><td>140</td><td>Random Task</td><td id="quests__9__lists__4__exp">800,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-4"></td><td colspan="3"><label>Protera Prison</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__5__active"></td><td>140</td><td>20x Red Eye</td><td id="quests__9__lists__5__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__6__active"></td><td>140</td><td>20x Sandpaper</td><td id="quests__9__lists__6__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__7__active"></td><td>140</td><td>20x Dehumidifier</td><td id="quests__9__lists__7__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__8__active"></td><td>140</td><td>??x Flower</td><td id="quests__9__lists__8__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__9__active"></td><td>140</td><td>1x Bright Light</td><td id="quests__9__lists__9__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__10__active"></td><td>140</td><td>1x Prisoner Letter</td><td id="quests__9__lists__10__exp">700,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__9__lists__11__active"></td><td>140</td><td>Finish Cleaning</td><td id="quests__9__lists__11__exp">700,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__10"><i class="fas fa-angle-down"></i> EP 16.2 Daily Quests <span class="badge" id="quests__10__active_count"></span></h3>
+      <div id="quests__10" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Rebellion Base</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__0__active"></td><td>100</td><td>Finish Promoting Arms Shop</td><td id="quests__10__lists__0__exp">100,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__1__active"></td><td>100</td><td>Random Ores 1</td><td id="quests__10__lists__1__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__2__active"></td><td>100</td><td>3x Slick Paper</td><td id="quests__10__lists__2__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__3__active"></td><td>100</td><td>1x Elena Bolkova</td><td id="quests__10__lists__3__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__4__active"></td><td>100</td><td>Random Ores 2</td><td id="quests__10__lists__4__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__5__active"></td><td>100</td><td>5x Broken Gun Wreck</td><td id="quests__10__lists__5__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__6__active"></td><td>100</td><td>Random Tea</td><td id="quests__10__lists__6__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__7__active"></td><td>100</td><td>Finish Retuning Cat</td><td id="quests__10__lists__7__exp">100,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__10__lists__8__active"></td><td>100</td><td>Random Task</td><td id="quests__10__lists__8__exp">200,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Heart Hunter War Base</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__10__lists__9__active"></td><td>100</td><td>10x Humanoid Chimera 10x Material Chimera</td><td id="quests__10__lists__9__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__10__lists__10__active"></td><td>100</td><td>Finish Finding Researchers</td><td id="quests__10__lists__10__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__10__lists__11__active"></td><td>100</td><td>1x Cutie</td><td id="quests__10__lists__11__exp">200,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__11"><i class="fas fa-angle-down"></i> EP 17.1 Daily Quests <span class="badge" id="quests__11__active_count"></span></h3>
+      <div id="quests__11" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__11__lists__0__active"></td><td>110</td><td>10x Random Items</td><td id="quests__11__lists__0__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__11__lists__1__active"></td><td>110</td><td>15x Heart Hunter Bellare 15x Heart Hunter Sanare</td><td id="quests__11__lists__1__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__11__lists__2__active"></td><td>110</td><td>20x Dolor 10x Identification Bracelet</td><td id="quests__11__lists__2__exp">200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__11__lists__3__active"></td><td>110</td><td>Finish Helping Farm</td><td id="quests__11__lists__3__exp">75,547</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__11__lists__4__active"></td><td>110</td><td>Finish Cor Memorial</td><td id="quests__11__lists__4__exp">610,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__11__lists__5__active"></td><td>110</td><td>Finish 2nd OS Search (CP 14 Miguel)</td><td id="quests__11__lists__5__exp">392,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__12"><i class="fas fa-angle-down"></i> EP 17.2 Daily Quests <span class="badge" id="quests__12__active_count"></span></h3>
+      <div id="quests__12" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__0__active"></td><td>130</td><td>10x Robot Communication Chip</td><td id="quests__12__lists__0__exp">949,720</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__1__active"></td><td>130</td><td>20x Guardian Parts</td><td id="quests__12__lists__1__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__2__active"></td><td>130</td><td>20x Bookworm</td><td id="quests__12__lists__2__exp">910,040</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__3__active"></td><td>130</td><td>20x Roaming Spellbook</td><td id="quests__12__lists__3__exp">934,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__4__active"></td><td>130</td><td>20x Broken Cleaner 5x Broken Robot Part</td><td id="quests__12__lists__4__exp">695,812</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__5__active"></td><td>130</td><td>15x Boiling Water Marc 15x Boiling Water Piranha</td><td id="quests__12__lists__5__exp">722,940</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__6__active"></td><td>150</td><td>20x Pitaya</td><td id="quests__12__lists__6__exp">1,800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__12__lists__7__active"></td><td>130</td><td>1x Sweetie</td><td id="quests__12__lists__7__exp">206,267</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__12__lists__8__active"></td><td>130</td><td>10x Broken Robot Core</td><td id="quests__12__lists__8__exp">206,267</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__9__active"></td><td>130</td><td>1x Silva Papilia / Gran Silva Papilia</td><td id="quests__12__lists__9__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__10__active"></td><td>130</td><td>1x Gardener's Cookie</td><td id="quests__12__lists__10__exp">800,000</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__11__active"></td><td>130</td><td>44x Sewage Waterfall 44x Sewage Cramp 44x Sewage Venenum</td><td id="quests__12__lists__11__exp">5,065,368</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__12__active"></td><td>130</td><td>44x Unleashed Plasma 44x Elite Bellare 44x Mana Addicted Dolor</td><td id="quests__12__lists__12__exp">5,197,368</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__13__active"></td><td>160</td><td>20x Heart Hunter Skirmisher</td><td id="quests__12__lists__13__exp">4,431,108</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__14__active"></td><td>170</td><td>20x Broken Warehouse Manager</td><td id="quests__12__lists__14__exp">5,974,540</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__12__lists__15__active"></td><td>180</td><td>10x Potato Chip</td><td id="quests__12__lists__15__exp">11,560,465</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__13"><i class="fas fa-angle-down"></i> EP 18 Daily Quests <span class="badge" id="quests__13__active_count"></span></h3>
+      <div id="quests__13" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest" id="quests__13__lists__0__active"></td><td>170</td><td>Imril: 20x Ash Toad</td><td id="quests__13__lists__0__exp">4,364,880</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__13__lists__1__active"></td><td>200</td><td>Imril: 20x Hot Molar</td><td id="quests__13__lists__1__exp">11,588,320</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__13__lists__2__active"></td><td>170</td><td>Aruin: 5x Trapped Bird / Trapped Lizard / Trapped Pear</td><td id="quests__13__lists__2__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__13__lists__3__active"></td><td>170</td><td>Budan: 1x Purified Water</td><td id="quests__13__lists__3__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__13__lists__4__active"></td><td>170</td><td>Aheer: 30x Firewind Kite</td><td id="quests__13__lists__4__exp">10,318,080</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__13__lists__5__active"></td><td>170</td><td>Goodra: 1x Recording Note</td><td id="quests__13__lists__5__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__13__lists__6__active"></td><td>170</td><td>Ezekiel: 1x Steel, 10x Very Unusual Crystal</td><td id="quests__13__lists__6__exp">18,252,408</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__13__lists__7__active"></td><td>170</td><td>Scania: 20x Ashring</td><td id="quests__13__lists__7__exp">7,769,124</td></tr>
+              <tr><td><input type="checkbox" class="quest" id="quests__13__lists__8__active"></td><td>170</td><td>30x Monsters in gw_fild01</td><td id="quests__13__lists__8__exp">9,956,480</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__14"><i class="fas fa-angle-down"></i> Illusion Dungeon Daily Quests <span class="badge" id="quests__14__active_count"></span></h3>
+      <div id="quests__14" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Illusion of Moonlight</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__14__lists__0__active"></td><td>100</td><td>1x Wizard of Truth</td><td id="quests__14__lists__0__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__14__lists__1__active"></td><td>100</td><td>20x Angry Nine Tail</td><td id="quests__14__lists__1__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__14__lists__2__active"></td><td>100</td><td>20x Resentful Soldier</td><td id="quests__14__lists__2__exp">300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__14__lists__3__active"></td><td>100</td><td>100x Monsters</td><td id="quests__14__lists__3__exp">2,500,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Illusion of Frozen</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__14__lists__4__active"></td><td>120</td><td>10x Dry Twig 10x Random monsters</td><td id="quests__14__lists__4__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__14__lists__5__active"></td><td>120</td><td>100x Monsters</td><td id="quests__14__lists__5__exp">6,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-3"></td><td colspan="3"><label>Illusion of Vampire</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__6__active"></td><td>130</td><td>10x Restless Zombie 10x Illusion Zombie 10x Illusion Ghoul</td><td id="quests__14__lists__6__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__7__active"></td><td>130</td><td>20x Wavy Mane 10x Illusion Nightmare</td><td id="quests__14__lists__7__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__8__active"></td><td>130</td><td>10x Sticky Blood 10x Mushroom Sap 5x Illusion Drainliar 5x Black Mushroom</td><td id="quests__14__lists__8__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__9__active"></td><td>130</td><td>20x Short Bat Hair 10x Illusion Drainliar</td><td id="quests__14__lists__9__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__10__active"></td><td>130</td><td>10x Shining Spore 10x Cluster of Nightmares</td><td id="quests__14__lists__10__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__11__active"></td><td>130</td><td>10x Dried Yggdrasil Leaf 10x Suspicious Pentacle 5x Restless Zombie 5x Illusion Zombie</td><td id="quests__14__lists__11__exp">500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__14__lists__12__active"></td><td>130</td><td>100x Monsters</td><td id="quests__14__lists__12__exp">10,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-4"></td><td colspan="3"><label>Illusion of Abyss</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__14__lists__13__active"></td><td>150</td><td>Finish Talking NPCs</td><td id="quests__14__lists__13__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__14__lists__14__active"></td><td>150</td><td>5x Old Metal Pieces 10x Ominous Assaulter</td><td id="quests__14__lists__14__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__14__lists__15__active"></td><td>150</td><td>10x Rotten Meat 10x Ominous Permeter 10x Ominous Solider 10x Ominous Freezer 10x Ominous Heater</td><td id="quests__14__lists__15__exp">1,200,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__14__lists__16__active"></td><td>150</td><td>100x Monsters</td><td id="quests__14__lists__16__exp">22,500,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-5"></td><td colspan="3"><label>Illusion of Teddy Bear</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__14__lists__17__active"></td><td>150</td><td>10x Hardworking Pitman 10x Soul Fragment 10x Sinister Dwelling Obsidian</td><td id="quests__14__lists__17__exp">1,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__14__lists__18__active"></td><td>150</td><td>10x Red Teddy Bear 10x Yellow Teddy Bear 10x Green Teddy Bear 10x Blue Teddy Bear 10x White Teddy</td><td id="quests__14__lists__18__exp">1,300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__14__lists__19__active"></td><td>150</td><td>1x Shining Teddy Bear</td><td id="quests__14__lists__19__exp">1,500,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__14__lists__20__active"></td><td>150</td><td>100x Monsters</td><td id="quests__14__lists__20__exp">17,500,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-6"></td><td colspan="3"><label>Illusion of Luanda</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__14__lists__21__active"></td><td>160</td><td>3x Megalithic Token</td><td id="quests__14__lists__21__exp">4,300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__14__lists__22__active"></td><td>160</td><td>3x Wootan's Token</td><td id="quests__14__lists__22__exp">4,300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__14__lists__23__active"></td><td>160</td><td>5x Ancient Tri Joint 5x Ancient Stalactic Golem 5x Ancient Megalith</td><td id="quests__14__lists__23__exp">4,300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__14__lists__24__active"></td><td>160</td><td>5x Ancient Stone Shooter 5x Ancient Wootan Shooter 5x Ancient Wootan Fighter</td><td id="quests__14__lists__24__exp">4,300,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__14__lists__25__active"></td><td>160</td><td>100x Monsters</td><td id="quests__14__lists__25__exp">29,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-7"></td><td colspan="3"><label>Illusion of Labyrinth</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__26__active"></td><td>170</td><td>5x Chaotic Baphoment Jr.</td><td id="quests__14__lists__26__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__27__active"></td><td>170</td><td>2x Chaotic Ghostring</td><td id="quests__14__lists__27__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__28__active"></td><td>170</td><td>5x Chaotic Hunter Fly</td><td id="quests__14__lists__28__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__29__active"></td><td>170</td><td>5x Chaotic Killer Mantis</td><td id="quests__14__lists__29__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__30__active"></td><td>170</td><td>5x Chaotic Mantis</td><td id="quests__14__lists__30__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__31__active"></td><td>170</td><td>5x Chaotic Poporing</td><td id="quests__14__lists__31__exp">1,750,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__14__lists__32__active"></td><td>170</td><td>100x Monsters</td><td id="quests__14__lists__32__exp">35,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-8"></td><td colspan="3"><label>Illusion of Under Water</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__14__lists__33__active"></td><td>140</td><td>10x Abyssal Essence</td><td id="quests__14__lists__33__exp">4,441,860</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__14__lists__34__active"></td><td>140</td><td>10x Abysmal Sropho 10x Abysmal Deviace 10x Abysmal Marse</td><td id="quests__14__lists__34__exp">4,441,860</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__14__lists__35__active"></td><td>180</td><td>15x Abysmal Sedora 15x Abysmal Strouf</td><td id="quests__14__lists__35__exp">20,107,500</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__14__lists__36__active"></td><td>180</td><td>10x Abysmal Swordfish 10x Abysmal Phen 10x Abysmal Dramoh</td><td id="quests__14__lists__36__exp">20,107,500</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__14__lists__37__active"></td><td>180</td><td>100x Monsters</td><td id="quests__14__lists__37__exp">65,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-9"></td><td colspan="3"><label>Illusion of Twins</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-9" id="quests__14__lists__38__active"></td><td>160</td><td>20x Fine Dry Sand</td><td id="quests__14__lists__38__exp">2,446,980</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-9" id="quests__14__lists__39__active"></td><td>160</td><td>20x Opaque Liquid</td><td id="quests__14__lists__39__exp">2,423,850</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-9" id="quests__14__lists__40__active"></td><td>160</td><td>10x Diligent Soldier Andre 10x Diligent Piere 10x Diligent Vitata</td><td id="quests__14__lists__40__exp">4,987,680</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-9" id="quests__14__lists__41__active"></td><td>160</td><td>20x Shell of Cognition</td><td id="quests__14__lists__41__exp">2,395,320</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-9" id="quests__14__lists__42__active"></td><td>160</td><td>100x Monsters</td><td id="quests__14__lists__42__exp">27,000,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__15"><i class="fas fa-angle-down"></i> 175-190 Monster Hunting Quests <span class="badge" id="quests__15__active_count"></span></h3>
+      <div id="quests__15" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Nogg Road 3F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__15__lists__0__active"></td><td>175</td><td>15x Rigid Sky Deleter 15x Rigid Earth Deleter</td><td id="quests__15__lists__0__exp">4,852,278</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__15__lists__1__active"></td><td>175</td><td>10x Rigid Nightmare Terror</td><td id="quests__15__lists__1__exp">1,661,868</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__15__lists__2__active"></td><td>175</td><td>10x Rigid Lava Golem</td><td id="quests__15__lists__2__exp">1,590,396</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__15__lists__3__active"></td><td>175</td><td>10x Rigid Explosion 10x Rigid Blazer</td><td id="quests__15__lists__3__exp">3,251,388</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Abyss Glast Heim</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__15__lists__4__active"></td><td>175</td><td>20x Corrupted Raydric 20x Corrupted Raydric Archer</td><td id="quests__15__lists__4__exp">8,142,552</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__15__lists__5__active"></td><td>175</td><td>5x Frozen Gargoyle 5x Prison Breaker</td><td id="quests__15__lists__5__exp">2,036,754</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__15__lists__6__active"></td><td>175</td><td>10x Ice Ghost 10x Flame Ghost</td><td id="quests__15__lists__6__exp">4,138,800</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-3"></td><td colspan="3"><label>Mine Dungeon 3F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__15__lists__7__active"></td><td>180</td><td>20x Poisonous 20x Toxious</td><td id="quests__15__lists__7__exp">27,512,240</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__15__lists__8__active"></td><td>180</td><td>20x Green Mineral 20x Red Mineral</td><td id="quests__15__lists__8__exp">27,836,640</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__15__lists__9__active"></td><td>180</td><td>20x White Mineral 20x Purple Mineral</td><td id="quests__15__lists__9__exp">27,838,400</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__15__lists__10__active"></td><td>180</td><td>10x Abyssman</td><td id="quests__15__lists__10__exp">6,938,800</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__15__lists__11__active"></td><td>180</td><td>10x White Porcellio 10x Jeweliant</td><td id="quests__15__lists__11__exp">13,854,240</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-4"></td><td colspan="3"><label>Ancient Odin Shirine</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__15__lists__12__active"></td><td>180</td><td>30x Angelgolt (Blue) 40x Angelgolt (Pink)</td><td id="quests__15__lists__12__exp">50,190,280</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__15__lists__13__active"></td><td>180</td><td>30x Holy Frus 30x Holy Skogul</td><td id="quests__15__lists__13__exp">44,210,160</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-5"></td><td colspan="3"><label>Abyss Lake Underground Cave 4F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__15__lists__14__active"></td><td>190</td><td>20x Purple Ferus</td><td id="quests__15__lists__14__exp">15,823,920</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__15__lists__15__active"></td><td>190</td><td>10x Treasure Mimic</td><td id="quests__15__lists__15__exp">7,979,360</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__15__lists__16__active"></td><td>190</td><td>20x Black Acidus 20x Silver Acidus</td><td id="quests__15__lists__16__exp">32,090,640</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__15__lists__17__active"></td><td>190</td><td>30x Bone Ferus 30x Bone Acidus</td><td id="quests__15__lists__17__exp">48,548,160</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-6"></td><td colspan="3"><label>Thanatos Tower 9F-12F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__18__active"></td><td>180</td><td>20x Crow Duke 20x Crow Baron</td><td id="quests__15__lists__18__exp">31,151,220</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__19__active"></td><td>180</td><td>10x Piece of Memory Purple</td><td id="quests__15__lists__19__exp">15,575,610</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__20__active"></td><td>180</td><td>15x Void Mimic 15x Book of Death 15x Eldest</td><td id="quests__15__lists__20__exp">34,770,420</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__21__active"></td><td>180</td><td>10x Piece of Memory Red</td><td id="quests__15__lists__21__exp">17,385,210</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__22__active"></td><td>180</td><td>15x Empathizer 15x Happiness Giver 15x Pray Giver 15x Smile Giver</td><td id="quests__15__lists__22__exp">45,811,170</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__23__active"></td><td>180</td><td>10x Piece of Memory Blue</td><td id="quests__15__lists__23__exp">22,905,585</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__24__active"></td><td>180</td><td>10x Anger of Thanatos 10x Horror of Thanatos 10x Regret of Thanatos 10x Resentment of Thanatos</td><td id="quests__15__lists__24__exp">30,736,590</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__15__lists__25__active"></td><td>180</td><td>10x Piece of Memory Green</td><td id="quests__15__lists__25__exp">15,368,295</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__16"><i class="fas fa-angle-down"></i> 200-250 Monster Hunting Quests <span class="badge" id="quests__16__active_count"></span></h3>
+      <div id="quests__16" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-1"></td><td colspan="3"><label>Rudus 4F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__16__lists__0__active"></td><td>200</td><td>10x Dolorian 10x Plagarion 10x Deadre</td><td id="quests__16__lists__0__exp">15,915,940</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__16__lists__1__active"></td><td>200</td><td>15x Giant Caput 15x Venedi</td><td id="quests__16__lists__1__exp">15,176,970</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-1" id="quests__16__lists__2__active"></td><td>200</td><td>Finish Talking NPC</td><td id="quests__16__lists__2__exp">15,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-2"></td><td colspan="3"><label>Nifflheim Dungeon 1F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__16__lists__3__active"></td><td>200</td><td>15x Ghost Quve 15x Lude Gal</td><td id="quests__16__lists__3__exp">15,642,570</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__16__lists__4__active"></td><td>200</td><td>10x Brutal Murderer 10x Gan Ceann</td><td id="quests__16__lists__4__exp">15,642,570</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-2" id="quests__16__lists__5__active"></td><td>200</td><td>Finish Talking NPC</td><td id="quests__16__lists__5__exp">10,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-3"></td><td colspan="3"><label>Abandoned Lab Amicitia 1F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__16__lists__6__active"></td><td>215</td><td>15x Amitera 15x Fillia</td><td id="quests__16__lists__6__exp">17,726,670</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__16__lists__7__active"></td><td>215</td><td>15x Litus 15x Vanilaqus</td><td id="quests__16__lists__7__exp">17,724,090</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-3" id="quests__16__lists__8__active"></td><td>215</td><td>Finish Talking NPC</td><td id="quests__16__lists__8__exp">17,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-4"></td><td colspan="3"><label>Abandoned Lab Amicitia 2F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__16__lists__9__active"></td><td>230</td><td>15x Napeo 15x Galensis</td><td id="quests__16__lists__9__exp">18,970,590</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-4" id="quests__16__lists__10__active"></td><td>230</td><td>15x Lava Eater 15x Fulgor</td><td id="quests__16__lists__10__exp">18,980,190</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-5"></td><td colspan="3"><label>Nifflheim Dungeon 2F</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__16__lists__11__active"></td><td>240</td><td>15x Disguiser 15x Blue Moon Loli Ruri</td><td id="quests__16__lists__11__exp">20,272,230</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__16__lists__12__active"></td><td>240</td><td>10x Grote 10x Pierrotzoist</td><td id="quests__16__lists__12__exp">13,721,460</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-5" id="quests__16__lists__13__active"></td><td>240</td><td>Finish Talking NPC</td><td id="quests__16__lists__13__exp">13,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-6"></td><td colspan="3"><label>Clock Tower Unknown Basement</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__16__lists__14__active"></td><td>240</td><td>Daily Choice: 100x Monsters</td><td id="quests__16__lists__14__exp">38,409,074</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__16__lists__15__active"></td><td>240</td><td>Daily Choice: 300x Monsters</td><td id="quests__16__lists__15__exp">136,177,626</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__16__lists__16__active"></td><td>240</td><td>Daily Choice: 1000x Monsters</td><td id="quests__16__lists__16__exp">698,346,800</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6" id="quests__16__lists__17__active"></td><td>240</td><td>Finish Talking NPC</td><td id="quests__16__lists__17__exp">1,745,867</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-6 quest-weekly" id="quests__16__lists__18__active"></td><td>240</td><td>Weekly: 5000x Monsters</td><td id="quests__16__lists__18__exp">2,182,333,750</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-7"></td><td colspan="3"><label>Mjolnir Underground Caverns</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__16__lists__19__active"></td><td>250</td><td>Daily Choice: 100x Monsters</td><td id="quests__16__lists__19__exp">242,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7" id="quests__16__lists__20__active"></td><td>250</td><td>Daily Choice: 500x Monsters</td><td id="quests__16__lists__20__exp">1,214,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-7 quest-weekly" id="quests__16__lists__21__active"></td><td>250</td><td>Weekly: 5000x Monsters</td><td id="quests__16__lists__21__exp">12,140,000,000</td></tr>
+              <tr class="quests-subtitle"><td><input type="checkbox" class="check-all" data-target=".quest-8"></td><td colspan="3"><label>Power Twisted Plains</label></td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__16__lists__22__active"></td><td>250</td><td>Daily Choice: 100x Monsters</td><td id="quests__16__lists__22__exp">243,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8" id="quests__16__lists__23__active"></td><td>250</td><td>Daily Choice: 500x Monsters</td><td id="quests__16__lists__23__exp">1,218,000,000</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-8 quest-weekly" id="quests__16__lists__24__active"></td><td>250</td><td>Weekly: 5000x Monsters</td><td id="quests__16__lists__24__exp">12,180,000,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 data-toggle="collapse" data-target="#quests__17"><i class="fas fa-angle-down"></i> Project Lumina EP 1 Daily Quests <span class="badge" id="quests__17__active_count"></span></h3>
+      <div id="quests__17" class="collapse">
+        <div class="scroll">
+          <table class="table">
+            <thead>
+              <tr><th><input type="checkbox" class="check-all" data-target=".quest"></th><th>Lv</th><th>Quest</th><th>Exp</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__17__lists__0__active"></td><td>230</td><td>Gray Wolf Forest: 125x Monsters</td><td id="quests__17__lists__0__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__17__lists__1__active"></td><td>230</td><td>Abandoned Lab Amicitia 2F: 130x Monsters</td><td id="quests__17__lists__1__exp">0</td></tr>
+              <tr><td><input type="checkbox" class="quest quest-fixed-exp" id="quests__17__lists__2__active"></td><td>230</td><td>Abandoned Pit 2F: 140x Monsters</td><td id="quests__17__lists__2__exp">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

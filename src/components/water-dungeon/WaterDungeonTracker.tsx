@@ -695,7 +695,7 @@ export default function WaterDungeonTracker() {
           </div>
 
           <div className="flex w-full flex-col gap-2 lg:w-auto lg:items-end">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-6 lg:w-auto">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7 lg:w-auto">
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
                 href="/cen-lab"
@@ -719,6 +719,12 @@ export default function WaterDungeonTracker() {
                 href="/personal-data"
               >
                 Personal
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-amber-500/40 hover:text-amber-200"
+                href="/exp"
+              >
+                EXP
               </Link>
               <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-pink-500/40 hover:text-pink-200"
