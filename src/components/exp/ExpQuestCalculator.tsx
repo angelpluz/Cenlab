@@ -10,6 +10,7 @@ import {
   FOURTH_CLASS_JOB_EXP,
   type ExpQuest,
 } from "@/lib/exp-calculator-data";
+import { THIRD_CLASS_JOB_EXP } from "@/lib/exp-class3-data";
 import {
   PERSONAL_DATA_STORAGE_KEY,
   readPersonalDataProfiles,
@@ -1178,7 +1179,11 @@ export default function ExpQuestCalculator() {
 
             <WaterDungeonExpCalculator />
 
-            <ExpLevelTable currentLevel={safeCurrentLevel} targetLevel={safeTargetLevel} />
+            <ExpLevelTable
+              characterClass={characterClass}
+              currentLevel={safeCurrentLevel}
+              targetLevel={safeTargetLevel}
+            />
           </section>
         </div>
       </div>
@@ -1531,20 +1536,33 @@ function WaterDungeonExpCell({ value }: { value: number | null }) {
 }
 
 function ExpLevelTable({
+  characterClass,
   currentLevel,
   targetLevel,
 }: {
+  characterClass: CharacterClass;
   currentLevel: number;
   targetLevel: number;
 }) {
+  const usesFourthJobTable = characterClass === "fourth";
+  const jobRows = usesFourthJobTable ? FOURTH_CLASS_JOB_EXP : THIRD_CLASS_JOB_EXP;
+  const jobTableTitle = usesFourthJobTable ? "Fourth Class Job" : "3rd Class Job";
+  const jobTableRange = usesFourthJobTable ? "Job Lv.1-50" : "Job Lv.1-70";
+  const jobTableNote =
+    characterClass === "doram"
+      ? "Doram-specific job data is not provided; showing the 3rd Class Job table."
+      : "EXP required for each next job level";
+
   return (
     <section className="rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
       <div className="flex flex-col gap-1 border-b border-slate-800 p-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-violet-200">EXP Table</h2>
-          <p className="text-sm text-slate-500">Class 4 base and job EXP from exptable.html</p>
+          <p className="text-sm text-slate-500">
+            Base EXP uses Class 4 data; Job EXP follows the selected class.
+          </p>
         </div>
-        <p className="text-sm font-semibold text-slate-400">Base Lv.200-260 / Job Lv.1-50</p>
+        <p className="text-sm font-semibold text-slate-400">Base Lv.200-260 / {jobTableRange}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
@@ -1606,8 +1624,8 @@ function ExpLevelTable({
 
         <div className="overflow-hidden rounded-lg border border-slate-800">
           <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
-            <h3 className="font-black text-cyan-100">Job Level Up</h3>
-            <p className="mt-1 text-sm text-slate-500">EXP required for each next job level</p>
+            <h3 className="font-black text-cyan-100">{jobTableTitle}</h3>
+            <p className="mt-1 text-sm text-slate-500">{jobTableNote}</p>
           </div>
           <div className="max-h-[520px] overflow-auto">
             <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
@@ -1618,7 +1636,7 @@ function ExpLevelTable({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
-                {FOURTH_CLASS_JOB_EXP.map((row) => (
+                {jobRows.map((row) => (
                   <tr key={row.level} className="bg-slate-950/10">
                     <td className="px-4 py-3 font-mono font-black text-slate-100">
                       {row.level} to {row.level + 1}
