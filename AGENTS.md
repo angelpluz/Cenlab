@@ -127,3 +127,19 @@ npm run lint     # ESLint check
 - Roster cards now include a Start Character button and per-character run controls.
 - The side panel shows active character timer panels instead of one shared boss timer.
 - Character records support optional `imageSrc`; current UI uses generated portrait fallback art until real sprite files are added.
+
+## 2026-06-23 Update - RO Codex (Item + Monster Database)
+- Added `/codex` protected route for browsing Items and Monsters.
+- New files:
+  - `src/lib/codex-types.ts` — shared types for `CodexItem`, `CodexMonster`, `CodexEntry`, filters, tags.
+  - `src/lib/codex-data.ts` — curated local seed data (no external API dependency).
+  - `src/lib/codex-utils.ts` — search, filter, sort helpers.
+  - `src/components/codex/CodexClient.tsx` — main client page.
+  - `src/components/codex/CodexSearch.tsx` — tab + search + filter UI.
+  - `src/components/codex/CodexItemCard.tsx` — item card.
+  - `src/components/codex/CodexMonsterCard.tsx` — monster card.
+  - `src/app/(protected)/codex/page.tsx` — protected page entry.
+- Navigation: added "Codex" link in `OgchNav.tsx`.
+- Approach: own curated database instead of parsing ro-calculator.sanka.in.th bundle (fragile) or relying on Divine Pride API.
+- Schema supports optional `externalIds` (Divine Pride / rAthena) for future sync.
+- Build & lint: ✅ passing.
