@@ -5017,23 +5017,23 @@ export const FOURTH_CLASS_BASE_EXP = [
   },
   {
     "level": 251,
-    "expToReach": 51
+    "expToReach": 43181573623
   },
   {
     "level": 252,
-    "expToReach": 52
+    "expToReach": 52940609261
   },
   {
     "level": 253,
-    "expToReach": 53
+    "expToReach": 64905186953
   },
   {
     "level": 254,
-    "expToReach": 54
+    "expToReach": 79573759204
   },
   {
     "level": 255,
-    "expToReach": 55
+    "expToReach": 97557428784
   },
   {
     "level": 256,

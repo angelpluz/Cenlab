@@ -7,6 +7,7 @@ import {
   EXP_QUEST_CATEGORIES,
   EXP_QUESTS,
   FOURTH_CLASS_BASE_EXP,
+  FOURTH_CLASS_JOB_EXP,
   type ExpQuest,
 } from "@/lib/exp-calculator-data";
 import {
@@ -1032,6 +1033,8 @@ export default function ExpQuestCalculator() {
                 </table>
               </div>
             </section>
+
+            <ExpLevelTable currentLevel={safeCurrentLevel} targetLevel={safeTargetLevel} />
           </section>
         </div>
       </div>
@@ -1162,5 +1165,112 @@ function SummaryCard({
       <p className="mt-2 break-words font-mono text-2xl font-black">{value}</p>
       {detail ? <p className="mt-1 text-sm font-semibold text-slate-400">{detail}</p> : null}
     </div>
+  );
+}
+
+function ExpLevelTable({
+  currentLevel,
+  targetLevel,
+}: {
+  currentLevel: number;
+  targetLevel: number;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
+      <div className="flex flex-col gap-1 border-b border-slate-800 p-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-black text-violet-200">EXP Table</h2>
+          <p className="text-sm text-slate-500">Class 4 base and job EXP from exptable.html</p>
+        </div>
+        <p className="text-sm font-semibold text-slate-400">Base Lv.200-260 / Job Lv.1-50</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)]">
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
+            <h3 className="font-black text-violet-100">Base Level Up</h3>
+            <p className="mt-1 text-sm text-slate-500">EXP required for each next base level</p>
+          </div>
+          <div className="max-h-[520px] overflow-auto">
+            <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-950/95 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">From</th>
+                  <th className="px-3 py-3">To</th>
+                  <th className="px-4 py-3 text-right">Required EXP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {FOURTH_CLASS_BASE_EXP.map((row) => {
+                  const fromLevel = row.level - 1;
+                  const isCurrentNext = fromLevel === currentLevel;
+                  const isTarget = row.level === targetLevel;
+
+                  return (
+                    <tr
+                      key={row.level}
+                      className={
+                        isCurrentNext
+                          ? "bg-amber-950/25"
+                          : isTarget
+                            ? "bg-emerald-950/15"
+                            : "bg-slate-950/10"
+                      }
+                    >
+                      <td className="px-4 py-3 font-mono font-black text-slate-200">Lv.{fromLevel}</td>
+                      <td className="px-3 py-3">
+                        <span className="font-mono font-black text-slate-100">Lv.{row.level}</span>
+                        {isCurrentNext ? (
+                          <span className="ml-2 rounded border border-amber-500/35 bg-amber-950/35 px-2 py-0.5 text-xs font-black text-amber-100">
+                            Next
+                          </span>
+                        ) : null}
+                        {isTarget ? (
+                          <span className="ml-2 rounded border border-emerald-500/35 bg-emerald-950/35 px-2 py-0.5 text-xs font-black text-emerald-100">
+                            Target
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono font-black text-violet-100">
+                        {formatNumber(row.expToReach)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
+            <h3 className="font-black text-cyan-100">Job Level Up</h3>
+            <p className="mt-1 text-sm text-slate-500">EXP required for each next job level</p>
+          </div>
+          <div className="max-h-[520px] overflow-auto">
+            <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-950/95 text-xs uppercase tracking-[0.16em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Job Lv</th>
+                  <th className="px-4 py-3 text-right">Required EXP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {FOURTH_CLASS_JOB_EXP.map((row) => (
+                  <tr key={row.level} className="bg-slate-950/10">
+                    <td className="px-4 py-3 font-mono font-black text-slate-100">
+                      {row.level} to {row.level + 1}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-black text-cyan-100">
+                      {formatNumber(row.expToNext)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
