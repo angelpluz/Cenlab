@@ -51,6 +51,8 @@ type WaterDungeonExpRank = {
   rows: WaterDungeonExpRow[];
 };
 
+type KnownWaterDungeonExp = Omit<WaterDungeonExpRow, "difficulty">;
+
 const WEEKDAYS = [
   { value: 0, label: "Sat. Reset" },
   { value: 1, label: "Sun." },
@@ -89,100 +91,128 @@ const BUFFS: { key: BuffKey; label: string; bonus: number }[] = [
   { key: "kafra", label: "Kafra", bonus: 50 },
 ];
 
+function createWaterDungeonRows(knownRows: Record<number, KnownWaterDungeonExp> = {}): WaterDungeonExpRow[] {
+  return Array.from({ length: 5 }, (_, index) => {
+    const difficulty = index + 1;
+    const knownRow = knownRows[difficulty];
+
+    return {
+      difficulty,
+      monsterBaseExp: knownRow?.monsterBaseExp ?? null,
+      monsterJobExp: knownRow?.monsterJobExp ?? null,
+      fifthFloorBaseExp: knownRow?.fifthFloorBaseExp ?? null,
+      fifthFloorJobExp: knownRow?.fifthFloorJobExp ?? null,
+      meteoriteDustChance: knownRow?.meteoriteDustChance ?? null,
+    };
+  });
+}
+
 const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
+  {
+    id: "rank-0",
+    label: "Rank 0",
+    levelRange: "Lv 40-59",
+    rows: createWaterDungeonRows(),
+  },
+  {
+    id: "rank-1",
+    label: "Rank 1",
+    levelRange: "Lv 60-79",
+    rows: createWaterDungeonRows({
+      1: {
+        monsterBaseExp: 510,
+        monsterJobExp: 510,
+        fifthFloorBaseExp: 6696,
+        fifthFloorJobExp: 6480,
+        meteoriteDustChance: null,
+      },
+    }),
+  },
+  {
+    id: "rank-2",
+    label: "Rank 2",
+    levelRange: "Lv 80-99",
+    rows: createWaterDungeonRows(),
+  },
+  {
+    id: "rank-3",
+    label: "Rank 3",
+    levelRange: "Lv 100-119",
+    rows: createWaterDungeonRows({
+      1: {
+        monsterBaseExp: 1805,
+        monsterJobExp: 1631,
+        fifthFloorBaseExp: 22680,
+        fifthFloorJobExp: 20520,
+        meteoriteDustChance: null,
+      },
+    }),
+  },
+  {
+    id: "rank-4",
+    label: "Rank 4",
+    levelRange: "Lv 120-139",
+    rows: createWaterDungeonRows({
+      1: {
+        monsterBaseExp: 3150,
+        monsterJobExp: 2700,
+        fifthFloorBaseExp: 37800,
+        fifthFloorJobExp: 32400,
+        meteoriteDustChance: null,
+      },
+    }),
+  },
+  {
+    id: "rank-5",
+    label: "Rank 5",
+    levelRange: "Lv 140-159",
+    rows: createWaterDungeonRows(),
+  },
+  {
+    id: "rank-6",
+    label: "Rank 6",
+    levelRange: "Lv 160-179",
+    rows: createWaterDungeonRows(),
+  },
+  {
+    id: "rank-7",
+    label: "Rank 7",
+    levelRange: "Lv 180-199",
+    rows: createWaterDungeonRows(),
+  },
   {
     id: "rank-8",
     label: "Rank 8",
     levelRange: "Lv 200-219",
-    rows: [
-      {
-        difficulty: 1,
+    rows: createWaterDungeonRows({
+      1: {
         monsterBaseExp: 274092,
         monsterJobExp: 191100,
         fifthFloorBaseExp: 2710800,
         fifthFloorJobExp: 1890000,
         meteoriteDustChance: null,
       },
-      {
-        difficulty: 2,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 3,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 4,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 5,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-    ],
+    }),
   },
   {
     id: "rank-9",
     label: "Rank 9",
     levelRange: "Lv 220-239",
-    rows: [
-      {
-        difficulty: 1,
+    rows: createWaterDungeonRows({
+      1: {
         monsterBaseExp: null,
         monsterJobExp: null,
         fifthFloorBaseExp: 3207600,
         fifthFloorJobExp: 2268000,
         meteoriteDustChance: 70,
       },
-      {
-        difficulty: 2,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 3,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 4,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-      {
-        difficulty: 5,
-        monsterBaseExp: null,
-        monsterJobExp: null,
-        fifthFloorBaseExp: null,
-        fifthFloorJobExp: null,
-        meteoriteDustChance: null,
-      },
-    ],
+    }),
+  },
+  {
+    id: "rank-10",
+    label: "Rank 10",
+    levelRange: "Lv 240-249",
+    rows: createWaterDungeonRows(),
   },
 ];
 
@@ -1285,7 +1315,7 @@ function SummaryCard({
 }
 
 function WaterDungeonExpCalculator() {
-  const [rankId, setRankId] = useState(WATER_DUNGEON_EXP_RANKS[0].id);
+  const [rankId, setRankId] = useState("rank-8");
   const [difficulty, setDifficulty] = useState(1);
   const [monsterCount, setMonsterCount] = useState(0);
   const [fifthFloorCount, setFifthFloorCount] = useState(1);
@@ -1318,9 +1348,19 @@ function WaterDungeonExpCalculator() {
       <div className="flex flex-col gap-1 border-b border-slate-800 p-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-sky-200">Water Dungeon EXP</h2>
-          <p className="text-sm text-slate-500">Base / Job calculator for water dungeon ranks</p>
+          <p className="text-sm text-slate-500">
+            Base / Job calculator for water dungeon ranks from{" "}
+            <a
+              className="font-bold text-sky-300 underline decoration-sky-500/40 underline-offset-4 hover:text-sky-100"
+              href="https://hazyforest.com/instances:sunken_tower"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Hazy Forest
+            </a>
+          </p>
         </div>
-        <p className="text-sm font-semibold text-slate-400">Rank 8-9 data</p>
+        <p className="text-sm font-semibold text-slate-400">Rank 0-10 data</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
