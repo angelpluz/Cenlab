@@ -9,6 +9,12 @@ import {
   readPersonalDataProfiles,
 } from "@/lib/personal-data";
 import type { PersonalCharacterProfile } from "@/lib/personal-data-types";
+import type {
+  RathenaCalculatorItem,
+  RathenaItemBonuses,
+  RathenaItemBonusKey,
+  RathenaItemCategory,
+} from "@/lib/rathena-item-types";
 
 const STORAGE_KEY = "cenlab.stat-calculator.v1";
 
@@ -45,6 +51,60 @@ const MODIFIER_FIELDS = [
   { key: "sMatkBonus", label: "S.MATK +", max: 500 },
 ] as const;
 
+const ITEM_CATEGORIES: { value: RathenaItemCategory | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "weapon", label: "Weapon" },
+  { value: "armor", label: "Armor" },
+  { value: "card", label: "Card" },
+  { value: "shadow", label: "Shadow" },
+  { value: "ammo", label: "Ammo" },
+  { value: "consumable", label: "Consumable" },
+  { value: "usable", label: "Usable" },
+  { value: "etc", label: "Etc" },
+];
+
+const ITEM_BONUS_LABELS: Record<RathenaItemBonusKey, string> = {
+  str: "STR",
+  agi: "AGI",
+  vit: "VIT",
+  int: "INT",
+  dex: "DEX",
+  luk: "LUK",
+  pow: "POW",
+  sta: "STA",
+  wis: "WIS",
+  spl: "SPL",
+  con: "CON",
+  crt: "CRT",
+  weaponAtk: "Weapon ATK",
+  equipAtk: "Equip ATK",
+  atkPercent: "ATK %",
+  equipMatk: "Equip MATK",
+  matkPercent: "MATK %",
+  hitBonus: "HIT",
+  fleeBonus: "FLEE",
+  critBonus: "CRIT",
+  defBonus: "DEF",
+  mdefBonus: "MDEF",
+  pAtkBonus: "P.ATK",
+  sMatkBonus: "S.MATK",
+  rangedDamagePercent: "Ranged %",
+  meleeDamagePercent: "Melee %",
+  criticalDamagePercent: "Crit Dmg %",
+  variableCastPercent: "VCT %",
+  aspdPercent: "ASPD %",
+};
+
+const PERCENT_BONUS_KEYS = new Set<RathenaItemBonusKey>([
+  "atkPercent",
+  "matkPercent",
+  "rangedDamagePercent",
+  "meleeDamagePercent",
+  "criticalDamagePercent",
+  "variableCastPercent",
+  "aspdPercent",
+]);
+
 type PrimaryStatKey = (typeof PRIMARY_STAT_FIELDS)[number]["key"];
 type TraitStatKey = (typeof TRAIT_STAT_FIELDS)[number]["key"];
 type ModifierKey = (typeof MODIFIER_FIELDS)[number]["key"];
@@ -53,6 +113,7 @@ type StatBuild = {
   profileId: string;
   baseLevel: number;
   jobLevel: number;
+  itemIds: number[];
   primaryStats: Record<PrimaryStatKey, number>;
   traitStats: Record<TraitStatKey, number>;
   modifiers: Record<ModifierKey, number>;
@@ -77,6 +138,13 @@ type DerivedStats = {
   mres: number;
   hPlus: number;
   cRate: number;
+};
+
+type ItemSearchResponse = {
+  generatedAt: string;
+  items: RathenaCalculatorItem[];
+  source: string;
+  total: number;
 };
 
 const DEFAULT_PRIMARY_STATS: Record<PrimaryStatKey, number> = {
@@ -116,6 +184,7 @@ const DEFAULT_BUILD: StatBuild = {
   profileId: "",
   baseLevel: 250,
   jobLevel: 50,
+  itemIds: [],
   primaryStats: DEFAULT_PRIMARY_STATS,
   traitStats: DEFAULT_TRAIT_STATS,
   modifiers: DEFAULT_MODIFIERS,
@@ -154,11 +223,19 @@ function mergeNumberRecord<T extends string>(
 
 function normalizeBuild(value: unknown): StatBuild {
   const source = typeof value === "object" && value !== null ? (value as Partial<StatBuild>) : {};
+  const rawItemIds = Array.isArray(source.itemIds) ? source.itemIds : [];
 
   return {
     profileId: typeof source.profileId === "string" ? source.profileId : DEFAULT_BUILD.profileId,
     baseLevel: floorClamp(typeof source.baseLevel === "number" ? source.baseLevel : DEFAULT_BUILD.baseLevel, 1, 260),
     jobLevel: floorClamp(typeof source.jobLevel === "number" ? source.jobLevel : DEFAULT_BUILD.jobLevel, 1, 70),
+    itemIds: Array.from(
+      new Set(
+        rawItemIds
+          .map((id) => (typeof id === "number" ? Math.floor(id) : Number(id)))
+          .filter((id) => Number.isInteger(id) && id > 0)
+      )
+    ).slice(0, 80),
     primaryStats: mergeNumberRecord(DEFAULT_PRIMARY_STATS, source.primaryStats, 1, 130),
     traitStats: mergeNumberRecord(DEFAULT_TRAIT_STATS, source.traitStats, 0, 110),
     modifiers: mergeNumberRecord(DEFAULT_MODIFIERS, source.modifiers, 0, 5000),
@@ -176,6 +253,62 @@ function readStoredBuild(): StatBuild {
   } catch {
     return DEFAULT_BUILD;
   }
+}
+
+function addBonus(current: number, bonuses: RathenaItemBonuses, key: RathenaItemBonusKey): number {
+  return current + (bonuses[key] || 0);
+}
+
+function combineItemBonuses(items: RathenaCalculatorItem[]): RathenaItemBonuses {
+  const combined: RathenaItemBonuses = {};
+
+  for (const item of items) {
+    if (!item.bonuses) continue;
+
+    for (const [rawKey, value] of Object.entries(item.bonuses)) {
+      if (typeof value !== "number") continue;
+      const key = rawKey as RathenaItemBonusKey;
+      combined[key] = (combined[key] || 0) + value;
+    }
+  }
+
+  return combined;
+}
+
+function applyItemBonuses(build: StatBuild, bonuses: RathenaItemBonuses): StatBuild {
+  return {
+    ...build,
+    primaryStats: {
+      str: floorClamp(addBonus(build.primaryStats.str, bonuses, "str"), 1, 500),
+      agi: floorClamp(addBonus(build.primaryStats.agi, bonuses, "agi"), 1, 500),
+      vit: floorClamp(addBonus(build.primaryStats.vit, bonuses, "vit"), 1, 500),
+      int: floorClamp(addBonus(build.primaryStats.int, bonuses, "int"), 1, 500),
+      dex: floorClamp(addBonus(build.primaryStats.dex, bonuses, "dex"), 1, 500),
+      luk: floorClamp(addBonus(build.primaryStats.luk, bonuses, "luk"), 1, 500),
+    },
+    traitStats: {
+      pow: floorClamp(addBonus(build.traitStats.pow, bonuses, "pow"), 0, 500),
+      sta: floorClamp(addBonus(build.traitStats.sta, bonuses, "sta"), 0, 500),
+      wis: floorClamp(addBonus(build.traitStats.wis, bonuses, "wis"), 0, 500),
+      spl: floorClamp(addBonus(build.traitStats.spl, bonuses, "spl"), 0, 500),
+      con: floorClamp(addBonus(build.traitStats.con, bonuses, "con"), 0, 500),
+      crt: floorClamp(addBonus(build.traitStats.crt, bonuses, "crt"), 0, 500),
+    },
+    modifiers: {
+      weaponAtk: floorClamp(addBonus(build.modifiers.weaponAtk, bonuses, "weaponAtk"), 0, 20000),
+      equipAtk: floorClamp(addBonus(build.modifiers.equipAtk, bonuses, "equipAtk"), 0, 20000),
+      atkPercent: floorClamp(addBonus(build.modifiers.atkPercent, bonuses, "atkPercent"), 0, 5000),
+      equipMatk: floorClamp(addBonus(build.modifiers.equipMatk, bonuses, "equipMatk"), 0, 20000),
+      matkPercent: floorClamp(addBonus(build.modifiers.matkPercent, bonuses, "matkPercent"), 0, 5000),
+      hitBonus: floorClamp(addBonus(build.modifiers.hitBonus, bonuses, "hitBonus"), 0, 20000),
+      fleeBonus: floorClamp(addBonus(build.modifiers.fleeBonus, bonuses, "fleeBonus"), 0, 20000),
+      critBonus: floorClamp(addBonus(build.modifiers.critBonus, bonuses, "critBonus"), 0, 5000),
+      defBonus: floorClamp(addBonus(build.modifiers.defBonus, bonuses, "defBonus"), 0, 20000),
+      mdefBonus: floorClamp(addBonus(build.modifiers.mdefBonus, bonuses, "mdefBonus"), 0, 20000),
+      pAtkBonus: floorClamp(addBonus(build.modifiers.pAtkBonus, bonuses, "pAtkBonus"), 0, 5000),
+      sMatkBonus: floorClamp(addBonus(build.modifiers.sMatkBonus, bonuses, "sMatkBonus"), 0, 5000),
+    },
+  };
 }
 
 function calculateDerivedStats(build: StatBuild): DerivedStats {
@@ -220,16 +353,84 @@ function calculateDerivedStats(build: StatBuild): DerivedStats {
 export default function StatCalculator() {
   const [profiles, setProfiles] = useState<PersonalCharacterProfile[]>(() => readPersonalDataProfiles());
   const [build, setBuild] = useState<StatBuild>(() => readStoredBuild());
+  const [itemQuery, setItemQuery] = useState("");
+  const [itemCategory, setItemCategory] = useState<RathenaItemCategory | "all">("all");
+  const [itemResults, setItemResults] = useState<RathenaCalculatorItem[]>([]);
+  const [selectedItems, setSelectedItems] = useState<RathenaCalculatorItem[]>([]);
+  const [itemTotal, setItemTotal] = useState(0);
+  const [isSearchingItems, setIsSearchingItems] = useState(false);
 
   const selectedProfile = profiles.find((profile) => profile.id === build.profileId);
-  const derivedStats = useMemo(() => calculateDerivedStats(build), [build]);
+  const itemBonuses = useMemo(() => combineItemBonuses(selectedItems), [selectedItems]);
+  const effectiveBuild = useMemo(() => applyItemBonuses(build, itemBonuses), [build, itemBonuses]);
+  const derivedStats = useMemo(() => calculateDerivedStats(effectiveBuild), [effectiveBuild]);
   const castRemaining = Math.max(0, 100 - derivedStats.variableCastReduction);
-  const primaryTotal = PRIMARY_STAT_FIELDS.reduce((sum, field) => sum + build.primaryStats[field.key], 0);
-  const traitTotal = TRAIT_STAT_FIELDS.reduce((sum, field) => sum + build.traitStats[field.key], 0);
+  const primaryTotal = PRIMARY_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.primaryStats[field.key], 0);
+  const traitTotal = TRAIT_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.traitStats[field.key], 0);
+  const selectedItemIds = build.itemIds.join(",");
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
   }, [build]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchSelectedItems() {
+      if (!selectedItemIds) {
+        setSelectedItems([]);
+        return;
+      }
+
+      const response = await fetch(`/api/items/search?ids=${encodeURIComponent(selectedItemIds)}`, {
+        signal: controller.signal,
+      });
+      if (!response.ok) return;
+
+      const payload = (await response.json()) as ItemSearchResponse;
+      setSelectedItems(payload.items);
+    }
+
+    fetchSelectedItems().catch((error) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      console.error(error);
+    });
+
+    return () => controller.abort();
+  }, [selectedItemIds]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setIsSearchingItems(true);
+      const params = new URLSearchParams({
+        category: itemCategory,
+        limit: "36",
+        q: itemQuery,
+      });
+
+      try {
+        const response = await fetch(`/api/items/search?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as ItemSearchResponse;
+        setItemResults(payload.items);
+        setItemTotal(payload.total);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error(error);
+      } finally {
+        if (!controller.signal.aborted) setIsSearchingItems(false);
+      }
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [itemCategory, itemQuery]);
 
   useEffect(() => {
     function refreshProfiles() {
@@ -298,6 +499,33 @@ export default function StatCalculator() {
     );
   }
 
+  function addItem(itemId: number) {
+    setBuild((current) =>
+      normalizeBuild({
+        ...current,
+        itemIds: current.itemIds.includes(itemId) ? current.itemIds : [...current.itemIds, itemId],
+      })
+    );
+  }
+
+  function removeItem(itemId: number) {
+    setBuild((current) =>
+      normalizeBuild({
+        ...current,
+        itemIds: current.itemIds.filter((id) => id !== itemId),
+      })
+    );
+  }
+
+  function clearItems() {
+    setBuild((current) =>
+      normalizeBuild({
+        ...current,
+        itemIds: [],
+      })
+    );
+  }
+
   function resetBuild() {
     setBuild(DEFAULT_BUILD);
   }
@@ -334,9 +562,9 @@ export default function StatCalculator() {
             detail={`status ${derivedStats.statusMatk}`}
             tone="violet"
           />
-          <SummaryCard label="HIT" value={formatNumber(derivedStats.hit)} detail={`DEX ${build.primaryStats.dex}`} tone="emerald" />
-          <SummaryCard label="FLEE" value={formatNumber(derivedStats.flee)} detail={`AGI ${build.primaryStats.agi}`} tone="sky" />
-          <SummaryCard label="CRIT" value={formatNumber(derivedStats.crit)} detail={`LUK ${build.primaryStats.luk}`} tone="amber" />
+          <SummaryCard label="HIT" value={formatNumber(derivedStats.hit)} detail={`DEX ${effectiveBuild.primaryStats.dex}`} tone="emerald" />
+          <SummaryCard label="FLEE" value={formatNumber(derivedStats.flee)} detail={`AGI ${effectiveBuild.primaryStats.agi}`} tone="sky" />
+          <SummaryCard label="CRIT" value={formatNumber(derivedStats.crit)} detail={`LUK ${effectiveBuild.primaryStats.luk}`} tone="amber" />
           <SummaryCard
             label="VCT"
             value={`${formatNumber(derivedStats.variableCastReduction)}%`}
@@ -439,6 +667,22 @@ export default function StatCalculator() {
           </aside>
 
           <section className="space-y-5">
+            <ItemLoadoutPanel
+              bonuses={itemBonuses}
+              category={itemCategory}
+              isLoading={isSearchingItems}
+              query={itemQuery}
+              results={itemResults}
+              resultTotal={itemTotal}
+              selectedIds={build.itemIds}
+              selectedItems={selectedItems}
+              onAdd={addItem}
+              onCategoryChange={setItemCategory}
+              onClear={clearItems}
+              onQueryChange={setItemQuery}
+              onRemove={removeItem}
+            />
+
             <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/20">
               <h2 className="text-lg font-black text-sky-200">Modifiers</h2>
               <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -504,6 +748,227 @@ export default function StatCalculator() {
       </div>
     </main>
   );
+}
+
+function ItemLoadoutPanel({
+  bonuses,
+  category,
+  isLoading,
+  onAdd,
+  onCategoryChange,
+  onClear,
+  onQueryChange,
+  onRemove,
+  query,
+  resultTotal,
+  results,
+  selectedIds,
+  selectedItems,
+}: {
+  bonuses: RathenaItemBonuses;
+  category: RathenaItemCategory | "all";
+  isLoading: boolean;
+  onAdd: (itemId: number) => void;
+  onCategoryChange: (category: RathenaItemCategory | "all") => void;
+  onClear: () => void;
+  onQueryChange: (query: string) => void;
+  onRemove: (itemId: number) => void;
+  query: string;
+  resultTotal: number;
+  results: RathenaCalculatorItem[];
+  selectedIds: number[];
+  selectedItems: RathenaCalculatorItem[];
+}) {
+  const selectedIdSet = new Set(selectedIds);
+  const bonusEntries = (Object.entries(bonuses) as [RathenaItemBonusKey, number][])
+    .filter(([, value]) => value !== 0)
+    .sort(([a], [b]) => ITEM_BONUS_LABELS[a].localeCompare(ITEM_BONUS_LABELS[b]));
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/20">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-cyan-200">Item Loadout</h2>
+          <p className="mt-1 text-sm text-slate-400">rAthena item search with parsed top-level bonuses</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-lg border border-cyan-500/25 bg-cyan-950/25 px-3 py-2 text-xs font-black text-cyan-100">
+            {selectedItems.length} selected
+          </span>
+          <button
+            className="rounded-lg border border-rose-500/35 bg-rose-950/25 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-950/45 disabled:cursor-not-allowed disabled:opacity-40"
+            disabled={selectedItems.length === 0}
+            type="button"
+            onClick={onClear}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_180px]">
+        <label className="block">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Search Items</span>
+          <input
+            className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
+            placeholder="Angel Wing Bow, Mob Scarf, Varmundt..."
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+          />
+        </label>
+
+        <label className="block">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Category</span>
+          <select
+            className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition focus:border-cyan-400"
+            value={category}
+            onChange={(event) => onCategoryChange(event.target.value as RathenaItemCategory | "all")}
+          >
+            {ITEM_CATEGORIES.map((itemCategory) => (
+              <option key={itemCategory.value} value={itemCategory.value}>
+                {itemCategory.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-h-[220px] rounded-lg border border-slate-800 bg-slate-950/55">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-3 py-2">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+              {isLoading ? "Searching" : `${formatNumber(resultTotal)} results`}
+            </p>
+            <p className="text-xs font-semibold text-slate-500">showing {results.length}</p>
+          </div>
+
+          <div className="max-h-[430px] divide-y divide-slate-800 overflow-y-auto">
+            {results.length === 0 ? (
+              <div className="p-5 text-sm font-semibold text-slate-500">No item found.</div>
+            ) : (
+              results.map((item) => {
+                const isSelected = selectedIdSet.has(item.id);
+
+                return (
+                  <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_88px] gap-3 p-3">
+                    <ItemSummary item={item} />
+                    <button
+                      className="h-10 self-start rounded-lg border border-cyan-500/35 bg-cyan-950/25 px-3 text-xs font-black text-cyan-100 transition hover:bg-cyan-950/45 disabled:cursor-not-allowed disabled:border-slate-700 disabled:bg-slate-900 disabled:text-slate-500"
+                      disabled={isSelected}
+                      type="button"
+                      onClick={() => onAdd(item.id)}
+                    >
+                      {isSelected ? "Added" : "Add"}
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-950/55">
+            <div className="border-b border-slate-800 px-3 py-2">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Selected Items</p>
+            </div>
+            <div className="max-h-[250px] divide-y divide-slate-800 overflow-y-auto">
+              {selectedItems.length === 0 ? (
+                <div className="p-4 text-sm font-semibold text-slate-500">No items selected.</div>
+              ) : (
+                selectedItems.map((item) => (
+                  <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_32px] gap-2 p-3">
+                    <ItemSummary compact item={item} />
+                    <button
+                      className="h-8 rounded-lg border border-rose-500/35 bg-rose-950/25 text-sm font-black text-rose-100 transition hover:bg-rose-950/45"
+                      type="button"
+                      aria-label={`Remove ${item.name}`}
+                      onClick={() => onRemove(item.id)}
+                    >
+                      x
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-950/10 p-3">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300/80">Parsed Bonuses</p>
+            {bonusEntries.length === 0 ? (
+              <p className="mt-2 text-sm font-semibold text-slate-500">
+                Select items with direct top-level bonuses to apply them.
+              </p>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {bonusEntries.map(([key, value]) => (
+                  <span
+                    key={key}
+                    className="rounded-lg border border-emerald-500/25 bg-emerald-950/30 px-2.5 py-1 text-xs font-black text-emerald-100"
+                  >
+                    {ITEM_BONUS_LABELS[key]} {formatBonusValue(key, value)}
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="mt-3 text-xs font-semibold text-amber-200/80">
+              Conditional refine, grade, skill, race, size, and set bonuses are shown as preview only for now.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ItemSummary({ compact = false, item }: { compact?: boolean; item: RathenaCalculatorItem }) {
+  const bonusEntries = item.bonuses
+    ? (Object.entries(item.bonuses) as [RathenaItemBonusKey, number][]).filter(([, value]) => value !== 0)
+    : [];
+
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-sm font-black text-slate-100">{item.name}</p>
+      <p className="mt-1 truncate text-xs font-semibold text-slate-500">{formatItemMeta(item)}</p>
+      {!compact && item.scriptPreview && item.scriptPreview.length > 0 ? (
+        <p className="mt-2 line-clamp-2 font-mono text-[11px] font-semibold text-slate-400">
+          {item.scriptPreview.slice(0, 3).join(" ")}
+        </p>
+      ) : null}
+      {bonusEntries.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {bonusEntries.slice(0, compact ? 3 : 6).map(([key, value]) => (
+            <span
+              key={key}
+              className="rounded-md border border-cyan-500/20 bg-cyan-950/25 px-2 py-0.5 text-[11px] font-bold text-cyan-100"
+            >
+              {ITEM_BONUS_LABELS[key]} {formatBonusValue(key, value)}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function formatItemMeta(item: RathenaCalculatorItem): string {
+  return [
+    `#${item.id}`,
+    item.category,
+    item.subType,
+    item.slots.filter((slot) => slot !== "none").join("/"),
+    item.equipLevel ? `Lv.${item.equipLevel}` : undefined,
+    item.cardSlots !== undefined ? `${item.cardSlots} slots` : undefined,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+function formatBonusValue(key: RathenaItemBonusKey, value: number): string {
+  const prefix = value > 0 ? "+" : "";
+  const suffix = PERCENT_BONUS_KEYS.has(key) ? "%" : "";
+  return `${prefix}${formatNumber(value)}${suffix}`;
 }
 
 function NavLink({
