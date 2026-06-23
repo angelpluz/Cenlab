@@ -35,6 +35,22 @@ type ProjectionRow = {
   missingExpTable: boolean;
 };
 
+type WaterDungeonExpRow = {
+  difficulty: number;
+  monsterBaseExp: number | null;
+  monsterJobExp: number | null;
+  fifthFloorBaseExp: number | null;
+  fifthFloorJobExp: number | null;
+  meteoriteDustChance: number | null;
+};
+
+type WaterDungeonExpRank = {
+  id: string;
+  label: string;
+  levelRange: string;
+  rows: WaterDungeonExpRow[];
+};
+
 const WEEKDAYS = [
   { value: 0, label: "Sat. Reset" },
   { value: 1, label: "Sun." },
@@ -71,6 +87,103 @@ const BUFFS: { key: BuffKey; label: string; bonus: number }[] = [
   { key: "vip", label: "VIP", bonus: 20 },
   { key: "silvervine", label: "Silvervine", bonus: 30 },
   { key: "kafra", label: "Kafra", bonus: 50 },
+];
+
+const WATER_DUNGEON_EXP_RANKS: WaterDungeonExpRank[] = [
+  {
+    id: "rank-8",
+    label: "Rank 8",
+    levelRange: "Lv 200-219",
+    rows: [
+      {
+        difficulty: 1,
+        monsterBaseExp: 274092,
+        monsterJobExp: 191100,
+        fifthFloorBaseExp: 2710800,
+        fifthFloorJobExp: 1890000,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 2,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 3,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 4,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 5,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+    ],
+  },
+  {
+    id: "rank-9",
+    label: "Rank 9",
+    levelRange: "Lv 220-239",
+    rows: [
+      {
+        difficulty: 1,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: 3207600,
+        fifthFloorJobExp: 2268000,
+        meteoriteDustChance: 70,
+      },
+      {
+        difficulty: 2,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 3,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 4,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+      {
+        difficulty: 5,
+        monsterBaseExp: null,
+        monsterJobExp: null,
+        fifthFloorBaseExp: null,
+        fifthFloorJobExp: null,
+        meteoriteDustChance: null,
+      },
+    ],
+  },
 ];
 
 const numberFormatter = new Intl.NumberFormat("en-US");
@@ -1034,6 +1147,8 @@ export default function ExpQuestCalculator() {
               </div>
             </section>
 
+            <WaterDungeonExpCalculator />
+
             <ExpLevelTable currentLevel={safeCurrentLevel} targetLevel={safeTargetLevel} />
           </section>
         </div>
@@ -1149,13 +1264,14 @@ function SummaryCard({
   label: string;
   value: string;
   detail?: string;
-  tone: "amber" | "cyan" | "emerald" | "rose" | "violet";
+  tone: "amber" | "cyan" | "emerald" | "rose" | "sky" | "violet";
 }) {
   const toneClass = {
     amber: "border-amber-500/25 bg-amber-950/20 text-amber-100",
     cyan: "border-cyan-500/25 bg-cyan-950/20 text-cyan-100",
     emerald: "border-emerald-500/25 bg-emerald-950/20 text-emerald-100",
     rose: "border-rose-500/25 bg-rose-950/20 text-rose-100",
+    sky: "border-sky-500/25 bg-sky-950/20 text-sky-100",
     violet: "border-violet-500/25 bg-violet-950/20 text-violet-100",
   }[tone];
 
@@ -1165,6 +1281,212 @@ function SummaryCard({
       <p className="mt-2 break-words font-mono text-2xl font-black">{value}</p>
       {detail ? <p className="mt-1 text-sm font-semibold text-slate-400">{detail}</p> : null}
     </div>
+  );
+}
+
+function WaterDungeonExpCalculator() {
+  const [rankId, setRankId] = useState(WATER_DUNGEON_EXP_RANKS[0].id);
+  const [difficulty, setDifficulty] = useState(1);
+  const [monsterCount, setMonsterCount] = useState(0);
+  const [fifthFloorCount, setFifthFloorCount] = useState(1);
+  const [baseRatePercent, setBaseRatePercent] = useState(100);
+  const [jobRatePercent, setJobRatePercent] = useState(100);
+  const [customMonsterBaseExp, setCustomMonsterBaseExp] = useState(0);
+  const [customMonsterJobExp, setCustomMonsterJobExp] = useState(0);
+  const [customFifthBaseExp, setCustomFifthBaseExp] = useState(0);
+  const [customFifthJobExp, setCustomFifthJobExp] = useState(0);
+
+  const selectedRank = WATER_DUNGEON_EXP_RANKS.find((rank) => rank.id === rankId) ?? WATER_DUNGEON_EXP_RANKS[0];
+  const selectedRow = selectedRank.rows.find((row) => row.difficulty === difficulty) ?? selectedRank.rows[0];
+
+  const monsterBaseExp = selectedRow.monsterBaseExp ?? customMonsterBaseExp;
+  const monsterJobExp = selectedRow.monsterJobExp ?? customMonsterJobExp;
+  const fifthBaseExp = selectedRow.fifthFloorBaseExp ?? customFifthBaseExp;
+  const fifthJobExp = selectedRow.fifthFloorJobExp ?? customFifthJobExp;
+  const rawBaseExp = monsterBaseExp * monsterCount + fifthBaseExp * fifthFloorCount;
+  const rawJobExp = monsterJobExp * monsterCount + fifthJobExp * fifthFloorCount;
+  const adjustedBaseExp = Math.floor((rawBaseExp * baseRatePercent) / 100);
+  const adjustedJobExp = Math.floor((rawJobExp * jobRatePercent) / 100);
+  const hasMissingSelectedData =
+    selectedRow.monsterBaseExp === null ||
+    selectedRow.monsterJobExp === null ||
+    selectedRow.fifthFloorBaseExp === null ||
+    selectedRow.fifthFloorJobExp === null;
+
+  return (
+    <section className="rounded-xl border border-sky-500/20 bg-slate-900/70 shadow-lg shadow-black/20">
+      <div className="flex flex-col gap-1 border-b border-slate-800 p-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-black text-sky-200">Water Dungeon EXP</h2>
+          <p className="text-sm text-slate-500">Base / Job calculator for water dungeon ranks</p>
+        </div>
+        <p className="text-sm font-semibold text-slate-400">Rank 8-9 data</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-800 bg-slate-950/45 p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Rank</span>
+                <select
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 outline-none transition focus:border-sky-400"
+                  value={rankId}
+                  onChange={(event) => {
+                    setRankId(event.target.value);
+                    setDifficulty(1);
+                  }}
+                >
+                  {WATER_DUNGEON_EXP_RANKS.map((rank) => (
+                    <option key={rank.id} value={rank.id}>
+                      {rank.label} ({rank.levelRange})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Difficulty</span>
+                <select
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-100 outline-none transition focus:border-sky-400"
+                  value={difficulty}
+                  onChange={(event) => setDifficulty(Number(event.target.value))}
+                >
+                  {selectedRank.rows.map((row) => (
+                    <option key={row.difficulty} value={row.difficulty}>
+                      Level {row.difficulty}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <NumberField
+                label="Monster Count"
+                max={99999}
+                min={0}
+                value={monsterCount}
+                onChange={setMonsterCount}
+              />
+              <NumberField
+                label="5F Count"
+                max={999}
+                min={0}
+                value={fifthFloorCount}
+                onChange={setFifthFloorCount}
+              />
+              <NumberField
+                label="Base Rate %"
+                max={10000}
+                min={0}
+                value={baseRatePercent}
+                onChange={setBaseRatePercent}
+              />
+              <NumberField
+                label="Job Rate %"
+                max={10000}
+                min={0}
+                value={jobRatePercent}
+                onChange={setJobRatePercent}
+              />
+            </div>
+          </div>
+
+          {hasMissingSelectedData ? (
+            <div className="rounded-lg border border-orange-500/30 bg-orange-950/20 p-4">
+              <h3 className="font-black text-orange-100">Unknown override</h3>
+              <p className="mt-1 text-sm text-orange-200/75">Fill only the cells marked ? for this rank.</p>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <NumberField
+                  label="Monster Base"
+                  max={999999999999}
+                  min={0}
+                  value={customMonsterBaseExp}
+                  onChange={setCustomMonsterBaseExp}
+                />
+                <NumberField
+                  label="Monster Job"
+                  max={999999999999}
+                  min={0}
+                  value={customMonsterJobExp}
+                  onChange={setCustomMonsterJobExp}
+                />
+                <NumberField
+                  label="5F Base"
+                  max={999999999999}
+                  min={0}
+                  value={customFifthBaseExp}
+                  onChange={setCustomFifthBaseExp}
+                />
+                <NumberField
+                  label="5F Job"
+                  max={999999999999}
+                  min={0}
+                  value={customFifthJobExp}
+                  onChange={setCustomFifthJobExp}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <SummaryCard label="Base EXP" value={formatNumber(adjustedBaseExp)} detail={`raw ${formatNumber(rawBaseExp)}`} tone="sky" />
+            <SummaryCard label="Job EXP" value={formatNumber(adjustedJobExp)} detail={`raw ${formatNumber(rawJobExp)}`} tone="cyan" />
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-slate-800">
+          <div className="border-b border-slate-800 bg-slate-950/70 px-4 py-3">
+            <h3 className="font-black text-sky-100">Water Dungeon Table</h3>
+            <p className="mt-1 text-sm text-slate-500">Unknown values are kept as ? until more data is added.</p>
+          </div>
+          <div className="overflow-auto">
+            <table className="min-w-[860px] divide-y divide-slate-800 text-left text-sm">
+              <thead className="bg-slate-950/95 text-xs uppercase tracking-[0.14em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Rank</th>
+                  <th className="px-3 py-3">Diff</th>
+                  <th className="px-3 py-3 text-right">Monster Base</th>
+                  <th className="px-3 py-3 text-right">Monster Job</th>
+                  <th className="px-3 py-3 text-right">5F Base</th>
+                  <th className="px-3 py-3 text-right">5F Job</th>
+                  <th className="px-4 py-3 text-right">Dust</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80">
+                {WATER_DUNGEON_EXP_RANKS.flatMap((rank) =>
+                  rank.rows.map((row) => {
+                    const isActive = rank.id === rankId && row.difficulty === difficulty;
+
+                    return (
+                      <tr key={`${rank.id}-${row.difficulty}`} className={isActive ? "bg-sky-950/25" : "bg-slate-950/10"}>
+                        <td className="px-4 py-3 font-bold text-slate-200">
+                          {rank.label}
+                          <div className="mt-1 text-xs text-slate-500">{rank.levelRange}</div>
+                        </td>
+                        <td className="px-3 py-3 font-mono font-black text-slate-100">{row.difficulty}</td>
+                        <WaterDungeonExpCell value={row.monsterBaseExp} />
+                        <WaterDungeonExpCell value={row.monsterJobExp} />
+                        <WaterDungeonExpCell value={row.fifthFloorBaseExp} />
+                        <WaterDungeonExpCell value={row.fifthFloorJobExp} />
+                        <td className="px-4 py-3 text-right font-mono font-black text-slate-200">
+                          {row.meteoriteDustChance === null ? "?" : `${row.meteoriteDustChance}%`}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WaterDungeonExpCell({ value }: { value: number | null }) {
+  return (
+    <td className={`px-3 py-3 text-right font-mono font-black ${value === null ? "text-orange-200" : "text-slate-100"}`}>
+      {value === null ? "?" : formatNumber(value)}
+    </td>
   );
 }
 
