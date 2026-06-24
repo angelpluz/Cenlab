@@ -5,6 +5,7 @@ export type RathenaItemCategory =
   | "consumable"
   | "usable"
   | "ammo"
+  | "costume"
   | "etc"
   | "shadow";
 
@@ -20,12 +21,17 @@ export type RathenaItemSlot =
   | "weapon"
   | "ammo"
   | "card"
+  | "costume-head-top"
+  | "costume-head-mid"
+  | "costume-head-low"
+  | "costume-garment"
   | "shadow-weapon"
   | "shadow-armor"
   | "shadow-shield"
   | "shadow-garment"
   | "shadow-shoes"
-  | "shadow-accessory"
+  | "shadow-earring"
+  | "shadow-pendant"
   | "none";
 
 export type RathenaItemBonusKey =

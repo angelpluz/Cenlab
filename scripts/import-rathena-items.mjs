@@ -72,12 +72,17 @@ const LOCATION_SLOT_MAP = {
   Left_Accessory: "accessory",
   Both_Accessory: "accessory",
   Ammo: "ammo",
+  Costume_Head_Top: "costume-head-top",
+  Costume_Head_Mid: "costume-head-mid",
+  Costume_Head_Low: "costume-head-low",
+  Costume_Garment: "costume-garment",
   Shadow_Weapon: "shadow-weapon",
   Shadow_Armor: "shadow-armor",
   Shadow_Shield: "shadow-shield",
   Shadow_Shoes: "shadow-shoes",
   Shadow_Garment: "shadow-garment",
-  Shadow_Accessory: "shadow-accessory",
+  Shadow_Right_Accessory: "shadow-earring",
+  Shadow_Left_Accessory: "shadow-pendant",
 };
 
 function toNumber(value) {
@@ -95,6 +100,7 @@ function itemCategory(entry) {
   if (type === "Weapon") return "weapon";
   if (type === "Card") return "card";
   if (type === "Ammo") return "ammo";
+  if (Object.keys(locations).some((location) => location.startsWith("Costume_"))) return "costume";
   if (Object.keys(locations).some((location) => location.startsWith("Shadow_"))) return "shadow";
   if (type === "Armor") return "armor";
   if (type === "Healing") return "consumable";

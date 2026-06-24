@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import LogoutButton from "@/components/auth/LogoutButton";
 import {
   PERSONAL_DATA_EVENT,
@@ -15,6 +16,7 @@ import type {
   RathenaItemBonusKey,
   RathenaItemCategory,
   RathenaItemGrade,
+  RathenaItemSlot,
 } from "@/lib/rathena-item-types";
 
 const STORAGE_KEY = "cenlab.stat-calculator.v1";
@@ -57,6 +59,7 @@ const ITEM_CATEGORIES: { value: RathenaItemCategory | "all"; label: string }[] =
   { value: "weapon", label: "Weapon" },
   { value: "armor", label: "Armor" },
   { value: "card", label: "Card" },
+  { value: "costume", label: "Costume" },
   { value: "shadow", label: "Shadow" },
   { value: "ammo", label: "Ammo" },
   { value: "consumable", label: "Consumable" },
@@ -110,6 +113,54 @@ type PrimaryStatKey = (typeof PRIMARY_STAT_FIELDS)[number]["key"];
 type TraitStatKey = (typeof TRAIT_STAT_FIELDS)[number]["key"];
 type ModifierKey = (typeof MODIFIER_FIELDS)[number]["key"];
 type GearGrade = "none" | RathenaItemGrade;
+type ElementProperty = "Neutral" | "Water" | "Earth" | "Fire" | "Wind" | "Poison" | "Holy" | "Dark" | "Ghost" | "Undead";
+
+const ELEMENT_OPTIONS: ElementProperty[] = [
+  "Neutral",
+  "Water",
+  "Earth",
+  "Fire",
+  "Wind",
+  "Poison",
+  "Holy",
+  "Dark",
+  "Ghost",
+  "Undead",
+];
+
+const DEFAULT_SKILL_OPTIONS = ["Crescive Bolt Lv10", "Gale Storm Lv10", "Hawk Rush Lv10", "Normal Attack"];
+
+const CUSTOM_OPTION_KEY_MAP: Record<string, RathenaItemBonusKey> = {
+  atk: "equipAtk",
+  equip_atk: "equipAtk",
+  weapon_atk: "weaponAtk",
+  weaponatk: "weaponAtk",
+  atk_rate: "atkPercent",
+  atkpercent: "atkPercent",
+  matk: "equipMatk",
+  matk_rate: "matkPercent",
+  matkpercent: "matkPercent",
+  hit: "hitBonus",
+  flee: "fleeBonus",
+  crit: "critBonus",
+  cri: "critBonus",
+  def: "defBonus",
+  mdef: "mdefBonus",
+  p_atk: "pAtkBonus",
+  patk: "pAtkBonus",
+  s_matk: "sMatkBonus",
+  smatk: "sMatkBonus",
+  range: "rangedDamagePercent",
+  ranged: "rangedDamagePercent",
+  ranged_damage: "rangedDamagePercent",
+  melee: "meleeDamagePercent",
+  melee_damage: "meleeDamagePercent",
+  crit_damage: "criticalDamagePercent",
+  critdmg: "criticalDamagePercent",
+  vct: "variableCastPercent",
+  variable_cast: "variableCastPercent",
+  aspd: "aspdPercent",
+};
 
 const GEAR_GRADE_OPTIONS: { value: GearGrade; label: string }[] = [
   { value: "none", label: "ungrade" },
@@ -227,6 +278,96 @@ const GEAR_SLOT_DEFS = [
     refineable: false,
     gradable: false,
   },
+  {
+    key: "costumeUpper",
+    label: "Costume Upper",
+    category: "costume",
+    slots: ["costume-head-top"],
+    optionLabels: ["Enchant Upper"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "costumeMiddle",
+    label: "Costume Middle",
+    category: "costume",
+    slots: ["costume-head-mid"],
+    optionLabels: ["Enchant Middle"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "costumeLower",
+    label: "Costume Lower",
+    category: "costume",
+    slots: ["costume-head-low"],
+    optionLabels: ["Enchant Lower"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "costumeGarment",
+    label: "Costume Garment",
+    category: "costume",
+    slots: ["costume-garment"],
+    optionLabels: ["Enchant 1", "Enchant 2", "Enchant 3", "Enchant 4"],
+    refineable: false,
+    gradable: false,
+  },
+  {
+    key: "shadowWeapon",
+    label: "Shadow Weapon",
+    category: "shadow",
+    slots: ["shadow-weapon"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
+  {
+    key: "shadowArmor",
+    label: "Shadow Armor",
+    category: "shadow",
+    slots: ["shadow-armor"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
+  {
+    key: "shadowShield",
+    label: "Shadow Shield",
+    category: "shadow",
+    slots: ["shadow-shield"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
+  {
+    key: "shadowShoes",
+    label: "Shadow Shoes",
+    category: "shadow",
+    slots: ["shadow-shoes"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
+  {
+    key: "shadowEarring",
+    label: "Shadow Earring",
+    category: "shadow",
+    slots: ["shadow-earring"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
+  {
+    key: "shadowPendant",
+    label: "Shadow Pendant",
+    category: "shadow",
+    slots: ["shadow-pendant"],
+    optionLabels: [],
+    refineable: true,
+    gradable: false,
+  },
 ] as const;
 
 type GearSlotDef = (typeof GEAR_SLOT_DEFS)[number];
@@ -252,10 +393,128 @@ type PickerTarget =
   | { kind: "main"; slotKey: GearSlotKey }
   | { kind: "option"; optionIndex: number; slotKey: GearSlotKey };
 
+const SUMMARY_GEAR_FIELD_MAP: Partial<
+  Record<
+    GearSlotKey,
+    {
+      gradeField?: string;
+      itemField: string;
+      optionFields?: string[];
+      refineField?: string;
+    }
+  >
+> = {
+  weapon: {
+    itemField: "weapon",
+    refineField: "weaponRefine",
+    gradeField: "weaponGrade",
+    optionFields: ["weaponCard1", "weaponCard2", "weaponEnchant1", "weaponEnchant2", "weaponEnchant3", "weaponEnchant4"],
+  },
+  headTop: {
+    itemField: "headUpper",
+    refineField: "headUpperRefine",
+    gradeField: "headUpperGrade",
+    optionFields: ["headUpperCard", "headUpperEnchant1", "headUpperEnchant2", "headUpperEnchant3"],
+  },
+  headMid: {
+    itemField: "headMiddle",
+    optionFields: ["headMiddleCard", "headMiddleEnchant1", "headMiddleEnchant2"],
+  },
+  headLow: {
+    itemField: "headLower",
+    optionFields: ["headLowerCard", "headLowerEnchant1", "headLowerEnchant2"],
+  },
+  armor: {
+    itemField: "armor",
+    refineField: "armorRefine",
+    gradeField: "armorGrade",
+    optionFields: ["armorCard", "armorEnchant1", "armorEnchant2", "armorEnchant3"],
+  },
+  garment: {
+    itemField: "garment",
+    refineField: "garmentRefine",
+    gradeField: "garmentGrade",
+    optionFields: ["garmentCard", "garmentEnchant1", "garmentEnchant2", "garmentEnchant3"],
+  },
+  shoes: {
+    itemField: "boot",
+    refineField: "bootRefine",
+    gradeField: "bootGrade",
+    optionFields: ["bootCard", "bootEnchant1", "bootEnchant2", "bootEnchant3"],
+  },
+  accessoryRight: {
+    itemField: "accRight",
+    optionFields: ["accRightCard", "accRightEnchant1", "accRightEnchant2"],
+  },
+  accessoryLeft: {
+    itemField: "accLeft",
+    optionFields: ["accLeftCard", "accLeftEnchant1", "accLeftEnchant2"],
+  },
+  shield: {
+    itemField: "shield",
+    refineField: "shieldRefine",
+    gradeField: "shieldGrade",
+    optionFields: ["shieldCard", "shieldEnchant1", "shieldEnchant2"],
+  },
+  ammo: {
+    itemField: "ammo",
+    optionFields: ["ammoOption1", "ammoOption2"],
+  },
+  costumeUpper: {
+    itemField: "costumeUpper",
+    optionFields: ["costumeEnchantUpper"],
+  },
+  costumeMiddle: {
+    itemField: "costumeMiddle",
+    optionFields: ["costumeEnchantMiddle"],
+  },
+  costumeLower: {
+    itemField: "costumeLower",
+    optionFields: ["costumeEnchantLower"],
+  },
+  costumeGarment: {
+    itemField: "costumeGarment",
+    optionFields: [
+      "costumeEnchantGarment",
+      "costumeEnchantGarment2",
+      "costumeEnchantGarment3",
+      "costumeEnchantGarment4",
+    ],
+  },
+  shadowWeapon: {
+    itemField: "shadowWeapon",
+    refineField: "shadowWeaponRefine",
+  },
+  shadowArmor: {
+    itemField: "shadowArmor",
+    refineField: "shadowArmorRefine",
+  },
+  shadowShield: {
+    itemField: "shadowShield",
+    refineField: "shadowShieldRefine",
+  },
+  shadowShoes: {
+    itemField: "shadowBoot",
+    refineField: "shadowBootRefine",
+  },
+  shadowEarring: {
+    itemField: "shadowEarring",
+    refineField: "shadowEarringRefine",
+  },
+  shadowPendant: {
+    itemField: "shadowPendant",
+    refineField: "shadowPendantRefine",
+  },
+};
+
 type StatBuild = {
   profileId: string;
   baseLevel: number;
   jobLevel: number;
+  targetMonster: string;
+  selectedAtkSkill: string;
+  propertyAtk: ElementProperty;
+  customOptionText: string;
   extraItemIds: number[];
   gear: GearLoadout;
   primaryStats: Record<PrimaryStatKey, number>;
@@ -340,6 +599,10 @@ const DEFAULT_BUILD: StatBuild = {
   profileId: "",
   baseLevel: 250,
   jobLevel: 50,
+  targetMonster: "",
+  selectedAtkSkill: DEFAULT_SKILL_OPTIONS[0],
+  propertyAtk: "Neutral",
+  customOptionText: "",
   extraItemIds: [],
   gear: createDefaultGearLoadout(),
   primaryStats: DEFAULT_PRIMARY_STATS,
@@ -415,6 +678,14 @@ function normalizeGearLoadout(value: unknown): GearLoadout {
   }, {} as GearLoadout);
 }
 
+function normalizeElementProperty(value: unknown): ElementProperty {
+  return ELEMENT_OPTIONS.includes(value as ElementProperty) ? (value as ElementProperty) : DEFAULT_BUILD.propertyAtk;
+}
+
+function normalizeText(value: unknown, maxLength: number): string {
+  return typeof value === "string" ? value.slice(0, maxLength) : "";
+}
+
 function normalizeBuild(value: unknown): StatBuild {
   const source = typeof value === "object" && value !== null ? (value as Partial<StatBuild>) : {};
   const legacySource = source as Partial<StatBuild> & { itemIds?: unknown };
@@ -423,6 +694,10 @@ function normalizeBuild(value: unknown): StatBuild {
     profileId: typeof source.profileId === "string" ? source.profileId : DEFAULT_BUILD.profileId,
     baseLevel: floorClamp(typeof source.baseLevel === "number" ? source.baseLevel : DEFAULT_BUILD.baseLevel, 1, 260),
     jobLevel: floorClamp(typeof source.jobLevel === "number" ? source.jobLevel : DEFAULT_BUILD.jobLevel, 1, 70),
+    targetMonster: normalizeText(source.targetMonster, 80),
+    selectedAtkSkill: normalizeText(source.selectedAtkSkill, 80) || DEFAULT_BUILD.selectedAtkSkill,
+    propertyAtk: normalizeElementProperty(source.propertyAtk),
+    customOptionText: normalizeText(source.customOptionText, 2000),
     extraItemIds: normalizeItemIds(source.extraItemIds ?? legacySource.itemIds),
     gear: normalizeGearLoadout(source.gear),
     primaryStats: mergeNumberRecord(DEFAULT_PRIMARY_STATS, source.primaryStats, 1, 130),
@@ -456,6 +731,38 @@ function mergeBonuses(target: RathenaItemBonuses, source?: RathenaItemBonuses) {
     const key = rawKey as RathenaItemBonusKey;
     target[key] = (target[key] || 0) + value;
   }
+}
+
+function normalizeCustomOptionKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+}
+
+function parseCustomOptionText(value: string): RathenaItemBonuses {
+  const bonuses: RathenaItemBonuses = {};
+  const entries = value
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  for (const entry of entries) {
+    const match = entry.match(/^([a-zA-Z0-9_\s.-]+)\s*[:=]\s*(-?\d+(?:\.\d+)?)$/);
+    if (!match) continue;
+
+    const bonusKey = CUSTOM_OPTION_KEY_MAP[normalizeCustomOptionKey(match[1])];
+    if (!bonusKey) continue;
+
+    bonuses[bonusKey] = (bonuses[bonusKey] || 0) + Number(match[2]);
+  }
+
+  return bonuses;
+}
+
+function combineBonuses(...sources: RathenaItemBonuses[]): RathenaItemBonuses {
+  const combined: RathenaItemBonuses = {};
+  for (const source of sources) {
+    mergeBonuses(combined, source);
+  }
+  return combined;
 }
 
 function isBonusRuleActive(rule: NonNullable<RathenaCalculatorItem["bonusRules"]>[number], entry: ConfiguredItem): boolean {
@@ -584,7 +891,7 @@ function isCardOptionLabel(label: string | undefined): boolean {
 
 function getPickerConfig(
   target: PickerTarget | null
-): { category: RathenaItemCategory | "all"; slot?: string; subType?: string } | null {
+): { category: RathenaItemCategory | "all"; slot?: RathenaItemSlot; subType?: string } | null {
   if (!target) return null;
   const slotDef = getGearSlotDef(target.slotKey);
 
@@ -593,7 +900,7 @@ function getPickerConfig(
     if (isCardOptionLabel(optionLabel)) {
       return {
         category: "card",
-        slot: slotDef.slots[0],
+        slot: slotDef.slots[0] as RathenaItemSlot,
       };
     }
 
@@ -605,7 +912,7 @@ function getPickerConfig(
 
   return {
     category: slotDef.category as RathenaItemCategory,
-    slot: slotDef.slots[0],
+    slot: slotDef.slots[0] as RathenaItemSlot,
   };
 }
 
@@ -648,6 +955,62 @@ function calculateDerivedStats(build: StatBuild): DerivedStats {
   };
 }
 
+function getRawCustomOptions(value: string): string[] {
+  return value
+    .split(/[\n,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function buildCalculatorSummary(
+  build: StatBuild,
+  itemMap: Map<number, RathenaCalculatorItem>,
+  derivedStats: DerivedStats
+) {
+  const equipment: Record<string, number | string | null> = {};
+  const equipmentNames: Record<string, string> = {};
+
+  for (const slotDef of GEAR_SLOT_DEFS) {
+    const fieldMap = SUMMARY_GEAR_FIELD_MAP[slotDef.key];
+    const slot = build.gear[slotDef.key];
+    if (!fieldMap || !slot) continue;
+
+    equipment[fieldMap.itemField] = slot.itemId;
+    if (slot.itemId) {
+      equipmentNames[fieldMap.itemField] = itemMap.get(slot.itemId)?.name || `#${slot.itemId}`;
+    }
+
+    if (fieldMap.refineField) equipment[fieldMap.refineField] = slot.refine;
+    if (fieldMap.gradeField) equipment[fieldMap.gradeField] = slot.grade === "none" ? null : slot.grade;
+
+    fieldMap.optionFields?.forEach((field, index) => {
+      const optionId = slot.optionIds[index] || null;
+      equipment[field] = optionId;
+      if (optionId) {
+        equipmentNames[field] = itemMap.get(optionId)?.name || `#${optionId}`;
+      }
+    });
+  }
+
+  return {
+    character: {
+      profileId: build.profileId || null,
+      level: build.baseLevel,
+      jobLevel: build.jobLevel,
+      selectedAtkSkill: build.selectedAtkSkill,
+      propertyAtk: build.propertyAtk,
+      targetMonster: build.targetMonster || null,
+    },
+    primaryStats: build.primaryStats,
+    traitStats: build.traitStats,
+    manualModifiers: build.modifiers,
+    rawOptionTxts: getRawCustomOptions(build.customOptionText),
+    equipment,
+    equipmentNames,
+    derived: derivedStats,
+  };
+}
+
 export default function StatCalculator() {
   const [profiles, setProfiles] = useState<PersonalCharacterProfile[]>(() => readPersonalDataProfiles());
   const [build, setBuild] = useState<StatBuild>(() => readStoredBuild());
@@ -662,8 +1025,14 @@ export default function StatCalculator() {
   const selectedItemMap = useMemo(() => new Map(selectedItems.map((item) => [item.id, item])), [selectedItems]);
   const configuredItems = useMemo(() => getConfiguredItems(build, selectedItemMap), [build, selectedItemMap]);
   const itemBonuses = useMemo(() => combineConfiguredItemBonuses(configuredItems), [configuredItems]);
-  const effectiveBuild = useMemo(() => applyItemBonuses(build, itemBonuses), [build, itemBonuses]);
+  const customBonuses = useMemo(() => parseCustomOptionText(build.customOptionText), [build.customOptionText]);
+  const totalBonuses = useMemo(() => combineBonuses(itemBonuses, customBonuses), [customBonuses, itemBonuses]);
+  const effectiveBuild = useMemo(() => applyItemBonuses(build, totalBonuses), [build, totalBonuses]);
   const derivedStats = useMemo(() => calculateDerivedStats(effectiveBuild), [effectiveBuild]);
+  const calculatorSummary = useMemo(
+    () => buildCalculatorSummary(build, selectedItemMap, derivedStats),
+    [build, derivedStats, selectedItemMap]
+  );
   const castRemaining = Math.max(0, 100 - derivedStats.variableCastReduction);
   const primaryTotal = PRIMARY_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.primaryStats[field.key], 0);
   const traitTotal = TRAIT_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.traitStats[field.key], 0);
@@ -868,7 +1237,7 @@ export default function StatCalculator() {
     setItemQuery("");
   }
 
-  function resetBuild() {
+function resetBuild() {
     setBuild(DEFAULT_BUILD);
     setPickerTarget(null);
     setItemQuery("");
@@ -1012,7 +1381,7 @@ export default function StatCalculator() {
 
           <section className="space-y-5">
             <EquipmentBuilderPanel
-              bonuses={itemBonuses}
+              bonuses={totalBonuses}
               configuredItems={configuredItems}
               gear={build.gear}
               isLoading={isSearchingItems}
@@ -1047,6 +1416,14 @@ export default function StatCalculator() {
                 ))}
               </div>
             </div>
+
+            <CalculatorWorkbenchPanel
+              build={build}
+              customBonuses={customBonuses}
+              derivedStats={derivedStats}
+              summary={calculatorSummary}
+              onUpdateBuild={updateBuild}
+            />
 
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
               <OutputPanel
@@ -1096,6 +1473,161 @@ export default function StatCalculator() {
         </div>
       </div>
     </main>
+  );
+}
+
+function CalculatorWorkbenchPanel({
+  build,
+  customBonuses,
+  derivedStats,
+  onUpdateBuild,
+  summary,
+}: {
+  build: StatBuild;
+  customBonuses: RathenaItemBonuses;
+  derivedStats: DerivedStats;
+  onUpdateBuild: (patch: Partial<StatBuild>) => void;
+  summary: ReturnType<typeof buildCalculatorSummary>;
+}) {
+  const customBonusEntries = (Object.entries(customBonuses) as [RathenaItemBonusKey, number][]).filter(
+    ([, value]) => value !== 0
+  );
+
+  return (
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_430px]">
+      <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
+        <div className="border-b border-emerald-500/25 bg-emerald-900/75 px-4 py-3">
+          <h2 className="font-black text-emerald-50">Battle Summary</h2>
+        </div>
+        <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-3">
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Monster</span>
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400"
+              placeholder="Phantom of Amdarais..."
+              value={build.targetMonster}
+              onChange={(event) => onUpdateBuild({ targetMonster: event.target.value })}
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Skill</span>
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition focus:border-cyan-400"
+              list="stat-calculator-skill-options"
+              value={build.selectedAtkSkill}
+              onChange={(event) => onUpdateBuild({ selectedAtkSkill: event.target.value })}
+            />
+            <datalist id="stat-calculator-skill-options">
+              {DEFAULT_SKILL_OPTIONS.map((skill) => (
+                <option key={skill} value={skill} />
+              ))}
+            </datalist>
+          </label>
+
+          <label className="block">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Element</span>
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition focus:border-cyan-400"
+              value={build.propertyAtk}
+              onChange={(event) => onUpdateBuild({ propertyAtk: event.target.value as ElementProperty })}
+            >
+              {ELEMENT_OPTIONS.map((element) => (
+                <option key={element} value={element}>
+                  {element}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 border-t border-slate-800 p-4 md:grid-cols-3">
+          <SummaryCard label="BaseSkill" value={formatNumber(derivedStats.totalAtk)} detail="current ATK model" tone="amber" />
+          <SummaryCard label="Hit" value={formatNumber(derivedStats.hit)} detail="status + item" tone="cyan" />
+          <SummaryCard label="ASPD" value={`${formatNumber(100 + (customBonuses.aspdPercent || 0))}%`} detail="custom ASPD %" tone="violet" />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <WorkbenchDetails title="Custom Bonus" tone="violet" defaultOpen>
+          <textarea
+            className="min-h-[150px] w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs font-bold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-violet-400"
+            placeholder={"atk:4\np_atk:5\nranged:20\nvct:10"}
+            value={build.customOptionText}
+            onChange={(event) => onUpdateBuild({ customOptionText: event.target.value })}
+          />
+          {customBonusEntries.length === 0 ? (
+            <p className="mt-3 text-sm font-semibold text-slate-500">Known tokens are applied to the live stat output.</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {customBonusEntries.map(([key, value]) => (
+                <span
+                  key={key}
+                  className="rounded-lg border border-violet-500/25 bg-violet-950/35 px-2.5 py-1 text-xs font-black text-violet-100"
+                >
+                  {ITEM_BONUS_LABELS[key]} {formatBonusValue(key, value)}
+                </span>
+              ))}
+            </div>
+          )}
+        </WorkbenchDetails>
+
+        <WorkbenchDetails title="Calculation Breakdown" tone="emerald" defaultOpen>
+          <div className="space-y-2">
+            <BreakdownRow label="Step 1: Status ATK" value={derivedStats.statusAtk} formula="Lv/4 + STR + DEX/5 + LUK/3" />
+            <BreakdownRow label="Step 2: Total ATK" value={derivedStats.totalAtk} formula="(Status + weapon + equip) x ATK%" />
+            <BreakdownRow label="Step 3: Status MATK" value={derivedStats.statusMatk} formula="Lv/4 + INT + INT/2 + DEX/5 + LUK/3" />
+            <BreakdownRow label="Step 4: Total MATK" value={derivedStats.totalMatk} formula="(Status + equip) x MATK%" />
+            <BreakdownRow label="Step 5: VCT" value={`${formatNumber(derivedStats.variableCastReduction)}%`} formula="(DEX x 2 + INT) / 530" />
+          </div>
+        </WorkbenchDetails>
+
+        <WorkbenchDetails title="Summary" tone="cyan">
+          <pre className="max-h-[420px] overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-3 font-mono text-[11px] font-semibold leading-relaxed text-slate-200">
+            {JSON.stringify(summary, null, 2)}
+          </pre>
+        </WorkbenchDetails>
+      </div>
+    </div>
+  );
+}
+
+function WorkbenchDetails({
+  children,
+  defaultOpen = false,
+  title,
+  tone,
+}: {
+  children: ReactNode;
+  defaultOpen?: boolean;
+  title: string;
+  tone: "cyan" | "emerald" | "violet";
+}) {
+  const toneClass = {
+    cyan: "border-cyan-500/25 bg-cyan-950/20 text-cyan-100",
+    emerald: "border-emerald-500/25 bg-emerald-950/20 text-emerald-100",
+    violet: "border-violet-500/25 bg-violet-950/20 text-violet-100",
+  }[tone];
+
+  return (
+    <details className={`rounded-xl border shadow-lg shadow-black/20 ${toneClass}`} open={defaultOpen}>
+      <summary className="cursor-pointer px-4 py-3 text-sm font-black">{title}</summary>
+      <div className="border-t border-slate-800/80 bg-slate-900/70 p-4">{children}</div>
+    </details>
+  );
+}
+
+function BreakdownRow({ formula, label, value }: { formula: string; label: string; value: number | string }) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-black text-slate-300">{label}</p>
+        <p className="font-mono text-sm font-black text-emerald-200">
+          {typeof value === "number" ? formatNumber(value) : value}
+        </p>
+      </div>
+      <p className="mt-1 font-mono text-[11px] font-semibold text-slate-500">{formula}</p>
+    </div>
   );
 }
 
