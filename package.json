@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "import:rathena-items": "node scripts/import-rathena-items.mjs",
+    "import:sanka-items": "node scripts/import-sanka-items.mjs",
     "start": "next start",
     "lint": "next lint"
   },
