@@ -85,6 +85,38 @@ const LOCATION_SLOT_MAP = {
   Shadow_Left_Accessory: "shadow-pendant",
 };
 
+const WEAPON_SUBTYPE_ID_MAP = {
+  Dagger: 256,
+  "1hSword": 257,
+  "2hSword": 258,
+  "1hSpear": 259,
+  "2hSpear": 260,
+  "1hAxe": 261,
+  "2hAxe": 262,
+  Mace: 263,
+  Staff: 265,
+  "2hStaff": 266,
+  Bow: 267,
+  Knuckle: 268,
+  Musical: 269,
+  Whip: 270,
+  Book: 271,
+  Katar: 272,
+  Revolver: 273,
+  Rifle: 274,
+  Gatling: 275,
+  Shotgun: 276,
+  Grenade: 277,
+  Huuma: 278,
+};
+
+const NORMALIZED_WEAPON_SUBTYPE_ID_MAP = Object.fromEntries(
+  Object.entries(WEAPON_SUBTYPE_ID_MAP).map(([key, value]) => [
+    key.toLowerCase().replace(/[^a-z0-9]/g, ""),
+    value,
+  ])
+);
+
 function toNumber(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -119,6 +151,13 @@ function itemSlots(entry, category) {
   if (slots.length === 0) return ["none"];
 
   return [...new Set(slots)];
+}
+
+function weaponSubtypeId(subType) {
+  if (!subType) return undefined;
+
+  const normalized = String(subType).toLowerCase().replace(/[^a-z0-9]/g, "");
+  return NORMALIZED_WEAPON_SUBTYPE_ID_MAP[normalized];
 }
 
 function topLevelScriptLines(script) {
@@ -302,6 +341,7 @@ function mapEntry(entry, sourceKind) {
     category,
     itemType: entry.Type ? String(entry.Type) : undefined,
     subType: entry.SubType ? String(entry.SubType) : undefined,
+    itemSubTypeId: category === "weapon" ? weaponSubtypeId(entry.SubType) : undefined,
     slots: itemSlots(entry, category),
     cardSlots: toNumber(entry.Slots),
     equipLevel: toNumber(entry.EquipLevelMin),
