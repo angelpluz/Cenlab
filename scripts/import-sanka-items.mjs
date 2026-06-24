@@ -242,6 +242,7 @@ function normalizeItem(entry) {
     category,
     itemType: category === "card" && entry.itemTypeId === 11 ? "Enchant" : String(entry.itemTypeId),
     subType: category === "card" && entry.itemTypeId === 11 ? "Enchant" : undefined,
+    itemSubTypeId: typeof entry.itemSubTypeId === "number" ? entry.itemSubTypeId : undefined,
     slots,
     cardSlots: typeof entry.slots === "number" ? entry.slots : undefined,
     equipLevel: typeof entry.requiredLevel === "number" ? entry.requiredLevel : undefined,
@@ -253,6 +254,10 @@ function normalizeItem(entry) {
       (category === "armor" || category === "shadow") && typeof entry.itemLevel === "number" ? entry.itemLevel : undefined,
     refineable: category === "weapon" || category === "armor" || category === "shadow" ? true : undefined,
     gradable: entry.canGrade === true ? true : undefined,
+    usableClass: Array.isArray(entry.usableClass) ? entry.usableClass.map(String) : undefined,
+    unusableClass: Array.isArray(entry.unusableClass) ? entry.unusableClass.map(String) : undefined,
+    description: description || undefined,
+    propertyAtk: entry.propertyAtk ? String(entry.propertyAtk) : undefined,
     bonuses: Object.keys(bonuses).length > 0 ? bonuses : undefined,
     scriptPreview: preview,
   };

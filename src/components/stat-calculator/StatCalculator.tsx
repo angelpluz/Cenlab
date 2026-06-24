@@ -130,6 +130,31 @@ const ELEMENT_OPTIONS: ElementProperty[] = [
 
 const DEFAULT_SKILL_OPTIONS = ["Crescive Bolt Lv10", "Gale Storm Lv10", "Hawk Rush Lv10", "Normal Attack"];
 
+const CHARACTER_CLASS_OPTIONS = [
+  "Windhawk",
+  "DragonKnight",
+  "ArchMage",
+  "Cardinal",
+  "Meister",
+  "ShadowCross",
+  "Inquisitor",
+  "ImperialGuard",
+  "Biolo",
+  "AbyssChaser",
+  "ElementalMaster",
+  "Troubadour",
+  "Trouvere",
+  "NightWatch",
+  "Shinkiro",
+  "Shiranui",
+  "SkyEmperor",
+  "SoulAscetic",
+  "SpiritHandler",
+  "HyperNovice",
+] as const;
+
+type CharacterClass = (typeof CHARACTER_CLASS_OPTIONS)[number];
+
 const CUSTOM_OPTION_KEY_MAP: Record<string, RathenaItemBonusKey> = {
   atk: "equipAtk",
   equip_atk: "equipAtk",
@@ -509,6 +534,7 @@ const SUMMARY_GEAR_FIELD_MAP: Partial<
 
 type StatBuild = {
   profileId: string;
+  characterClass: CharacterClass;
   baseLevel: number;
   jobLevel: number;
   targetMonster: string;
@@ -597,6 +623,7 @@ function createDefaultGearLoadout(): GearLoadout {
 
 const DEFAULT_BUILD: StatBuild = {
   profileId: "",
+  characterClass: "Windhawk",
   baseLevel: 250,
   jobLevel: 50,
   targetMonster: "",
@@ -682,6 +709,10 @@ function normalizeElementProperty(value: unknown): ElementProperty {
   return ELEMENT_OPTIONS.includes(value as ElementProperty) ? (value as ElementProperty) : DEFAULT_BUILD.propertyAtk;
 }
 
+function normalizeCharacterClass(value: unknown): CharacterClass {
+  return CHARACTER_CLASS_OPTIONS.includes(value as CharacterClass) ? (value as CharacterClass) : DEFAULT_BUILD.characterClass;
+}
+
 function normalizeText(value: unknown, maxLength: number): string {
   return typeof value === "string" ? value.slice(0, maxLength) : "";
 }
@@ -692,6 +723,7 @@ function normalizeBuild(value: unknown): StatBuild {
 
   return {
     profileId: typeof source.profileId === "string" ? source.profileId : DEFAULT_BUILD.profileId,
+    characterClass: normalizeCharacterClass(source.characterClass),
     baseLevel: floorClamp(typeof source.baseLevel === "number" ? source.baseLevel : DEFAULT_BUILD.baseLevel, 1, 260),
     jobLevel: floorClamp(typeof source.jobLevel === "number" ? source.jobLevel : DEFAULT_BUILD.jobLevel, 1, 70),
     targetMonster: normalizeText(source.targetMonster, 80),
@@ -890,8 +922,9 @@ function isCardOptionLabel(label: string | undefined): boolean {
 }
 
 function getPickerConfig(
-  target: PickerTarget | null
-): { category: RathenaItemCategory | "all"; slot?: RathenaItemSlot; subType?: string } | null {
+  target: PickerTarget | null,
+  characterClass: CharacterClass
+): { category: RathenaItemCategory | "all"; characterClass?: CharacterClass; slot?: RathenaItemSlot; subType?: string } | null {
   if (!target) return null;
   const slotDef = getGearSlotDef(target.slotKey);
 
@@ -912,6 +945,7 @@ function getPickerConfig(
 
   return {
     category: slotDef.category as RathenaItemCategory,
+    characterClass,
     slot: slotDef.slots[0] as RathenaItemSlot,
   };
 }
@@ -995,6 +1029,7 @@ function buildCalculatorSummary(
   return {
     character: {
       profileId: build.profileId || null,
+      class: build.characterClass,
       level: build.baseLevel,
       jobLevel: build.jobLevel,
       selectedAtkSkill: build.selectedAtkSkill,
@@ -1037,7 +1072,7 @@ export default function StatCalculator() {
   const primaryTotal = PRIMARY_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.primaryStats[field.key], 0);
   const traitTotal = TRAIT_STAT_FIELDS.reduce((sum, field) => sum + effectiveBuild.traitStats[field.key], 0);
   const selectedItemIds = getLoadoutItemIds(build).join(",");
-  const pickerConfig = useMemo(() => getPickerConfig(pickerTarget), [pickerTarget]);
+  const pickerConfig = useMemo(() => getPickerConfig(pickerTarget, build.characterClass), [build.characterClass, pickerTarget]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(build));
@@ -1087,6 +1122,7 @@ export default function StatCalculator() {
       });
       if (pickerConfig.slot) params.set("slot", pickerConfig.slot);
       if (pickerConfig.subType) params.set("subType", pickerConfig.subType);
+      if (pickerConfig.characterClass) params.set("class", pickerConfig.characterClass);
 
       try {
         const response = await fetch(`/api/items/search?${params.toString()}`, {
@@ -1316,6 +1352,21 @@ function resetBuild() {
                 </select>
               </label>
 
+              <label className="mt-4 block">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">Character Class</span>
+                <select
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition focus:border-cyan-400"
+                  value={build.characterClass}
+                  onChange={(event) => updateBuild({ characterClass: event.target.value as CharacterClass })}
+                >
+                  {CHARACTER_CLASS_OPTIONS.map((className) => (
+                    <option key={className} value={className}>
+                      {className}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <NumberField
                   label="Base Level"
@@ -1382,6 +1433,7 @@ function resetBuild() {
           <section className="space-y-5">
             <EquipmentBuilderPanel
               bonuses={totalBonuses}
+              characterClass={build.characterClass}
               configuredItems={configuredItems}
               gear={build.gear}
               isLoading={isSearchingItems}
@@ -1633,6 +1685,7 @@ function BreakdownRow({ formula, label, value }: { formula: string; label: strin
 
 function EquipmentBuilderPanel({
   bonuses,
+  characterClass,
   configuredItems,
   gear,
   isLoading,
@@ -1652,6 +1705,7 @@ function EquipmentBuilderPanel({
   results,
 }: {
   bonuses: RathenaItemBonuses;
+  characterClass: CharacterClass;
   configuredItems: ConfiguredItem[];
   gear: GearLoadout;
   isLoading: boolean;
@@ -1674,7 +1728,7 @@ function EquipmentBuilderPanel({
     .filter(([, value]) => value !== 0)
     .sort(([a], [b]) => ITEM_BONUS_LABELS[a].localeCompare(ITEM_BONUS_LABELS[b]));
   const activeTargetLabel = pickerTarget ? getPickerTargetLabel(pickerTarget) : "";
-  const pickerScopeLabel = pickerTarget ? getPickerScopeLabel(pickerTarget) : "";
+  const pickerScopeLabel = pickerTarget ? getPickerScopeLabel(pickerTarget, characterClass) : "";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
@@ -1944,11 +1998,11 @@ function getPickerTargetLabel(target: PickerTarget): string {
   return `${slotDef.label} ${slotDef.optionLabels[target.optionIndex]}`;
 }
 
-function getPickerScopeLabel(target: PickerTarget): string {
-  const config = getPickerConfig(target);
+function getPickerScopeLabel(target: PickerTarget, characterClass?: CharacterClass): string {
+  const config = getPickerConfig(target, characterClass || DEFAULT_BUILD.characterClass);
   if (!config) return "";
   if (config.subType) return config.subType;
-  if (config.slot) return `${config.slot} only`;
+  if (config.slot) return [config.slot, config.characterClass].filter(Boolean).join(" / ");
   return "";
 }
 
@@ -2160,6 +2214,7 @@ function formatItemMeta(item: RathenaCalculatorItem): string {
     item.category,
     item.subType,
     item.slots.filter((slot) => slot !== "none").join("/"),
+    item.usableClass && item.usableClass.length > 0 ? item.usableClass.join("/") : undefined,
     item.equipLevel ? `Lv.${item.equipLevel}` : undefined,
     item.cardSlots !== undefined ? `${item.cardSlots} slots` : undefined,
   ]

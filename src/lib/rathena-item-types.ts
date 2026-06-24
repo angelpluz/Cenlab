@@ -83,6 +83,7 @@ export type RathenaCalculatorItem = {
   category: RathenaItemCategory;
   itemType?: string;
   subType?: string;
+  itemSubTypeId?: number;
   slots: RathenaItemSlot[];
   cardSlots?: number;
   equipLevel?: number;
@@ -94,6 +95,10 @@ export type RathenaCalculatorItem = {
   armorLevel?: number;
   refineable?: boolean;
   gradable?: boolean;
+  usableClass?: string[];
+  unusableClass?: string[];
+  description?: string;
+  propertyAtk?: string;
   bonuses?: RathenaItemBonuses;
   bonusRules?: RathenaItemBonusRule[];
   scriptPreview?: string[];
