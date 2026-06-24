@@ -14,6 +14,7 @@ function itemMatchesQuery(item: RathenaCalculatorItem, query: string): boolean {
   const text = [
     item.id,
     item.name,
+    ...(item.aliases || []),
     item.aegisName,
     item.category,
     item.itemType,

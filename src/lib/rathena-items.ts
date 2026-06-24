@@ -1,4 +1,5 @@
 import payload from "./generated/rathena-items.json";
+import { CUSTOM_CALCULATOR_ITEMS, CUSTOM_ITEM_OVERRIDES } from "./custom-calculator-items";
 import type {
   RathenaCalculatorItem,
   RathenaItemBonuses,
@@ -7,7 +8,13 @@ import type {
 
 export const RATHENA_ITEM_PAYLOAD = payload as RathenaItemPayload;
 
-export const RATHENA_ITEMS: RathenaCalculatorItem[] = RATHENA_ITEM_PAYLOAD.items;
+export const RATHENA_ITEMS: RathenaCalculatorItem[] = [
+  ...RATHENA_ITEM_PAYLOAD.items.map((item) => ({
+    ...item,
+    ...(CUSTOM_ITEM_OVERRIDES[item.id] || {}),
+  })),
+  ...CUSTOM_CALCULATOR_ITEMS,
+];
 
 const ITEM_BY_ID = new Map(RATHENA_ITEMS.map((item) => [item.id, item]));
 

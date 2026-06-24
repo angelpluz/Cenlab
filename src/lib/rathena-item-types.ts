@@ -79,6 +79,7 @@ export type RathenaCalculatorItem = {
   id: number;
   aegisName: string;
   name: string;
+  aliases?: string[];
   category: RathenaItemCategory;
   itemType?: string;
   subType?: string;
