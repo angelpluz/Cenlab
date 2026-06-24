@@ -578,12 +578,29 @@ function getGearSlotDef(slotKey: GearSlotKey): GearSlotDef {
   return GEAR_SLOT_DEFS.find((slotDef) => slotDef.key === slotKey) || GEAR_SLOT_DEFS[0];
 }
 
-function getPickerConfig(target: PickerTarget | null): { category: RathenaItemCategory | "all"; slot?: string } | null {
+function isCardOptionLabel(label: string | undefined): boolean {
+  return Boolean(label && label.toLowerCase().startsWith("card"));
+}
+
+function getPickerConfig(
+  target: PickerTarget | null
+): { category: RathenaItemCategory | "all"; slot?: string; subType?: string } | null {
   if (!target) return null;
   const slotDef = getGearSlotDef(target.slotKey);
 
   if (target.kind === "option") {
-    return { category: "card" };
+    const optionLabel = slotDef.optionLabels[target.optionIndex];
+    if (isCardOptionLabel(optionLabel)) {
+      return {
+        category: "card",
+        slot: slotDef.slots[0],
+      };
+    }
+
+    return {
+      category: "card",
+      subType: "Enchant",
+    };
   }
 
   return {
@@ -700,6 +717,7 @@ export default function StatCalculator() {
         q: itemQuery,
       });
       if (pickerConfig.slot) params.set("slot", pickerConfig.slot);
+      if (pickerConfig.subType) params.set("subType", pickerConfig.subType);
 
       try {
         const response = await fetch(`/api/items/search?${params.toString()}`, {
@@ -1124,6 +1142,7 @@ function EquipmentBuilderPanel({
     .filter(([, value]) => value !== 0)
     .sort(([a], [b]) => ITEM_BONUS_LABELS[a].localeCompare(ITEM_BONUS_LABELS[b]));
   const activeTargetLabel = pickerTarget ? getPickerTargetLabel(pickerTarget) : "";
+  const pickerScopeLabel = pickerTarget ? getPickerScopeLabel(pickerTarget) : "";
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900/70 shadow-lg shadow-black/20">
@@ -1155,6 +1174,9 @@ function EquipmentBuilderPanel({
               <span className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300/80">
                 Pick {activeTargetLabel}
               </span>
+              {pickerScopeLabel ? (
+                <span className="ml-2 text-xs font-bold text-amber-200/80">{pickerScopeLabel}</span>
+              ) : null}
               <input
                 className="mt-2 w-full rounded-lg border border-cyan-500/30 bg-slate-950 px-3 py-2 text-sm font-bold text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-300"
                 placeholder="Search item, card, enchant..."
@@ -1388,6 +1410,14 @@ function getPickerTargetLabel(target: PickerTarget): string {
   const slotDef = getGearSlotDef(target.slotKey);
   if (target.kind === "main") return slotDef.label;
   return `${slotDef.label} ${slotDef.optionLabels[target.optionIndex]}`;
+}
+
+function getPickerScopeLabel(target: PickerTarget): string {
+  const config = getPickerConfig(target);
+  if (!config) return "";
+  if (config.subType) return config.subType;
+  if (config.slot) return `${config.slot} only`;
+  return "";
 }
 
 function ItemLoadoutPanel({

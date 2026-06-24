@@ -42,6 +42,7 @@ export async function GET(request: Request) {
   const query = normalizeQuery(url.searchParams.get("q") || "");
   const category = url.searchParams.get("category") as RathenaItemCategory | "all" | null;
   const slot = url.searchParams.get("slot");
+  const subType = normalizeQuery(url.searchParams.get("subType") || "");
   const limit = Math.min(
     MAX_LIMIT,
     Math.max(1, Number(url.searchParams.get("limit") || 40) || 40)
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
   const filtered = RATHENA_ITEMS.filter((item) => {
     if (category && category !== "all" && item.category !== category) return false;
     if (slot && !item.slots.some((itemSlot) => itemSlot === slot)) return false;
+    if (subType && normalizeQuery(item.subType || "") !== subType) return false;
     return itemMatchesQuery(item, query);
   });
 
