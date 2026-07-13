@@ -30,6 +30,20 @@ import drakImage from "@/char/dancer/d5.jpg";
 import hideImage from "@/char/dancer/d6.jpg";
 import rragImage from "@/char/dancer/d7.jpg";
 import beeImage from "@/char/dancer/d8.jpg";
+import phiJiKlapRuamJoImage from "@/char/friends/thai-id-06.png";
+import shootingSlingImage from "@/char/friends/shootingsling-id-06.png";
+import ceresImage from "@/char/friends/ceres-id-06.png";
+import asda123QasdImage from "@/char/friends/asda123qasd-id-06.png";
+import phe0naZalpImage from "@/char/friends/phe0nazalp-id-06.png";
+import frebuzImage from "@/char/friends/frebuz-id-06.png";
+import deveraImage from "@/char/friends/devera-id-07.png";
+import hessiaImage from "@/char/friends/hessia-id-07.png";
+import hathorImage from "@/char/friends/hathor-id-10.png";
+import astereaImage from "@/char/friends/asterea-id-10.png";
+import ishtarImage from "@/char/friends/ishtar-id-11.png";
+import sellerDestpAlpImage from "@/char/friends/sellerdestpalp-id-11.png";
+import libertasImage from "@/char/friends/libertas-id-12.png";
+import rngerAlpzzImage from "@/char/friends/rngeralpzz-id-12.png";
 
 export const CHARACTER_IMAGES = {
   francesgaz: francesGazImage,
@@ -63,6 +77,20 @@ export const CHARACTER_IMAGES = {
   hide: hideImage,
   rrag: rragImage,
   bee: beeImage,
+  phijiklapruamjoid06: phiJiKlapRuamJoImage,
+  shootingslingid06: shootingSlingImage,
+  ceresid06: ceresImage,
+  asda123qasdid06: asda123QasdImage,
+  phe0nazalpid06: phe0naZalpImage,
+  frebuzid06: frebuzImage,
+  deveraid07: deveraImage,
+  hessiaid07: hessiaImage,
+  hathorid10: hathorImage,
+  astereaid10: astereaImage,
+  ishtarid11: ishtarImage,
+  sellerdestpalpid11: sellerDestpAlpImage,
+  libertasid12: libertasImage,
+  rngeralpzzid12: rngerAlpzzImage,
 } satisfies Record<string, StaticImageData>;
 
 const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {

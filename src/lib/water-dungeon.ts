@@ -90,6 +90,21 @@ const WATER_DUNGEON_SEEDS: WaterDungeonSeed[] = [
   },
   { id: "u-ranus", name: "U-ranus", groupId: "friends", nextAvailableAt: toBangkokDateTime(17, 6) },
   { id: "devera-id-07", name: "Devera", groupId: "friends", nextAvailableAt: null, note: "id 07" },
+  { id: "hessia-id-07", name: "HESSIA", groupId: "friends", nextAvailableAt: null, note: "id 07" },
+  { id: "aidos-id-03", name: "Aidos", groupId: "friends", nextAvailableAt: null, note: "id 03" },
+  { id: "xineira-id-03", name: "XINEIRA", groupId: "friends", nextAvailableAt: null, note: "id 03" },
+  { id: "phi-ji-klap-ruam-jo-id-06", name: "พี่จี๊กลับรวมจอ", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "shootingsling-id-06", name: "ShootingSling", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "ceres-id-06", name: "Ceres", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "asda123qasd-id-06", name: "asda123qasd", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "phe0nazalp-id-06", name: "Phe0naZALP", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "frebuz-id-06", name: "Frebuz", groupId: "friends", nextAvailableAt: null, note: "id 06" },
+  { id: "hathor-id-10", name: "Hathor", groupId: "friends", nextAvailableAt: null, note: "id 10" },
+  { id: "asterea-id-10", name: "ASTEREA", groupId: "friends", nextAvailableAt: null, note: "id 10" },
+  { id: "ishtar-id-11", name: "Ishtar", groupId: "friends", nextAvailableAt: null, note: "id 11" },
+  { id: "sellerdestpalp-id-11", name: "SellerDestpALp", groupId: "friends", nextAvailableAt: null, note: "id 11" },
+  { id: "libertas-id-12", name: "Libertas", groupId: "friends", nextAvailableAt: null, note: "id 12" },
+  { id: "rngeralpzz-id-12", name: "RNgerALPZZ", groupId: "friends", nextAvailableAt: null, note: "id 12" },
 ];
 
 const PERSONAL_SEED_PROFILES = getPersonalDataSeedProfiles();

@@ -69,6 +69,21 @@ const PERSONAL_CHARACTER_SEEDS: PersonalCharacterSeed[] = [
   { id: "pdrak-id-08", name: "Pแดร๊ค", groupId: "friends", level: 214, note: "id 08", aliases: ["drak", "แดร๊ค"] },
   { id: "u-ranus", name: "U-ranus", groupId: "friends", level: 200 },
   { id: "devera-id-07", name: "Devera", groupId: "friends", level: 200, note: "id 07", aliases: ["devera"] },
+  { id: "hessia-id-07", name: "HESSIA", groupId: "friends", level: 200, note: "id 07", aliases: ["hessia"] },
+  { id: "aidos-id-03", name: "Aidos", groupId: "friends", level: 200, note: "id 03", aliases: ["aidos"] },
+  { id: "xineira-id-03", name: "XINEIRA", groupId: "friends", level: 200, note: "id 03", aliases: ["xineira"] },
+  { id: "phi-ji-klap-ruam-jo-id-06", name: "พี่จี๊กลับรวมจอ", groupId: "friends", level: 200, note: "id 06" },
+  { id: "shootingsling-id-06", name: "ShootingSling", groupId: "friends", level: 200, note: "id 06", aliases: ["shootingsling"] },
+  { id: "ceres-id-06", name: "Ceres", groupId: "friends", level: 200, note: "id 06", aliases: ["ceres"] },
+  { id: "asda123qasd-id-06", name: "asda123qasd", groupId: "friends", level: 200, note: "id 06", aliases: ["asda123qasd"] },
+  { id: "phe0nazalp-id-06", name: "Phe0naZALP", groupId: "friends", level: 200, note: "id 06", aliases: ["phe0nazalp"] },
+  { id: "frebuz-id-06", name: "Frebuz", groupId: "friends", level: 200, note: "id 06", aliases: ["frebuz"] },
+  { id: "hathor-id-10", name: "Hathor", groupId: "friends", level: 200, note: "id 10", aliases: ["hathor"] },
+  { id: "asterea-id-10", name: "ASTEREA", groupId: "friends", level: 200, note: "id 10", aliases: ["asterea"] },
+  { id: "ishtar-id-11", name: "Ishtar", groupId: "friends", level: 200, note: "id 11", aliases: ["ishtar"] },
+  { id: "sellerdestpalp-id-11", name: "SellerDestpALp", groupId: "friends", level: 200, note: "id 11", aliases: ["sellerdestpalp"] },
+  { id: "libertas-id-12", name: "Libertas", groupId: "friends", level: 200, note: "id 12", aliases: ["libertas"] },
+  { id: "rngeralpzz-id-12", name: "RNgerALPZZ", groupId: "friends", level: 200, note: "id 12", aliases: ["rngeralpzz"] },
 ];
 
 function normalizeProfileKey(value: string): string {
