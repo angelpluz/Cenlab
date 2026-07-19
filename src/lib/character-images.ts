@@ -8,6 +8,7 @@ import reginaAlpImage from "@/char/Screenshot_25690604095146.png";
 import candySellerAlpImage from "@/char/Screenshot_25690604095153.png";
 import khrasedraAlpImage from "@/char/Screenshot_25690604095200.png";
 import soulAlpImage from "@/char/Screenshot_25690604095206.png";
+import kittyAlpImage from "@/char/kittyalp.png";
 import power0FranzImage from "@/char/Screenshot_25690604095211.png";
 import jessiGazAlpImage from "@/char/Screenshot_25690604095216.png";
 import souffleExtremeImage from "@/char/Screenshot_25690604095221.png";
@@ -57,6 +58,7 @@ export const CHARACTER_IMAGES = {
   candyselleralp: candySellerAlpImage,
   khrasedraalp: khrasedraAlpImage,
   soulalp: soulAlpImage,
+  kittyalp: kittyAlpImage,
   power0franz: power0FranzImage,
   jessigaalp: jessiGazAlpImage,
   soufflextreme: souffleExtremeImage,

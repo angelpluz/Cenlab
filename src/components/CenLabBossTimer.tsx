@@ -69,7 +69,7 @@ const CHARACTER_SEEDS: Character[] = [
     level: 225,
     imageSrc: CHARACTER_IMAGES.khrasedraalp,
   },
-  { id: "kittyalp", name: "KittyALP", job: "Windhawk", level: 250 },
+  { id: "kittyalp", name: "KittyALP", job: "Windhawk", level: 250, imageSrc: CHARACTER_IMAGES.kittyalp },
   { id: "soulalp", name: "SoulALP", job: "Windhawk", level: 250, imageSrc: CHARACTER_IMAGES.soulalp },
   { id: "power0franz", name: "PoWer0FranZ", job: "Meister", level: 225, imageSrc: CHARACTER_IMAGES.power0franz },
   { id: "jessigaalp", name: "JessiGazALP", job: "Inquisitor", level: 225, imageSrc: CHARACTER_IMAGES.jessigaalp },
