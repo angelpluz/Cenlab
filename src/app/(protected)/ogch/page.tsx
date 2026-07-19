@@ -10,11 +10,11 @@ const JOB_PAGES = [
     detail: "12 tracked characters with cooldown, level, and reset controls.",
   },
   {
-    name: "Bishop",
+    name: "Bishop / Cardinal",
     href: "/ogch/bishop",
     tone: "border-emerald-500/25 bg-emerald-950/20 text-emerald-100",
     summary: "Separate round page for the added bishop lineup.",
-    detail: "10 bishop characters, next scheduled run on 10/06/2026.",
+    detail: "12 bishop and cardinal characters with individual OGCH progress.",
   },
   {
     name: "Bard&Dancer",

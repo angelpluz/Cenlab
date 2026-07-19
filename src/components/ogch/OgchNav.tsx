@@ -8,7 +8,7 @@ type OgchNavProps = {
 const NAV_ITEMS = [
   { key: "overview", label: "OGCH Jobs", href: "/ogch" },
   { key: "windhawk", label: "Windhawk", href: "/ogch/windhawk" },
-  { key: "bishop", label: "Bishop", href: "/ogch/bishop" },
+  { key: "bishop", label: "Bishop / Cardinal", href: "/ogch/bishop" },
   { key: "dancer", label: "Bard&Dancer", href: "/ogch/dancer" },
 ] as const;
 

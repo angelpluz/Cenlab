@@ -105,6 +105,8 @@ const WATER_DUNGEON_SEEDS: WaterDungeonSeed[] = [
   { id: "sellerdestpalp-id-11", name: "SellerDestpALp", groupId: "friends", nextAvailableAt: null, note: "id 11" },
   { id: "libertas-id-12", name: "Libertas", groupId: "friends", nextAvailableAt: null, note: "id 12" },
   { id: "rngeralpzz-id-12", name: "RNgerALPZZ", groupId: "friends", nextAvailableAt: null, note: "id 12" },
+  { id: "thalia-id-13", name: "Thalia", groupId: "friends", nextAvailableAt: null, note: "id 13" },
+  { id: "forentear-id-13", name: "FORENTEAR", groupId: "friends", nextAvailableAt: null, note: "id 13" },
 ];
 
 const PERSONAL_SEED_PROFILES = getPersonalDataSeedProfiles();

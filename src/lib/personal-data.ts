@@ -41,7 +41,8 @@ const PERSONAL_CHARACTER_SEEDS: PersonalCharacterSeed[] = [
   { id: "karella", name: "KARELLA", groupId: "main", level: 248 },
   { id: "queenight", name: "QUEENIGHT", groupId: "main", level: 250 },
   { id: "xenodice", name: "XENODICE", groupId: "main", level: 250 },
-  { id: "vanesfranca", name: "VANESFRANCA", groupId: "main", level: 209 },
+  { id: "rainna", name: "RAINNA", groupId: "main", level: 250 },
+  { id: "vanesfranca", name: "VANESFRANCA", groupId: "main", level: 250 },
   { id: "pinaaya", name: "PINAAYA", groupId: "main", level: 250 },
 
   { id: "francesgaz", name: "FranCesGaz", groupId: "alp", level: 248 },
@@ -54,7 +55,8 @@ const PERSONAL_CHARACTER_SEEDS: PersonalCharacterSeed[] = [
   { id: "poweroffranz", name: "PoWerofFranZ", groupId: "alp", level: 250, aliases: ["power0franz"] },
   { id: "reginaalp", name: "ReginaALP", groupId: "alp", level: 250 },
   { id: "junoirextreme", name: "JunoirExtreme", groupId: "alp", level: 246 },
-  { id: "soulalp", name: "SoulALP", groupId: "alp", level: 200 },
+  { id: "kittyalp", name: "KittyALP", groupId: "alp", level: 250 },
+  { id: "soulalp", name: "SoulALP", groupId: "alp", level: 250 },
 
   { id: "catharina", name: "CATHARINA", groupId: "dancer", level: 252 },
   { id: "achilla", name: "ACHILLA", groupId: "dancer", level: 238 },
@@ -84,6 +86,8 @@ const PERSONAL_CHARACTER_SEEDS: PersonalCharacterSeed[] = [
   { id: "sellerdestpalp-id-11", name: "SellerDestpALp", groupId: "friends", level: 200, note: "id 11", aliases: ["sellerdestpalp"] },
   { id: "libertas-id-12", name: "Libertas", groupId: "friends", level: 200, note: "id 12", aliases: ["libertas"] },
   { id: "rngeralpzz-id-12", name: "RNgerALPZZ", groupId: "friends", level: 200, note: "id 12", aliases: ["rngeralpzz"] },
+  { id: "thalia-id-13", name: "Thalia", groupId: "friends", level: 200, note: "id 13", aliases: ["thalia"] },
+  { id: "forentear-id-13", name: "FORENTEAR", groupId: "friends", level: 200, note: "id 13", aliases: ["forentear"] },
 ];
 
 function normalizeProfileKey(value: string): string {

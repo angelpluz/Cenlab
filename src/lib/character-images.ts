@@ -44,6 +44,8 @@ import ishtarImage from "@/char/friends/ishtar-id-11.png";
 import sellerDestpAlpImage from "@/char/friends/sellerdestpalp-id-11.png";
 import libertasImage from "@/char/friends/libertas-id-12.png";
 import rngerAlpzzImage from "@/char/friends/rngeralpzz-id-12.png";
+import thaliaImage from "@/char/friends/thalia-id-13.png";
+import forentearImage from "@/char/friends/forentear-id-13.png";
 
 export const CHARACTER_IMAGES = {
   francesgaz: francesGazImage,
@@ -91,6 +93,8 @@ export const CHARACTER_IMAGES = {
   sellerdestpalpid11: sellerDestpAlpImage,
   libertasid12: libertasImage,
   rngeralpzzid12: rngerAlpzzImage,
+  thaliaid13: thaliaImage,
+  forentearid13: forentearImage,
 } satisfies Record<string, StaticImageData>;
 
 const CHARACTER_IMAGE_ALIASES: Record<string, StaticImageData> = {

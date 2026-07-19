@@ -232,7 +232,7 @@ export default function OgchStaticRosterTracker({
           name: character.name,
           clearCount: character.clearCount,
         },
-        jobLabel,
+        character.job,
         nextAvailableAt,
         {
           clearCount: character.clearCount + 1,
@@ -262,7 +262,7 @@ export default function OgchStaticRosterTracker({
           name: character.name,
           clearCount: character.clearCount,
         },
-        jobLabel,
+        character.job,
         nextAvailableAt,
         {
           clearCount: Number(manualClearCount),
@@ -289,7 +289,7 @@ export default function OgchStaticRosterTracker({
           name: currentCharacter.name,
           clearCount: currentCharacter.clearCount,
         },
-        jobLabel,
+        currentCharacter.job,
         nextAvailableAt,
         {
           clearCount: currentCharacter.clearCount,

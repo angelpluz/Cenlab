@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import OgchCharacterCard from "@/components/ogch/OgchCharacterCard";
 import OgchNav from "@/components/ogch/OgchNav";
 import {
@@ -21,10 +21,14 @@ import {
 import type { OgchCharacterProgress, OgchMutationApiResponse } from "@/lib/ogch-types";
 import {
   OGCH_STATIC_ROSTER_EVENT,
+  OGCH_LOCAL_WINDHAWK_STORAGE_KEY,
+  buildOgchStaticCharacter,
   completeOgchStaticRosterMembers,
   getOgchStaticRosterStorageKey,
   readOgchPartySelections,
+  readOgchLocalWindhawks,
   readOgchStaticRoster,
+  writeOgchLocalWindhawks,
   writeOgchPartySelections,
   type OgchPartyMember,
   type OgchPartyMemberDisplay,
@@ -122,15 +126,31 @@ export default function OgchTracker() {
     bishop: [],
     dancer: [],
   });
+  const localWindhawkIdsRef = useRef<Set<string>>(new Set());
 
   const refreshCharacters = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
     setError(null);
 
+    const profiles = readPersonalDataProfiles();
+    const localWindhawks = applyPersonalProfilesToOgchCharacters(readOgchLocalWindhawks(), profiles);
+
     try {
       const data = await getOgchCharacters();
-      setCharacters(applyPersonalProfilesToOgchCharacters(data, readPersonalDataProfiles()));
+      const apiCharacters = applyPersonalProfilesToOgchCharacters(data, profiles);
+      const apiIds = new Set(apiCharacters.map((character) => character.id));
+      const apiNames = new Set(apiCharacters.map((character) => character.name.toLowerCase()));
+      const supplementalWindhawks = localWindhawks.filter(
+        (character) => !apiIds.has(character.id) && !apiNames.has(character.name.toLowerCase())
+      );
+
+      localWindhawkIdsRef.current = new Set(
+        supplementalWindhawks.map((character) => character.id)
+      );
+      setCharacters([...apiCharacters, ...supplementalWindhawks]);
     } catch (requestError) {
+      localWindhawkIdsRef.current = new Set(localWindhawks.map((character) => character.id));
+      setCharacters(localWindhawks);
       setError(requestError instanceof Error ? requestError.message : "Could not load OGCH data.");
     } finally {
       if (!quiet) setIsLoading(false);
@@ -172,6 +192,7 @@ export default function OgchTracker() {
       }
 
       if (event.key === PERSONAL_DATA_STORAGE_KEY) handlePersonalDataEvent();
+      if (event.key === OGCH_LOCAL_WINDHAWK_STORAGE_KEY) void refreshCharacters(true);
     }
 
     window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
@@ -183,7 +204,7 @@ export default function OgchTracker() {
       window.removeEventListener(PERSONAL_DATA_EVENT, handlePersonalDataEvent);
       window.removeEventListener("storage", handleStorageEvent);
     };
-  }, [refreshStaticPartyRoster]);
+  }, [refreshCharacters, refreshStaticPartyRoster]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -360,6 +381,24 @@ export default function OgchTracker() {
     [refreshCharacters]
   );
 
+  const updateLocalWindhawk = useCallback(
+    (
+      characterId: string,
+      updater: (current: OgchCharacterProgress) => OgchCharacterProgress
+    ) => {
+      setCharacters((currentCharacters) => {
+        const nextCharacters = currentCharacters.map((character) =>
+          character.id === characterId ? updater(character) : character
+        );
+        writeOgchLocalWindhawks(
+          nextCharacters.filter((character) => localWindhawkIdsRef.current.has(character.id))
+        );
+        return nextCharacters;
+      });
+    },
+    []
+  );
+
   const openManualEdit = useCallback((character: OgchCharacterProgress) => {
     setManualTarget(character);
     setManualClearCount(String(character.clearCount));
@@ -404,11 +443,33 @@ export default function OgchTracker() {
 
     const completedAt = new Date(nowMs);
     const partyMembers = partySelections[pendingComplete.id] ?? [];
-    const completed = await runMutation(
-      pendingComplete.id,
-      () => completeOgchRun(pendingComplete.id),
-      "OGCH completed. Next run available in 3 days."
-    );
+    let completed: boolean;
+
+    if (localWindhawkIdsRef.current.has(pendingComplete.id)) {
+      setMutatingId(pendingComplete.id);
+      updateLocalWindhawk(pendingComplete.id, (character) =>
+        buildOgchStaticCharacter(
+          { id: character.id, name: character.name, clearCount: character.clearCount },
+          character.job,
+          "",
+          {
+            clearCount: character.clearCount + 1,
+            lastCompletedAt: completedAt.toISOString(),
+            nextAvailableAt: addOgchCooldown(completedAt).toISOString(),
+            cooldownStatus: "onCooldown",
+          }
+        )
+      );
+      setNotice("OGCH completed. Next run available in 3 days.");
+      setMutatingId(null);
+      completed = true;
+    } else {
+      completed = await runMutation(
+        pendingComplete.id,
+        () => completeOgchRun(pendingComplete.id),
+        "OGCH completed. Next run available in 3 days."
+      );
+    }
 
     if (completed && partyMembers.length > 0) {
       const completedMembers = completeOgchStaticRosterMembers(partyMembers, completedAt);
@@ -421,39 +482,82 @@ export default function OgchTracker() {
     }
 
     setPendingComplete(null);
-  }, [nowMs, partySelections, pendingComplete, refreshStaticPartyRoster, runMutation]);
+  }, [nowMs, partySelections, pendingComplete, refreshStaticPartyRoster, runMutation, updateLocalWindhawk]);
 
   const submitManualEdit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!manualTarget) return;
 
-      await runMutation(
-        manualTarget.id,
-        () => manualAdjustOgchProgress({
-          characterId: manualTarget.id,
-          clearCount: Number(manualClearCount),
-          lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
-          nextAvailableAt: fromDateTimeLocalInput(manualNextAvailableAt),
-        }),
-        "OGCH progress updated."
-      );
+      if (localWindhawkIdsRef.current.has(manualTarget.id)) {
+        const nextAvailableAt = fromDateTimeLocalInput(manualNextAvailableAt);
+        setMutatingId(manualTarget.id);
+        updateLocalWindhawk(manualTarget.id, (character) =>
+          buildOgchStaticCharacter(
+            { id: character.id, name: character.name, clearCount: character.clearCount },
+            character.job,
+            "",
+            {
+              clearCount: Number(manualClearCount),
+              lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
+              nextAvailableAt,
+              cooldownStatus: nextAvailableAt ? "onCooldown" : "available",
+            }
+          )
+        );
+        setNotice("OGCH progress updated.");
+        setMutatingId(null);
+      } else {
+        await runMutation(
+          manualTarget.id,
+          () => manualAdjustOgchProgress({
+            characterId: manualTarget.id,
+            clearCount: Number(manualClearCount),
+            lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
+            nextAvailableAt: fromDateTimeLocalInput(manualNextAvailableAt),
+          }),
+          "OGCH progress updated."
+        );
+      }
       setManualTarget(null);
     },
-    [manualClearCount, manualLastCompletedAt, manualNextAvailableAt, manualTarget, runMutation]
+    [manualClearCount, manualLastCompletedAt, manualNextAvailableAt, manualTarget, runMutation, updateLocalWindhawk]
   );
 
   const resetCooldown = useCallback(
     async (character: OgchCharacterProgress) => {
       if (!window.confirm(`Reset OGCH cooldown for ${character.name}?`)) return;
 
-      await runMutation(
-        character.id,
-        () => resetOgchCooldown(character.id),
-        "OGCH cooldown reset."
-      );
+      if (localWindhawkIdsRef.current.has(character.id)) {
+        setMutatingId(character.id);
+        updateLocalWindhawk(character.id, (currentCharacter) =>
+          buildOgchStaticCharacter(
+            {
+              id: currentCharacter.id,
+              name: currentCharacter.name,
+              clearCount: currentCharacter.clearCount,
+            },
+            currentCharacter.job,
+            "",
+            {
+              clearCount: currentCharacter.clearCount,
+              lastCompletedAt: currentCharacter.lastCompletedAt,
+              nextAvailableAt: null,
+              cooldownStatus: "available",
+            }
+          )
+        );
+        setNotice("OGCH cooldown reset.");
+        setMutatingId(null);
+      } else {
+        await runMutation(
+          character.id,
+          () => resetOgchCooldown(character.id),
+          "OGCH cooldown reset."
+        );
+      }
     },
-    [runMutation]
+    [runMutation, updateLocalWindhawk]
   );
 
   const pendingNextAvailableAt = pendingComplete ? addOgchCooldown(new Date(nowMs)) : null;
