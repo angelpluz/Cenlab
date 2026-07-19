@@ -22,6 +22,7 @@ import type { OgchCharacterProgress, OgchMutationApiResponse } from "@/lib/ogch-
 import {
   OGCH_STATIC_ROSTER_EVENT,
   OGCH_LOCAL_WINDHAWK_STORAGE_KEY,
+  OGCH_PARTY_STORAGE_KEY,
   buildOgchStaticCharacter,
   completeOgchStaticRosterMembers,
   getOgchStaticRosterStorageKey,
@@ -127,6 +128,7 @@ export default function OgchTracker() {
     dancer: [],
   });
   const localWindhawkIdsRef = useRef<Set<string>>(new Set());
+  const hasScrolledToHashRef = useRef(false);
 
   const refreshCharacters = useCallback(async (quiet = false) => {
     if (!quiet) setIsLoading(true);
@@ -193,6 +195,7 @@ export default function OgchTracker() {
 
       if (event.key === PERSONAL_DATA_STORAGE_KEY) handlePersonalDataEvent();
       if (event.key === OGCH_LOCAL_WINDHAWK_STORAGE_KEY) void refreshCharacters(true);
+      if (event.key === OGCH_PARTY_STORAGE_KEY) setPartySelections(readOgchPartySelections());
     }
 
     window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
@@ -207,9 +210,33 @@ export default function OgchTracker() {
   }, [refreshCharacters, refreshStaticPartyRoster]);
 
   useEffect(() => {
+    if (characters.length === 0 || Object.keys(partySelections).length === 0) return;
+
+    writeOgchPartySelections(
+      partySelections,
+      characters.map((character) => ({
+        characterId: character.id,
+        jobLabel: character.job,
+        name: character.name,
+      }))
+    );
+  }, [characters, partySelections]);
+
+  useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (isLoading || hasScrolledToHashRef.current || !window.location.hash) return;
+
+    const targetId = decodeURIComponent(window.location.hash.slice(1));
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    hasScrolledToHashRef.current = true;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [characters, isLoading]);
 
   useEffect(() => {
     if (!notice) return;
@@ -300,6 +327,7 @@ export default function OgchTracker() {
 
           return {
             characterId: character.id,
+            href: `/ogch/${member.job}#ogch-character-${character.id}`,
             job: member.job,
             jobLabel: character.job,
             key: `${member.job}:${character.id}`,
@@ -351,11 +379,18 @@ export default function OgchTracker() {
           delete nextSelections[leaderId];
         }
 
-        writeOgchPartySelections(nextSelections);
+        writeOgchPartySelections(
+          nextSelections,
+          characters.map((character) => ({
+            characterId: character.id,
+            jobLabel: character.job,
+            name: character.name,
+          }))
+        );
         return nextSelections;
       });
     },
-    []
+    [characters]
   );
 
   const runMutation = useCallback(

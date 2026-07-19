@@ -11,11 +11,18 @@ import {
   getRemainingCooldownSeconds,
 } from "@/lib/ogch";
 import {
+  OGCH_PARTY_EVENT,
+  OGCH_PARTY_STORAGE_KEY,
   OGCH_STATIC_ROSTER_EVENT,
   buildOgchStaticCharacter,
   getOgchStaticRosterStorageKey,
+  readOgchPartyLeaders,
+  readOgchPartySelections,
   readOgchStaticRoster,
   writeOgchStaticRoster,
+  type OgchPartyLeader,
+  type OgchPartyLinkDisplay,
+  type OgchPartyMember,
   type OgchStaticRosterJob,
   type StaticRosterCharacterSeed,
 } from "@/lib/ogch-static-rosters";
@@ -89,6 +96,8 @@ export default function OgchStaticRosterTracker({
   const [manualLastCompletedAt, setManualLastCompletedAt] = useState("");
   const [manualNextAvailableAt, setManualNextAvailableAt] = useState("");
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [partySelections, setPartySelections] = useState<Record<string, OgchPartyMember[]>>({});
+  const [partyLeaders, setPartyLeaders] = useState<Record<string, OgchPartyLeader>>({});
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -98,6 +107,11 @@ export default function OgchStaticRosterTracker({
   useEffect(() => {
     function refreshStoredRoster() {
       setCharacters(readOgchStaticRoster(activeNav));
+    }
+
+    function refreshPartyMappings() {
+      setPartySelections(readOgchPartySelections());
+      setPartyLeaders(readOgchPartyLeaders());
     }
 
     function handleRosterEvent(event: Event) {
@@ -112,16 +126,23 @@ export default function OgchStaticRosterTracker({
       ) {
         refreshStoredRoster();
       }
+
+      if (event.key === OGCH_PARTY_STORAGE_KEY) refreshPartyMappings();
     }
 
     refreshStoredRoster();
+    refreshPartyMappings();
     window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+    window.addEventListener(OGCH_PARTY_EVENT, refreshPartyMappings);
     window.addEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
+    window.addEventListener(PERSONAL_DATA_EVENT, refreshPartyMappings);
     window.addEventListener("storage", handleStorageEvent);
 
     return () => {
       window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
+      window.removeEventListener(OGCH_PARTY_EVENT, refreshPartyMappings);
       window.removeEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
+      window.removeEventListener(PERSONAL_DATA_EVENT, refreshPartyMappings);
       window.removeEventListener("storage", handleStorageEvent);
     };
   }, [activeNav]);
@@ -196,6 +217,41 @@ export default function OgchStaticRosterTracker({
       return aTime - bTime || a.character.name.localeCompare(b.character.name);
     });
   }, [filter, liveCharacters, sort]);
+
+  const partyLinksByCharacterId = useMemo<Record<string, OgchPartyLinkDisplay[]>>(() => {
+    const links: Record<string, OgchPartyLinkDisplay[]> = {};
+
+    Object.entries(partySelections).forEach(([leaderId, members]) => {
+      const leader = partyLeaders[leaderId] ?? {
+        characterId: leaderId,
+        jobLabel: "Windhawk",
+        name: leaderId,
+      };
+
+      members.forEach((member) => {
+        if (member.job !== activeNav) return;
+
+        const currentLinks = links[member.characterId] ?? [];
+        if (currentLinks.some((link) => link.key === `windhawk:${leaderId}`)) return;
+
+        links[member.characterId] = [
+          ...currentLinks,
+          {
+            href: `/ogch/windhawk#ogch-character-${leaderId}`,
+            jobLabel: leader.jobLabel,
+            key: `windhawk:${leaderId}`,
+            name: leader.name,
+          },
+        ];
+      });
+    });
+
+    Object.values(links).forEach((characterLinks) =>
+      characterLinks.sort((a, b) => a.name.localeCompare(b.name))
+    );
+
+    return links;
+  }, [activeNav, partyLeaders, partySelections]);
 
   function openManualEdit(character: OgchCharacterProgress) {
     setManualTarget(character);
@@ -371,7 +427,8 @@ export default function OgchStaticRosterTracker({
 
         <section className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 px-4 py-3 text-sm font-semibold text-cyan-100">
           {jobLabel} roster uses the same OGCH logic as Windhawk. Current next run target is{" "}
-          <span className="font-mono">{formatBangkokDateTime(nextAvailableAt)}</span>.
+          <span className="font-mono">{formatBangkokDateTime(nextAvailableAt)}</span>. Party mappings
+          are linked with the Windhawk page.
         </section>
 
         <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
@@ -384,6 +441,8 @@ export default function OgchStaticRosterTracker({
               onComplete={setPendingComplete}
               onManualEdit={openManualEdit}
               onResetCooldown={resetCooldown}
+              partyLabel="Mapped Windhawk"
+              partyMembers={partyLinksByCharacterId[character.id] ?? []}
             />
           ))}
         </section>

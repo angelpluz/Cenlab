@@ -29,10 +29,26 @@ export type OgchStaticRosterConfig = {
 export type OgchPartyMember = {
   job: OgchStaticRosterJob;
   characterId: string;
+  leaderName?: string;
+  leaderJobLabel?: string;
 };
 
 export type OgchPartyMemberDisplay = OgchPartyMember & {
   key: string;
+  name: string;
+  jobLabel: string;
+  href?: string;
+};
+
+export type OgchPartyLinkDisplay = {
+  key: string;
+  name: string;
+  jobLabel: string;
+  href?: string;
+};
+
+export type OgchPartyLeader = {
+  characterId: string;
   name: string;
   jobLabel: string;
 };
@@ -44,6 +60,7 @@ type StoredStaticRosterCharacter = Pick<
 
 export const OGCH_STATIC_ROSTER_EVENT = "cenlab:ogch-static-roster";
 export const OGCH_PARTY_STORAGE_KEY = "cenlab.ogch.party.v1";
+export const OGCH_PARTY_EVENT = "cenlab:ogch-party";
 export const OGCH_LOCAL_WINDHAWK_STORAGE_KEY = "cenlab.ogch.local-windhawk.v1";
 
 const BISHOP_NEXT_AVAILABLE_AT = "2026-06-10T00:00:00+07:00";
@@ -287,6 +304,89 @@ export function completeOgchStaticRosterMembers(members: OgchPartyMember[], comp
   return completedMembers;
 }
 
+function normalizePartySelections(value: unknown): Record<string, OgchPartyMember[]> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).flatMap(([leaderId, members]) => {
+      if (!Array.isArray(members)) return [];
+
+      const validMembers = members.flatMap((member): OgchPartyMember[] => {
+        if (!member || typeof member !== "object") return [];
+        const candidate = member as Partial<OgchPartyMember>;
+        if (
+          (candidate.job !== "bishop" && candidate.job !== "dancer") ||
+          typeof candidate.characterId !== "string" ||
+          candidate.characterId.length === 0
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            characterId: candidate.characterId,
+            job: candidate.job,
+            ...(typeof candidate.leaderName === "string"
+              ? { leaderName: candidate.leaderName }
+              : {}),
+            ...(typeof candidate.leaderJobLabel === "string"
+              ? { leaderJobLabel: candidate.leaderJobLabel }
+              : {}),
+          },
+        ];
+      });
+
+      return validMembers.length > 0 ? [[leaderId, validMembers]] : [];
+    })
+  );
+}
+
+function normalizePartyLeaders(value: unknown): Record<string, OgchPartyLeader> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).flatMap(([leaderId, leader]) => {
+      if (!leader || typeof leader !== "object") return [];
+      const candidate = leader as Partial<OgchPartyLeader>;
+      if (typeof candidate.name !== "string" || candidate.name.length === 0) return [];
+
+      return [
+        [
+          leaderId,
+          {
+            characterId:
+              typeof candidate.characterId === "string" ? candidate.characterId : leaderId,
+            jobLabel:
+              typeof candidate.jobLabel === "string" ? candidate.jobLabel : "Windhawk",
+            name: candidate.name,
+          },
+        ],
+      ];
+    })
+  );
+}
+
+function attachPartyLeaderDetails(
+  selections: Record<string, OgchPartyMember[]>,
+  leaders: Record<string, OgchPartyLeader>
+): Record<string, OgchPartyMember[]> {
+  return Object.fromEntries(
+    Object.entries(selections).map(([leaderId, members]) => {
+      const leader = leaders[leaderId];
+      if (!leader) return [leaderId, members];
+
+      return [
+        leaderId,
+        members.map((member) => ({
+          ...member,
+          leaderJobLabel: leader.jobLabel,
+          leaderName: leader.name,
+        })),
+      ];
+    })
+  );
+}
+
 export function readOgchPartySelections(): Record<string, OgchPartyMember[]> {
   if (typeof window === "undefined") return {};
 
@@ -294,17 +394,73 @@ export function readOgchPartySelections(): Record<string, OgchPartyMember[]> {
   if (!stored) return {};
 
   try {
-    const parsed = JSON.parse(stored) as Record<string, OgchPartyMember[]>;
-    if (!parsed || typeof parsed !== "object") return {};
-    return parsed;
+    const parsed = JSON.parse(stored) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const parsedRecord = parsed as Record<string, unknown>;
+
+    // Read the short-lived v2 envelope as a migration path, then keep storing the
+    // original v1 record shape so older clients remain compatible.
+    if (
+      parsedRecord.version === 2 &&
+      parsedRecord.selections &&
+      typeof parsedRecord.selections === "object" &&
+      !Array.isArray(parsedRecord.selections)
+    ) {
+      return attachPartyLeaderDetails(
+        normalizePartySelections(parsedRecord.selections),
+        normalizePartyLeaders(parsedRecord.leaders)
+      );
+    }
+
+    return normalizePartySelections(parsed);
   } catch {
     return {};
   }
 }
 
-export function writeOgchPartySelections(selections: Record<string, OgchPartyMember[]>) {
+export function readOgchPartyLeaders(): Record<string, OgchPartyLeader> {
+  const selections = readOgchPartySelections();
+  const profiles = readPersonalDataProfiles();
+
+  return Object.fromEntries(
+    Object.entries(selections).map(([leaderId, members]) => {
+      const storedLeaderName = members.find((member) => member.leaderName)?.leaderName;
+      const storedJobLabel = members.find((member) => member.leaderJobLabel)?.leaderJobLabel;
+      const personalProfile = findPersonalDataProfile(
+        profiles,
+        leaderId,
+        storedLeaderName ?? leaderId
+      );
+
+      return [
+        leaderId,
+        {
+          characterId: leaderId,
+          name: personalProfile?.name ?? storedLeaderName ?? leaderId,
+          jobLabel: storedJobLabel ?? "Windhawk",
+        },
+      ];
+    })
+  );
+}
+
+export function writeOgchPartySelections(
+  selections: Record<string, OgchPartyMember[]>,
+  leaders: OgchPartyLeader[] = []
+) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(OGCH_PARTY_STORAGE_KEY, JSON.stringify(selections));
+
+  const suppliedLeaders = new Map(leaders.map((leader) => [leader.characterId, leader]));
+  const enrichedSelections = attachPartyLeaderDetails(
+    normalizePartySelections(selections),
+    Object.fromEntries(suppliedLeaders)
+  );
+  const serializedState = JSON.stringify(enrichedSelections);
+
+  if (window.localStorage.getItem(OGCH_PARTY_STORAGE_KEY) === serializedState) return;
+
+  window.localStorage.setItem(OGCH_PARTY_STORAGE_KEY, serializedState);
+  window.dispatchEvent(new CustomEvent(OGCH_PARTY_EVENT));
 }
 
 export function resolveOgchPartyMembers(members: OgchPartyMember[]): OgchPartyMemberDisplay[] {
@@ -317,6 +473,7 @@ export function resolveOgchPartyMembers(members: OgchPartyMember[]): OgchPartyMe
       characterId: character.id,
       job: member.job,
       jobLabel: character.job,
+      href: `/ogch/${member.job}#ogch-character-${character.id}`,
       key: `${member.job}:${character.id}`,
       name: character.name,
     };

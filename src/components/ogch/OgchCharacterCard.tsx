@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
-import type { OgchPartyMemberDisplay } from "@/lib/ogch-static-rosters";
+import type { OgchPartyLinkDisplay } from "@/lib/ogch-static-rosters";
 import { formatBangkokDateTime, formatExp, getLiveCooldownStatus, getRemainingCooldownSeconds } from "@/lib/ogch";
 import { getCharacterImage } from "@/lib/character-images";
 import OgchCooldownBadge from "@/components/ogch/OgchCooldownBadge";
@@ -16,7 +17,8 @@ type OgchCharacterCardProps = {
   onManualEdit: (character: OgchCharacterProgress) => void;
   onManageParty?: (character: OgchCharacterProgress) => void;
   onResetCooldown: (character: OgchCharacterProgress) => void;
-  partyMembers?: OgchPartyMemberDisplay[];
+  partyLabel?: string;
+  partyMembers?: OgchPartyLinkDisplay[];
 };
 
 export default function OgchCharacterCard({
@@ -27,6 +29,7 @@ export default function OgchCharacterCard({
   onManualEdit,
   onManageParty,
   onResetCooldown,
+  partyLabel = "Party Members",
   partyMembers = [],
 }: OgchCharacterCardProps) {
   const now = new Date(nowMs);
@@ -39,7 +42,10 @@ export default function OgchCharacterCard({
   const characterImage = getCharacterImage(character.id, character.name);
 
   return (
-    <article className="rounded-xl border border-slate-800 bg-slate-900/65 p-3 shadow-lg shadow-black/10 transition hover:border-cyan-500/40">
+    <article
+      className="scroll-mt-4 rounded-xl border border-slate-800 bg-slate-900/65 p-3 shadow-lg shadow-black/10 transition hover:border-cyan-500/40 target:border-sky-400/70 target:ring-2 target:ring-sky-400/20"
+      id={`ogch-character-${character.id}`}
+    >
       <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
         {characterImage ? (
           <div
@@ -96,33 +102,42 @@ export default function OgchCharacterCard({
         <OgchProgressBar ogchLevel={character.ogchLevel} progress={character.progressToNextLevel} />
       </div>
 
-      {onManageParty ? (
+      {onManageParty || partyMembers.length > 0 ? (
         <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-950/15 p-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-sky-300">Party Members</p>
-            <button
-              onClick={() => onManageParty(character)}
-              disabled={isMutating}
-              className="rounded-md border border-sky-500/35 bg-sky-950/35 px-2 py-1 text-[11px] font-bold text-sky-100 transition hover:bg-sky-900/35 disabled:cursor-not-allowed disabled:opacity-40"
-              type="button"
-            >
-              {partyMembers.length > 0 ? "Edit Party" : "Add Party"}
-            </button>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-sky-300">{partyLabel}</p>
+            {onManageParty ? (
+              <button
+                onClick={() => onManageParty(character)}
+                disabled={isMutating}
+                className="rounded-md border border-sky-500/35 bg-sky-950/35 px-2 py-1 text-[11px] font-bold text-sky-100 transition hover:bg-sky-900/35 disabled:cursor-not-allowed disabled:opacity-40"
+                type="button"
+              >
+                {partyMembers.length > 0 ? "Edit Party" : "Add Party"}
+              </button>
+            ) : null}
           </div>
           {partyMembers.length > 0 ? (
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {partyMembers.map((member) => (
-                <span
-                  key={member.key}
-                  className="rounded-full border border-slate-700 bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200"
-                >
-                  {member.jobLabel}: {member.name}
-                </span>
-              ))}
+              {partyMembers.map((member) => {
+                const className =
+                  "rounded-full border border-slate-700 bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200 transition hover:border-sky-500/40 hover:text-sky-100";
+                const label = `${member.jobLabel}: ${member.name}`;
+
+                return member.href ? (
+                  <Link className={className} href={member.href} key={member.key}>
+                    {label}
+                  </Link>
+                ) : (
+                  <span className={className} key={member.key}>
+                    {label}
+                  </span>
+                );
+              })}
             </div>
-          ) : (
+          ) : onManageParty ? (
             <p className="mt-2 text-xs text-slate-500">No bishop or bard selected.</p>
-          )}
+          ) : null}
         </div>
       ) : null}
 
