@@ -63,27 +63,33 @@ export const OGCH_PARTY_STORAGE_KEY = "cenlab.ogch.party.v1";
 export const OGCH_PARTY_EVENT = "cenlab:ogch-party";
 export const OGCH_LOCAL_WINDHAWK_STORAGE_KEY = "cenlab.ogch.local-windhawk.v1";
 
+const OGCH_STATIC_ROSTER_BASELINE_REVISION: Record<OgchStaticRosterJob, number> = {
+  bishop: 2,
+  dancer: 1,
+};
+const OGCH_LOCAL_WINDHAWK_BASELINE_REVISION = 2;
+
 const BISHOP_NEXT_AVAILABLE_AT = "2026-06-10T00:00:00+07:00";
 const DANCER_NEXT_AVAILABLE_AT = "2026-06-10T00:00:00+07:00";
 
 const BISHOP_CHARACTERS: StaticRosterCharacterSeed[] = [
-  { id: "chronos", name: "CHRONOS", clearCount: 49 },
-  { id: "molloreena", name: "MOLLOREENA", clearCount: 45 },
-  { id: "kimrei", name: "KIMREI", clearCount: 38 },
-  { id: "hazele", name: "HAZELE", clearCount: 15 },
-  { id: "andromeche", name: "ANDROMECHE", clearCount: 26 },
-  { id: "felishar", name: "FELISHAR", clearCount: 19 },
-  { id: "karella", name: "KARELLA", clearCount: 18 },
-  { id: "queenight", name: "QUEENIGHT", clearCount: 15 },
-  { id: "xenodice", name: "XENODICE", clearCount: 19 },
-  { id: "pinaaya", name: "PINAAYA", clearCount: 1 },
-  { id: "rainna", name: "RAINNA", clearCount: 0, jobLabel: "Cardinal" },
-  { id: "vanesfranca", name: "VANESFRANCA", clearCount: 0, jobLabel: "Cardinal" },
+  { id: "chronos", name: "CHRONOS", clearCount: 55 },
+  { id: "molloreena", name: "MOLLOREENA", clearCount: 50 },
+  { id: "kimrei", name: "WEIRICIA", clearCount: 43 },
+  { id: "hazele", name: "HAZELE", clearCount: 21 },
+  { id: "andromeche", name: "ANDROMECHE", clearCount: 31 },
+  { id: "felishar", name: "FELISHAR", clearCount: 25 },
+  { id: "karella", name: "KARELLA", clearCount: 23 },
+  { id: "queenight", name: "QUEENIGHT", clearCount: 21 },
+  { id: "xenodice", name: "XENODICE", clearCount: 25 },
+  { id: "pinaaya", name: "PINAAYA", clearCount: 7 },
+  { id: "rainna", name: "RAINNA", clearCount: 1, jobLabel: "Cardinal" },
+  { id: "vanesfranca", name: "VANESFRANCA", clearCount: 1, jobLabel: "Cardinal" },
 ];
 
 const LOCAL_WINDHAWK_CHARACTERS: StaticRosterCharacterSeed[] = [
-  { id: "kittyalp", name: "KittyALP", clearCount: 0, jobLabel: "Windhawk" },
-  { id: "soulalp", name: "SoulALP", clearCount: 0, jobLabel: "Windhawk" },
+  { id: "kittyalp", name: "KittyALP", clearCount: 1, jobLabel: "Windhawk" },
+  { id: "soulalp", name: "SoulALP", clearCount: 1, jobLabel: "Windhawk" },
 ];
 
 const DANCER_CHARACTERS: StaticRosterCharacterSeed[] = [
@@ -118,6 +124,24 @@ export const OGCH_STATIC_ROSTERS: Record<OgchStaticRosterJob, OgchStaticRosterCo
 
 export function getOgchStaticRosterStorageKey(job: OgchStaticRosterJob): string {
   return `cenlab.ogch.static-roster.${job}.v1`;
+}
+
+function getOgchStaticRosterBaselineRevisionKey(job: OgchStaticRosterJob): string {
+  return `cenlab.ogch.static-roster.${job}.baseline-revision`;
+}
+
+function getOgchLocalWindhawkBaselineRevisionKey(): string {
+  return "cenlab.ogch.local-windhawk.baseline-revision";
+}
+
+function getMigratedNextAvailableAt(character: StoredStaticRosterCharacter): string | null {
+  if (!character.lastCompletedAt || !character.nextAvailableAt) return character.nextAvailableAt;
+
+  try {
+    return addOgchCooldown(new Date(character.lastCompletedAt)).toISOString();
+  } catch {
+    return character.nextAvailableAt;
+  }
 }
 
 function notifyStaticRosterChange(job: OgchStaticRosterJob) {
@@ -174,13 +198,20 @@ export function isOgchLocalWindhawk(characterId: string): boolean {
 export function readOgchLocalWindhawks(): OgchCharacterProgress[] {
   const buildCharacter = (
     seed: StaticRosterCharacterSeed,
-    storedCharacter?: StoredStaticRosterCharacter
+    storedCharacter?: StoredStaticRosterCharacter,
+    applyBaseline = false
   ) =>
     buildOgchStaticCharacter(seed, seed.jobLabel ?? "Windhawk", "", {
-      clearCount: storedCharacter?.clearCount ?? seed.clearCount,
+      clearCount:
+        storedCharacter && applyBaseline
+          ? Math.max(storedCharacter.clearCount, seed.clearCount)
+          : storedCharacter?.clearCount ?? seed.clearCount,
       cooldownStatus: storedCharacter?.cooldownStatus ?? "available",
       lastCompletedAt: storedCharacter?.lastCompletedAt ?? null,
-      nextAvailableAt: storedCharacter?.nextAvailableAt ?? null,
+      nextAvailableAt:
+        storedCharacter && applyBaseline
+          ? getMigratedNextAvailableAt(storedCharacter)
+          : storedCharacter?.nextAvailableAt ?? null,
     });
 
   if (typeof window === "undefined") {
@@ -190,12 +221,18 @@ export function readOgchLocalWindhawks(): OgchCharacterProgress[] {
   const stored = window.localStorage.getItem(OGCH_LOCAL_WINDHAWK_STORAGE_KEY);
   if (!stored) return LOCAL_WINDHAWK_CHARACTERS.map((seed) => buildCharacter(seed));
 
+  const applyBaseline =
+    window.localStorage.getItem(getOgchLocalWindhawkBaselineRevisionKey()) !==
+    String(OGCH_LOCAL_WINDHAWK_BASELINE_REVISION);
+
   try {
     const parsed = JSON.parse(stored) as StoredStaticRosterCharacter[];
     if (!Array.isArray(parsed)) return LOCAL_WINDHAWK_CHARACTERS.map((seed) => buildCharacter(seed));
 
     const storedById = new Map(parsed.map((character) => [character.id, character]));
-    return LOCAL_WINDHAWK_CHARACTERS.map((seed) => buildCharacter(seed, storedById.get(seed.id)));
+    return LOCAL_WINDHAWK_CHARACTERS.map((seed) =>
+      buildCharacter(seed, storedById.get(seed.id), applyBaseline)
+    );
   } catch {
     return LOCAL_WINDHAWK_CHARACTERS.map((seed) => buildCharacter(seed));
   }
@@ -214,6 +251,10 @@ export function writeOgchLocalWindhawks(characters: OgchCharacterProgress[]) {
       cooldownStatus: character.cooldownStatus,
     }));
 
+  window.localStorage.setItem(
+    getOgchLocalWindhawkBaselineRevisionKey(),
+    String(OGCH_LOCAL_WINDHAWK_BASELINE_REVISION)
+  );
   window.localStorage.setItem(OGCH_LOCAL_WINDHAWK_STORAGE_KEY, JSON.stringify(storedCharacters));
 }
 
@@ -226,6 +267,10 @@ export function readOgchStaticRoster(job: OgchStaticRosterJob): OgchCharacterPro
   const stored = window.localStorage.getItem(getOgchStaticRosterStorageKey(job));
   if (!stored) return getSeedRoster(job);
 
+  const applyBaseline =
+    window.localStorage.getItem(getOgchStaticRosterBaselineRevisionKey(job)) !==
+    String(OGCH_STATIC_ROSTER_BASELINE_REVISION[job]);
+
   try {
     const parsed = JSON.parse(stored) as StoredStaticRosterCharacter[];
     if (!Array.isArray(parsed)) return getSeedRoster(job);
@@ -233,11 +278,19 @@ export function readOgchStaticRoster(job: OgchStaticRosterJob): OgchCharacterPro
     const storedById = new Map(parsed.map((character) => [character.id, character]));
     return config.characters.map((seed) => {
       const storedCharacter = storedById.get(seed.id);
+      const migratedStoredCharacter =
+        storedCharacter && applyBaseline
+          ? {
+              ...storedCharacter,
+              clearCount: Math.max(storedCharacter.clearCount, seed.clearCount),
+              nextAvailableAt: getMigratedNextAvailableAt(storedCharacter),
+            }
+          : storedCharacter;
       return buildOgchStaticCharacter(
         seed,
         seed.jobLabel ?? config.jobLabel,
         config.nextAvailableAt,
-        storedCharacter
+        migratedStoredCharacter
       );
     });
   } catch {
@@ -256,6 +309,10 @@ export function writeOgchStaticRoster(job: OgchStaticRosterJob, characters: Ogch
     cooldownStatus: character.cooldownStatus,
   }));
 
+  window.localStorage.setItem(
+    getOgchStaticRosterBaselineRevisionKey(job),
+    String(OGCH_STATIC_ROSTER_BASELINE_REVISION[job])
+  );
   window.localStorage.setItem(getOgchStaticRosterStorageKey(job), JSON.stringify(storedCharacters));
   notifyStaticRosterChange(job);
 }

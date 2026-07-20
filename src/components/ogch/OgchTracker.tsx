@@ -477,6 +477,8 @@ export default function OgchTracker() {
     if (!pendingComplete) return;
 
     const completedAt = new Date(nowMs);
+    const nextResetAt = addOgchCooldown(completedAt);
+    const resetNotice = `OGCH completed. Next run: ${formatBangkokDateTime(nextResetAt)} (04:00 reset).`;
     const partyMembers = partySelections[pendingComplete.id] ?? [];
     let completed: boolean;
 
@@ -490,19 +492,19 @@ export default function OgchTracker() {
           {
             clearCount: character.clearCount + 1,
             lastCompletedAt: completedAt.toISOString(),
-            nextAvailableAt: addOgchCooldown(completedAt).toISOString(),
+            nextAvailableAt: nextResetAt.toISOString(),
             cooldownStatus: "onCooldown",
           }
         )
       );
-      setNotice("OGCH completed. Next run available in 3 days.");
+      setNotice(resetNotice);
       setMutatingId(null);
       completed = true;
     } else {
       completed = await runMutation(
         pendingComplete.id,
         () => completeOgchRun(pendingComplete.id),
-        "OGCH completed. Next run available in 3 days."
+        resetNotice
       );
     }
 
@@ -511,8 +513,8 @@ export default function OgchTracker() {
       refreshStaticPartyRoster();
       setNotice(
         completedMembers.length > 0
-          ? `OGCH completed. Party stamped: ${completedMembers.map((member) => member.name).join(", ")}.`
-          : "OGCH completed. Next run available in 3 days."
+          ? `OGCH completed. Party stamped: ${completedMembers.map((member) => member.name).join(", ")}. Next run: ${formatBangkokDateTime(nextResetAt)}.`
+          : resetNotice
       );
     }
 
@@ -673,6 +675,11 @@ export default function OgchTracker() {
               </select>
             </label>
           </div>
+        </section>
+
+        <section className="mb-5 rounded-xl border border-cyan-500/20 bg-cyan-950/20 px-4 py-3 text-sm font-semibold text-cyan-100">
+          OGCH game days reset at 04:00 Bangkok time. A completed run opens at the 04:00 reset
+          after 3 game days.
         </section>
 
         {isLoading ? (

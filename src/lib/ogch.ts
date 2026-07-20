@@ -16,8 +16,13 @@ export type OgchProgressInfo = {
   label: string;
 };
 
-export const OGCH_COOLDOWN_SECONDS = 3 * 24 * 60 * 60;
+export const OGCH_COOLDOWN_GAME_DAYS = 3;
+export const OGCH_RESET_HOUR = 4;
 export const READY_SOON_SECONDS = 12 * 60 * 60;
+
+const BANGKOK_UTC_OFFSET_HOURS = 7;
+const MILLISECONDS_PER_HOUR = 60 * 60 * 1000;
+const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
 
 export const OGCH_LEVEL_TABLE: OgchLevelInfo[] = [
   { level: 1, requirement: 0, exp: "600000000" },
@@ -127,7 +132,17 @@ export function formatRemainingTime(seconds: number): string {
 }
 
 export function addOgchCooldown(date: Date): Date {
-  return new Date(date.getTime() + OGCH_COOLDOWN_SECONDS * 1000);
+  const timestamp = date.getTime();
+  if (!Number.isFinite(timestamp)) throw new RangeError("Cannot calculate OGCH reset from an invalid date.");
+
+  // Shift Bangkok's 04:00 reset to a virtual midnight, advance by game days,
+  // then shift back. Bangkok is UTC+7 year-round, so this is host-TZ and DST safe.
+  const resetShift = (BANGKOK_UTC_OFFSET_HOURS - OGCH_RESET_HOUR) * MILLISECONDS_PER_HOUR;
+  const shiftedTimestamp = timestamp + resetShift;
+  const gameDayStart = Math.floor(shiftedTimestamp / MILLISECONDS_PER_DAY) * MILLISECONDS_PER_DAY;
+  const nextReset = gameDayStart + OGCH_COOLDOWN_GAME_DAYS * MILLISECONDS_PER_DAY;
+
+  return new Date(nextReset - resetShift);
 }
 
 export function formatExp(exp: string | number): string {

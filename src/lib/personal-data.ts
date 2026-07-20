@@ -34,7 +34,7 @@ export const PERSONAL_DATA_GROUP_OPTIONS: { key: PersonalDataGroupId; label: str
 const PERSONAL_CHARACTER_SEEDS: PersonalCharacterSeed[] = [
   { id: "chronos", name: "CHRONOS", groupId: "main", level: 250 },
   { id: "molloreena", name: "MOLLOREENA", groupId: "main", level: 246 },
-  { id: "kimrei", name: "KIMREI", groupId: "main", level: 251 },
+  { id: "kimrei", name: "WEIRICIA", groupId: "main", level: 251, aliases: ["KIMREI"] },
   { id: "hazele", name: "HAZELE", groupId: "main", level: 246 },
   { id: "andromeche", name: "ANDROMECHE", groupId: "main", level: 250 },
   { id: "felishar", name: "FELISHAR", groupId: "main", level: 250 },
@@ -97,10 +97,14 @@ function normalizeProfileKey(value: string): string {
 function buildProfile(seed: PersonalCharacterSeed, override?: Partial<StoredPersonalCharacterProfile>): PersonalCharacterProfile {
   const groupId = override?.groupId ?? seed.groupId;
   const level = override?.level === undefined ? seed.level : Math.max(seed.level, override.level);
+  const storedName =
+    seed.id === "kimrei" && override?.name?.trim().toUpperCase() === "KIMREI"
+      ? seed.name
+      : override?.name;
 
   return {
     id: seed.id,
-    name: override?.name ?? seed.name,
+    name: storedName ?? seed.name,
     level: Math.max(1, Math.floor(level)),
     groupId,
     groupLabel: PERSONAL_DATA_GROUPS[groupId],

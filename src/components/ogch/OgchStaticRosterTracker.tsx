@@ -280,6 +280,7 @@ export default function OgchStaticRosterTracker({
 
     setMutatingId(pendingComplete.id);
     const completedAt = new Date(nowMs);
+    const nextResetAt = addOgchCooldown(completedAt);
 
     updateCharacter(pendingComplete.id, (character) =>
       buildOgchStaticCharacter(
@@ -293,13 +294,15 @@ export default function OgchStaticRosterTracker({
         {
           clearCount: character.clearCount + 1,
           lastCompletedAt: completedAt.toISOString(),
-          nextAvailableAt: addOgchCooldown(completedAt).toISOString(),
+          nextAvailableAt: nextResetAt.toISOString(),
           cooldownStatus: "onCooldown",
         }
       )
     );
 
-    setNotice(`OGCH completed for ${pendingComplete.name}. Next run available in 3 days.`);
+    setNotice(
+      `OGCH completed for ${pendingComplete.name}. Next run: ${formatBangkokDateTime(nextResetAt)} (04:00 reset).`
+    );
     setPendingComplete(null);
     setMutatingId(null);
   }
@@ -426,9 +429,8 @@ export default function OgchStaticRosterTracker({
         </section>
 
         <section className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 px-4 py-3 text-sm font-semibold text-cyan-100">
-          {jobLabel} roster uses the same OGCH logic as Windhawk. Current next run target is{" "}
-          <span className="font-mono">{formatBangkokDateTime(nextAvailableAt)}</span>. Party mappings
-          are linked with the Windhawk page.
+          {jobLabel} uses the same 04:00 Bangkok game-day reset as Windhawk. A completed run opens
+          after 3 game days, and Party mappings stay linked with the Windhawk page.
         </section>
 
         <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
