@@ -65,6 +65,7 @@ async function alignCompletedCharacterReset(
   const completedCharacter = getMutationCharacter(completePayload);
   if (
     !completeResponse.ok ||
+    completePayload.success === false ||
     !completedCharacter ||
     !completedCharacter.lastCompletedAt ||
     !Number.isFinite(completedCharacter.clearCount)
