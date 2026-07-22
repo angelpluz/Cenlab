@@ -63,6 +63,20 @@ export const OGCH_PARTY_STORAGE_KEY = "cenlab.ogch.party.v1";
 export const OGCH_PARTY_EVENT = "cenlab:ogch-party";
 export const OGCH_LOCAL_WINDHAWK_STORAGE_KEY = "cenlab.ogch.local-windhawk.v1";
 
+const OGCH_EXCLUDED_WINDHAWK_KEYS = new Set(["candyselleralp"]);
+
+function normalizeOgchWindhawkKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export function isOgchWindhawkRosterExcluded(id: string, name?: string): boolean {
+  return (
+    OGCH_EXCLUDED_WINDHAWK_KEYS.has(normalizeOgchWindhawkKey(id)) ||
+    (typeof name === "string" &&
+      OGCH_EXCLUDED_WINDHAWK_KEYS.has(normalizeOgchWindhawkKey(name)))
+  );
+}
+
 const OGCH_STATIC_ROSTER_BASELINE_REVISION: Record<OgchStaticRosterJob, number> = {
   bishop: 2,
   dancer: 1,
@@ -366,7 +380,7 @@ function normalizePartySelections(value: unknown): Record<string, OgchPartyMembe
 
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>).flatMap(([leaderId, members]) => {
-      if (!Array.isArray(members)) return [];
+      if (!Array.isArray(members) || isOgchWindhawkRosterExcluded(leaderId)) return [];
 
       const validMembers = members.flatMap((member): OgchPartyMember[] => {
         if (!member || typeof member !== "object") return [];
@@ -392,6 +406,16 @@ function normalizePartySelections(value: unknown): Record<string, OgchPartyMembe
           },
         ];
       });
+
+      if (
+        validMembers.some(
+          (member) =>
+            typeof member.leaderName === "string" &&
+            isOgchWindhawkRosterExcluded(leaderId, member.leaderName)
+        )
+      ) {
+        return [];
+      }
 
       return validMembers.length > 0 ? [[leaderId, validMembers]] : [];
     })
@@ -428,17 +452,20 @@ function attachPartyLeaderDetails(
   leaders: Record<string, OgchPartyLeader>
 ): Record<string, OgchPartyMember[]> {
   return Object.fromEntries(
-    Object.entries(selections).map(([leaderId, members]) => {
+    Object.entries(selections).flatMap(([leaderId, members]) => {
       const leader = leaders[leaderId];
-      if (!leader) return [leaderId, members];
+      if (isOgchWindhawkRosterExcluded(leaderId, leader?.name)) return [];
+      if (!leader) return [[leaderId, members]];
 
       return [
-        leaderId,
-        members.map((member) => ({
-          ...member,
-          leaderJobLabel: leader.jobLabel,
-          leaderName: leader.name,
-        })),
+        [
+          leaderId,
+          members.map((member) => ({
+            ...member,
+            leaderJobLabel: leader.jobLabel,
+            leaderName: leader.name,
+          })),
+        ],
       ];
     })
   );

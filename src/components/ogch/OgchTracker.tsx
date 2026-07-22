@@ -26,6 +26,7 @@ import {
   buildOgchStaticCharacter,
   completeOgchStaticRosterMembers,
   getOgchStaticRosterStorageKey,
+  isOgchWindhawkRosterExcluded,
   readOgchPartySelections,
   readOgchLocalWindhawks,
   readOgchStaticRoster,
@@ -135,11 +136,18 @@ export default function OgchTracker() {
     setError(null);
 
     const profiles = readPersonalDataProfiles();
-    const localWindhawks = applyPersonalProfilesToOgchCharacters(readOgchLocalWindhawks(), profiles);
+    const localWindhawks = applyPersonalProfilesToOgchCharacters(
+      readOgchLocalWindhawks(),
+      profiles
+    ).filter(
+      (character) => !isOgchWindhawkRosterExcluded(character.id, character.name)
+    );
 
     try {
       const data = await getOgchCharacters();
-      const apiCharacters = applyPersonalProfilesToOgchCharacters(data, profiles);
+      const apiCharacters = applyPersonalProfilesToOgchCharacters(data, profiles).filter(
+        (character) => !isOgchWindhawkRosterExcluded(character.id, character.name)
+      );
       const apiIds = new Set(apiCharacters.map((character) => character.id));
       const apiNames = new Set(apiCharacters.map((character) => character.name.toLowerCase()));
       const supplementalWindhawks = localWindhawks.filter(
@@ -210,7 +218,7 @@ export default function OgchTracker() {
   }, [refreshCharacters, refreshStaticPartyRoster]);
 
   useEffect(() => {
-    if (characters.length === 0 || Object.keys(partySelections).length === 0) return;
+    if (characters.length === 0) return;
 
     writeOgchPartySelections(
       partySelections,
