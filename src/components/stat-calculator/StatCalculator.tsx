@@ -1289,10 +1289,11 @@ function resetBuild() {
           </div>
 
           <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-end">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:w-auto xl:grid-cols-8">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4 xl:w-auto xl:grid-cols-9">
               <NavLink href="/cen-lab" label="Cen Lab" tone="cyan" />
               <NavLink href="/ogch" label="OGCH" tone="violet" />
               <NavLink href="/water-dungeon" label="Water" tone="sky" />
+              <NavLink href="/daily-dungeon" label="ดันรายวัน" tone="amber" />
               <NavLink href="/personal-data" label="Personal" tone="emerald" />
               <NavLink href="/exp" label="EXP" tone="amber" />
               <NavLink href="/stat-calculator" label="Stat" tone="cyan" active />
