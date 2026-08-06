@@ -44,6 +44,7 @@ const NAV_ITEMS = [
   { href: "/ogch", label: "OGCH Tracker", tone: "violet" },
   { href: "/water-dungeon", label: "Water Dungeon", tone: "sky" },
   { href: "/daily-dungeon", label: "ดันรายวัน", tone: "amber", active: true },
+  { href: "/sakray", label: "ดัน Sakray", tone: "pink" },
   { href: "/personal-data", label: "Personal Data", tone: "emerald" },
   { href: "/exp", label: "EXP", tone: "amber" },
   { href: "/stat-calculator", label: "Stat", tone: "cyan" },
@@ -55,6 +56,7 @@ const NAV_HOVER: Record<(typeof NAV_ITEMS)[number]["tone"], string> = {
   amber: "hover:border-amber-500/40 hover:text-amber-200",
   cyan: "hover:border-cyan-500/40 hover:text-cyan-200",
   emerald: "hover:border-emerald-500/40 hover:text-emerald-200",
+  pink: "hover:border-pink-500/40 hover:text-pink-200",
   sky: "hover:border-sky-500/40 hover:text-sky-200",
   violet: "hover:border-violet-500/40 hover:text-violet-200",
 };
@@ -106,7 +108,7 @@ export default function DailyDungeonGuide() {
       <div className="mx-auto box-border w-full max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
         <header className="mb-5 flex flex-col items-center gap-3 text-center xl:flex-row xl:justify-between xl:text-left">
           <div className="flex w-full flex-col gap-2 xl:w-auto xl:items-start">
-            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:w-auto xl:grid-cols-9">
+            <nav className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:w-auto xl:grid-cols-10">
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
