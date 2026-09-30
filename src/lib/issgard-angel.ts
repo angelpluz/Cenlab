@@ -1,21 +1,23 @@
 export type IssgardAngelMonster = {
   level: number;
   name: string;
-  area: string;
-  element: string;
-  size: string;
-  hp: number;
+  map: string;
+  mapCode: string;
+  hp: number | null;
+  size: string | null;
+  element: string | null;
+  race: string;
 };
 
 // Data supplied by the user for the Event Issgard Angel tab.
 export const ISSGARD_ANGEL_MONSTERS: IssgardAngelMonster[] = [
-  { level: 200, name: "Empathizer", area: "New Thanatos Tower", element: "Ghost 4", size: "Medium", hp: 3788426 },
-  { level: 201, name: "Smile Giver", area: "New Thanatos Tower", element: "Holy 3", size: "Medium", hp: 3808424 },
-  { level: 202, name: "Happiness Giver", area: "New Thanatos Tower", element: "Wind 4", size: "Small", hp: 3827826 },
-  { level: 203, name: "Pray Giver", area: "New Thanatos Tower", element: "Ghost 3", size: "Medium", hp: 3845709 },
-  { level: 253, name: "Temple Rudo", area: "Varmundt's Biosphere – Temple", element: "Holy 3", size: "Small", hp: 32534117 },
-  { level: 253, name: "Temple Arc Angeling", area: "Varmundt's Biosphere – Temple", element: "Holy 3", size: "Medium", hp: 36048967 },
-  { level: 253, name: "Temple False Angel", area: "Varmundt's Biosphere – Temple", element: "Holy 3", size: "Small", hp: 33216055 },
-  { level: 254, name: "Temple Solace", area: "Varmundt's Biosphere – Temple", element: "Holy 3", size: "Medium", hp: 35374557 },
-  { level: 254, name: "Glacier Angelgolt", area: "Varmundt's Biosphere – Ice", element: "Holy 4", size: "Small", hp: 24831628 },
+  { name: "Empathizer", level: 200, map: "Thanatos Tower 11F", mapCode: "tha_t11", hp: 3788426, size: "Medium", element: "Ghost 4", race: "Angel" },
+  { name: "Smile Giver", level: 201, map: "Thanatos Tower 11F", mapCode: "tha_t11", hp: 3808424, size: "Medium", element: "Holy 3", race: "Angel" },
+  { name: "Happiness Giver", level: 202, map: "Thanatos Tower 11F", mapCode: "tha_t11", hp: 3827826, size: "Small", element: "Wind 4", race: "Angel" },
+  { name: "Pray Giver", level: 203, map: "Thanatos Tower 11F", mapCode: "tha_t11", hp: 3845709, size: "Medium", element: "Ghost 3", race: "Angel" },
+  { name: "Temple Rudo", level: 253, map: "Varmundt’s Biosphere – Temple", mapCode: "bl_temple", hp: 32534117, size: null, element: null, race: "Angel" },
+  { name: "Temple Arc Angeling", level: 253, map: "Varmundt’s Biosphere – Temple", mapCode: "bl_temple", hp: null, size: null, element: null, race: "Angel" },
+  { name: "Temple False Angel", level: 253, map: "Varmundt’s Biosphere – Temple", mapCode: "bl_temple", hp: null, size: null, element: null, race: "Angel" },
+  { name: "Temple Solace", level: 254, map: "Varmundt’s Biosphere – Temple", mapCode: "bl_temple", hp: null, size: null, element: null, race: "Angel" },
+  { name: "Glacier Angelgolt", level: 254, map: "Varmundt’s Biosphere – Ice", mapCode: "bl_ice", hp: 24831628, size: "Small", element: "Holy 4", race: "Angel" },
 ];
