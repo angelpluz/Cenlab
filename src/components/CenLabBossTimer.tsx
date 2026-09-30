@@ -771,6 +771,12 @@ export default function CenLabBossTimer() {
                 Bishop Rounds
               </Link>
               <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-amber-500/40 hover:text-amber-200"
+                href="/event-issgard"
+              >
+                Event Issgard
+              </Link>
+              <Link
                 className="inline-flex items-center justify-center rounded-lg border border-emerald-500/35 bg-emerald-950/25 px-4 py-2 text-sm font-bold text-emerald-100 transition hover:bg-emerald-950/45"
                 href="/cen-lab/calculator"
               >

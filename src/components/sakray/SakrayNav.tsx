@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: "EXP", href: "/exp", tone: "hover:border-amber-500/40 hover:text-amber-200" },
   { label: "Stat", href: "/stat-calculator", tone: "hover:border-cyan-500/40 hover:text-cyan-200" },
   { label: "Codex", href: "/codex", tone: "hover:border-violet-500/40 hover:text-violet-200" },
+  { label: "Event Issgard", href: "/event-issgard", tone: "hover:border-amber-500/40 hover:text-amber-200" },
   { label: "OGCH Jobs", href: "/ogch", tone: "hover:border-cyan-500/40 hover:text-cyan-200" },
   { label: "Public Timer", href: "/cen-lab/calculator", tone: "hover:border-emerald-500/40 hover:text-emerald-200" },
 ] as const;

@@ -64,6 +64,12 @@ export default function OgchNav({ active }: OgchNavProps) {
         >
           Codex
         </Link>
+        <Link
+          className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-amber-500/40 hover:text-amber-200"
+          href="/event-issgard"
+        >
+          Event Issgard
+        </Link>
         {NAV_ITEMS.map((item) => {
           const isActive = item.key === active;
 
