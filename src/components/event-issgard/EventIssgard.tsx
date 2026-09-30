@@ -2,24 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import sourceData from "@/lib/generated/issgard-monsters.json";
+import { ISSGARD_ANGEL_MONSTERS } from "@/lib/issgard-angel";
+import { ISSGARD_DEMON_MONSTERS } from "@/lib/issgard-demon";
 
 type Group = "angel" | "demon";
-
-type Monster = {
-  id?: number | null;
-  name: string;
-  level: number;
-  hp: number | null;
-  element: string;
-  size: string;
-  race: string;
-  type: string;
-  maps: string;
-  sourceScope?: string | null;
-  notes: string | null;
-  sourceUrl: string;
-};
 
 const GROUPS: { id: Group; label: string; color: string }[] = [
   { id: "angel", label: "Angel", color: "amber" },
@@ -34,23 +20,35 @@ export default function EventIssgard() {
   const [query, setQuery] = useState("");
   const [element, setElement] = useState("all");
 
-  const monsters: Monster[] = sourceData[group].monsters;
   const elements = useMemo(
-    () => Array.from(new Set(monsters.map((monster) => monster.element.split(" ")[0]))).sort(),
-    [monsters],
+    () => Array.from(new Set((group === "angel" ? ISSGARD_ANGEL_MONSTERS : ISSGARD_DEMON_MONSTERS)
+      .map((monster) => monster.element?.split(" ")[0])
+      .filter((value): value is string => Boolean(value)))).sort(),
+    [group],
   );
-  const filtered = useMemo(() => {
+  const filteredAngels = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
-    return monsters.filter((monster) => {
+    return ISSGARD_ANGEL_MONSTERS.filter((monster) => {
       if (element !== "all" && !monster.element.startsWith(`${element} `)) return false;
       if (!normalized) return true;
-      return [monster.name, monster.maps, monster.element, monster.notes, monster.sourceScope]
-        .filter(Boolean)
-        .some((value) => value!.toLocaleLowerCase().includes(normalized));
+      return [monster.name, monster.area, monster.element, monster.size]
+        .some((value) => value.toLocaleLowerCase().includes(normalized));
     });
-  }, [monsters, element, query]);
+  }, [element, query]);
+  const filteredDemons = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase();
+    return ISSGARD_DEMON_MONSTERS.filter((monster) => {
+      if (element !== "all" && !monster.element?.startsWith(`${element} `)) return false;
+      if (!normalized) return true;
+      return [monster.name, monster.map, monster.mapCode, monster.range, monster.element, monster.race]
+        .filter((value): value is string => Boolean(value))
+        .some((value) => value.toLocaleLowerCase().includes(normalized));
+    });
+  }, [element, query]);
 
   const selectedGroup = GROUPS.find((item) => item.id === group)!;
+  const monsters = group === "angel" ? ISSGARD_ANGEL_MONSTERS : ISSGARD_DEMON_MONSTERS;
+  const filteredCount = group === "angel" ? filteredAngels.length : filteredDemons.length;
   const levels = monsters.map((monster) => monster.level);
 
   return (
@@ -60,7 +58,7 @@ export default function EventIssgard() {
           <div>
             <p className="mb-1 text-xs font-bold uppercase tracking-[0.25em] text-cyan-400">Monster directory</p>
             <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Event Issgard</h1>
-            <p className="mt-2 text-sm text-slate-400">รายชื่อมอนสเตอร์จากชีตแรกของไฟล์ Excel Angel และ Demon</p>
+            <p className="mt-2 text-sm text-slate-400">รายชื่อมอนสเตอร์ Angel และ Demon จากตารางที่ให้มา</p>
           </div>
           <nav className="flex flex-wrap gap-2 text-sm font-semibold" aria-label="Page navigation">
             <Link href="/cen-lab" className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-200">Cen Lab</Link>
@@ -83,7 +81,7 @@ export default function EventIssgard() {
                 className={`flex items-center justify-between rounded-xl border px-5 py-4 text-left transition ${tone}`}
               >
                 <span className="text-lg font-black">{item.label}</span>
-                <span className="rounded-full bg-slate-950/50 px-3 py-1 text-sm font-bold">{sourceData[item.id].monsters.length} ตัว</span>
+                <span className="rounded-full bg-slate-950/50 px-3 py-1 text-sm font-bold">{item.id === "angel" ? ISSGARD_ANGEL_MONSTERS.length : ISSGARD_DEMON_MONSTERS.length} ตัว</span>
               </button>
             );
           })}
@@ -93,7 +91,7 @@ export default function EventIssgard() {
           <div className="flex flex-col gap-4 border-b border-slate-800 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className={`text-2xl font-black ${group === "angel" ? "text-amber-200" : "text-rose-200"}`}>{selectedGroup.label} Monsters</h2>
-              <p className="mt-1 text-sm text-slate-400">Lv. {Math.min(...levels)}–{Math.max(...levels)} · แสดง {filtered.length} / {monsters.length} ตัว</p>
+              <p className="mt-1 text-sm text-slate-400">Lv. {Math.min(...levels)}–{Math.max(...levels)} · แสดง {filteredCount} / {monsters.length} ตัว</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <label className="sr-only" htmlFor="issgard-search">ค้นหามอนสเตอร์</label>
@@ -119,45 +117,64 @@ export default function EventIssgard() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1150px] border-collapse text-left text-sm">
-              <thead className="bg-slate-950/75 text-xs uppercase tracking-wide text-slate-400">
-                <tr>
-                  <th scope="col" className="px-4 py-3">Monster</th>
-                  <th scope="col" className="px-3 py-3 text-right">Lv.</th>
-                  <th scope="col" className="px-3 py-3 text-right">HP</th>
-                  <th scope="col" className="px-3 py-3">Element</th>
-                  <th scope="col" className="px-3 py-3">Size</th>
-                  <th scope="col" className="px-3 py-3">Race / Type</th>
-                  <th scope="col" className="px-3 py-3">Maps / Spawn</th>
-                  <th scope="col" className="px-3 py-3">Notes / Scope</th>
-                  <th scope="col" className="px-4 py-3">Source</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {filtered.map((monster, index) => (
-                  <tr key={`${monster.id ?? monster.name}-${index}`} className="align-top transition hover:bg-slate-800/45">
-                    <td className="px-4 py-3 font-semibold text-white">
-                      {monster.name}
-                      {monster.id != null && <span className="mt-0.5 block text-xs font-normal text-slate-500">ID {monster.id}</span>}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-right font-semibold tabular-nums text-cyan-200">{monster.level}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{formatNumber(monster.hp)}</td>
-                    <td className="whitespace-nowrap px-3 py-3">{monster.element}</td>
-                    <td className="px-3 py-3">{monster.size}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-slate-300">{monster.race} / {monster.type}</td>
-                    <td className="min-w-56 px-3 py-3 text-slate-300">{monster.maps}</td>
-                    <td className="min-w-48 px-3 py-3 text-slate-400">
-                      {monster.notes || "—"}
-                      {monster.sourceScope && <span className="mt-1 block text-xs text-slate-500">{monster.sourceScope}</span>}
-                    </td>
-                    <td className="px-4 py-3"><a href={monster.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-300 underline decoration-cyan-500/40 underline-offset-4 hover:text-cyan-100">Divine Pride ↗</a></td>
+            {group === "demon" ? (
+              <table className="w-full min-w-[950px] border-collapse text-left text-sm">
+                <thead className="bg-slate-950/75 text-xs uppercase tracking-wide text-slate-400">
+                  <tr>
+                    <th scope="col" className="px-4 py-3">ช่วง</th>
+                    <th scope="col" className="px-3 py-3">Map</th>
+                    <th scope="col" className="px-3 py-3">Monster</th>
+                    <th scope="col" className="px-3 py-3 text-right">Lv.</th>
+                    <th scope="col" className="px-3 py-3 text-right">HP</th>
+                    <th scope="col" className="px-3 py-3">Size</th>
+                    <th scope="col" className="px-3 py-3">Element</th>
+                    <th scope="col" className="px-4 py-3">Race</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && <p className="p-8 text-center text-slate-400">ไม่พบมอนสเตอร์ที่ตรงกับการค้นหา</p>}
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredDemons.map((monster) => (
+                    <tr key={`${monster.mapCode}-${monster.name}`} className="align-top transition hover:bg-slate-800/45">
+                      <td className="whitespace-nowrap px-4 py-3 font-bold text-rose-200">{monster.range}</td>
+                      <td className="min-w-48 px-3 py-3 text-slate-200">{monster.map}<span className="block font-mono text-xs text-slate-500">{monster.mapCode}</span></td>
+                      <td className="min-w-48 px-3 py-3 font-semibold text-white">{monster.name}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-right font-semibold tabular-nums text-cyan-200">{monster.level}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">{formatNumber(monster.hp)}</td>
+                      <td className="px-3 py-3">{monster.size ?? "—"}</td>
+                      <td className="whitespace-nowrap px-3 py-3">{monster.element ?? "—"}</td>
+                      <td className="whitespace-nowrap px-4 py-3">{monster.race ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                <thead className="bg-slate-950/75 text-xs uppercase tracking-wide text-slate-400">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 text-right">Lv.</th>
+                    <th scope="col" className="px-3 py-3">Monster</th>
+                    <th scope="col" className="px-3 py-3">Area</th>
+                    <th scope="col" className="px-3 py-3">Element</th>
+                    <th scope="col" className="px-3 py-3">Size</th>
+                    <th scope="col" className="px-4 py-3 text-right">HP</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800">
+                  {filteredAngels.map((monster) => (
+                    <tr key={monster.name} className="align-top transition hover:bg-slate-800/45">
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums text-cyan-200">{monster.level}</td>
+                      <td className="min-w-44 px-3 py-3 font-semibold text-white">{monster.name}</td>
+                      <td className="min-w-56 px-3 py-3 text-slate-300">{monster.area}</td>
+                      <td className="whitespace-nowrap px-3 py-3">{monster.element}</td>
+                      <td className="px-3 py-3">{monster.size}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">{formatNumber(monster.hp)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {filteredCount === 0 && <p className="p-8 text-center text-slate-400">ไม่พบมอนสเตอร์ที่ตรงกับการค้นหา</p>}
           </div>
-          <p className="border-t border-slate-800 px-4 py-3 text-xs text-slate-500">ข้อมูลจาก {sourceData[group].file} · ชีต {sourceData[group].sheet} · ขีด “—” หมายถึงไม่มีข้อมูลใน Excel</p>
+          <p className="border-t border-slate-800 px-4 py-3 text-xs text-slate-500">ข้อมูล {selectedGroup.label} จากตารางที่ให้มา{group === "demon" ? " · ขีด “—” หมายถึงไม่มีข้อมูล" : ""}</p>
         </section>
       </div>
     </main>

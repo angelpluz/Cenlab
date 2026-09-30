@@ -3,7 +3,7 @@ import EventIssgard from "@/components/event-issgard/EventIssgard";
 
 export const metadata: Metadata = {
   title: "Event Issgard | Cenlab",
-  description: "Angel and Demon monster lists from the first sheet of each Excel file.",
+  description: "Angel and Demon monster lists for Event Issgard.",
 };
 
 export default function EventIssgardPage() {
