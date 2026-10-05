@@ -124,7 +124,7 @@ export const OGCH_STATIC_ROSTERS: Record<OgchStaticRosterJob, OgchStaticRosterCo
     introLabel: "Bishop & Cardinal Dungeon Run Tracker",
     jobLabel: "Bishop",
     nextAvailableAt: BISHOP_NEXT_AVAILABLE_AT,
-    sourceLabel: "Local bishop roster",
+    sourceLabel: "Shared OGCH database",
   },
   dancer: {
     activeNav: "dancer",
@@ -132,7 +132,7 @@ export const OGCH_STATIC_ROSTERS: Record<OgchStaticRosterJob, OgchStaticRosterCo
     introLabel: "Bard&Dancer Dungeon Run Tracker",
     jobLabel: "Bard&Dancer",
     nextAvailableAt: DANCER_NEXT_AVAILABLE_AT,
-    sourceLabel: "Local bard&dancer roster",
+    sourceLabel: "Shared OGCH database",
   },
 };
 

@@ -6,9 +6,11 @@ import OgchNav from "@/components/ogch/OgchNav";
 import {
   API_BASE_URL,
   completeOgchRun,
-  getOgchCharacters,
+  getOgchSharedState,
+  importOgchLocalState,
   manualAdjustOgchProgress,
   resetOgchCooldown,
+  saveOgchPartyMapping,
 } from "@/lib/api";
 import {
   addOgchCooldown,
@@ -20,25 +22,15 @@ import {
 } from "@/lib/ogch";
 import type { OgchCharacterProgress, OgchMutationApiResponse } from "@/lib/ogch-types";
 import {
-  OGCH_STATIC_ROSTER_EVENT,
-  OGCH_LOCAL_WINDHAWK_STORAGE_KEY,
-  OGCH_PARTY_STORAGE_KEY,
-  buildOgchStaticCharacter,
-  completeOgchStaticRosterMembers,
-  getOgchStaticRosterStorageKey,
-  isOgchWindhawkRosterExcluded,
-  readOgchPartySelections,
   readOgchLocalWindhawks,
+  readOgchPartySelections,
   readOgchStaticRoster,
-  writeOgchLocalWindhawks,
-  writeOgchPartySelections,
+  isOgchWindhawkRosterExcluded,
   type OgchPartyMember,
   type OgchPartyMemberDisplay,
   type OgchStaticRosterJob,
 } from "@/lib/ogch-static-rosters";
 import {
-  PERSONAL_DATA_EVENT,
-  PERSONAL_DATA_STORAGE_KEY,
   findPersonalDataProfile,
   readPersonalDataProfiles,
 } from "@/lib/personal-data";
@@ -121,6 +113,7 @@ export default function OgchTracker() {
   const [manualLastCompletedAt, setManualLastCompletedAt] = useState("");
   const [manualNextAvailableAt, setManualNextAvailableAt] = useState("");
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [localDataImported, setLocalDataImported] = useState(false);
   const [partySelections, setPartySelections] = useState<Record<string, OgchPartyMember[]>>({});
   const [partyTarget, setPartyTarget] = useState<OgchCharacterProgress | null>(null);
   const [partySearch, setPartySearch] = useState("");
@@ -128,7 +121,6 @@ export default function OgchTracker() {
     bishop: [],
     dancer: [],
   });
-  const localWindhawkIdsRef = useRef<Set<string>>(new Set());
   const hasScrolledToHashRef = useRef(false);
 
   const refreshCharacters = useCallback(async (quiet = false) => {
@@ -136,31 +128,21 @@ export default function OgchTracker() {
     setError(null);
 
     const profiles = readPersonalDataProfiles();
-    const localWindhawks = applyPersonalProfilesToOgchCharacters(
-      readOgchLocalWindhawks(),
-      profiles
-    ).filter(
-      (character) => !isOgchWindhawkRosterExcluded(character.id, character.name)
-    );
-
     try {
-      const data = await getOgchCharacters();
-      const apiCharacters = applyPersonalProfilesToOgchCharacters(data, profiles).filter(
+      const state = await getOgchSharedState();
+      const apiCharacters = applyPersonalProfilesToOgchCharacters(
+        state.characters.filter((character) => character.roster === "windhawk"), profiles
+      ).filter(
         (character) => !isOgchWindhawkRosterExcluded(character.id, character.name)
       );
-      const apiIds = new Set(apiCharacters.map((character) => character.id));
-      const apiNames = new Set(apiCharacters.map((character) => character.name.toLowerCase()));
-      const supplementalWindhawks = localWindhawks.filter(
-        (character) => !apiIds.has(character.id) && !apiNames.has(character.name.toLowerCase())
-      );
-
-      localWindhawkIdsRef.current = new Set(
-        supplementalWindhawks.map((character) => character.id)
-      );
-      setCharacters([...apiCharacters, ...supplementalWindhawks]);
+      setCharacters(apiCharacters);
+      setStaticPartyRoster({
+        bishop: state.characters.filter((character) => character.roster === "bishop"),
+        dancer: state.characters.filter((character) => character.roster === "dancer"),
+      });
+      setPartySelections(state.partySelections);
+      setLocalDataImported(state.localDataImported);
     } catch (requestError) {
-      localWindhawkIdsRef.current = new Set(localWindhawks.map((character) => character.id));
-      setCharacters(localWindhawks);
       setError(requestError instanceof Error ? requestError.message : "Could not load OGCH data.");
     } finally {
       if (!quiet) setIsLoading(false);
@@ -171,64 +153,14 @@ export default function OgchTracker() {
     void refreshCharacters();
   }, [refreshCharacters]);
 
-  const refreshStaticPartyRoster = useCallback(() => {
-    setStaticPartyRoster({
-      bishop: readOgchStaticRoster("bishop"),
-      dancer: readOgchStaticRoster("dancer"),
-    });
-  }, []);
-
   useEffect(() => {
-    setPartySelections(readOgchPartySelections());
-    refreshStaticPartyRoster();
-
-    function handleRosterEvent() {
-      refreshStaticPartyRoster();
-    }
-
-    function handlePersonalDataEvent() {
-      setCharacters((currentCharacters) =>
-        applyPersonalProfilesToOgchCharacters(currentCharacters, readPersonalDataProfiles())
-      );
-      refreshStaticPartyRoster();
-    }
-
-    function handleStorageEvent(event: StorageEvent) {
-      if (
-        event.key === getOgchStaticRosterStorageKey("bishop") ||
-        event.key === getOgchStaticRosterStorageKey("dancer")
-      ) {
-        refreshStaticPartyRoster();
-      }
-
-      if (event.key === PERSONAL_DATA_STORAGE_KEY) handlePersonalDataEvent();
-      if (event.key === OGCH_LOCAL_WINDHAWK_STORAGE_KEY) void refreshCharacters(true);
-      if (event.key === OGCH_PARTY_STORAGE_KEY) setPartySelections(readOgchPartySelections());
-    }
-
-    window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
-    window.addEventListener(PERSONAL_DATA_EVENT, handlePersonalDataEvent);
-    window.addEventListener("storage", handleStorageEvent);
+    const onFocus = () => void refreshCharacters(true);
+    window.addEventListener("focus", onFocus);
 
     return () => {
-      window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
-      window.removeEventListener(PERSONAL_DATA_EVENT, handlePersonalDataEvent);
-      window.removeEventListener("storage", handleStorageEvent);
+      window.removeEventListener("focus", onFocus);
     };
-  }, [refreshCharacters, refreshStaticPartyRoster]);
-
-  useEffect(() => {
-    if (characters.length === 0) return;
-
-    writeOgchPartySelections(
-      partySelections,
-      characters.map((character) => ({
-        characterId: character.id,
-        jobLabel: character.job,
-        name: character.name,
-      }))
-    );
-  }, [characters, partySelections]);
+  }, [refreshCharacters]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
@@ -375,31 +307,57 @@ export default function OgchTracker() {
   }, [nowMs, partySearch, staticPartyRoster]);
 
   const updatePartySelection = useCallback(
-    (leaderId: string, updater: (currentMembers: OgchPartyMember[]) => OgchPartyMember[]) => {
-      setPartySelections((currentSelections) => {
-        const nextMembers = updater(currentSelections[leaderId] ?? []);
-        const nextSelections = {
-          ...currentSelections,
-          [leaderId]: nextMembers,
-        };
-
-        if (nextMembers.length === 0) {
-          delete nextSelections[leaderId];
+    async (leaderId: string, updater: (currentMembers: OgchPartyMember[]) => OgchPartyMember[]) => {
+      const currentMembers = partySelections[leaderId] ?? [];
+      const nextMembers = updater(currentMembers);
+      setMutatingId(leaderId);
+      try {
+        for (const job of ["bishop", "dancer"] as const) {
+          const previousId = currentMembers.find((member) => member.job === job)?.characterId ?? null;
+          const nextId = nextMembers.find((member) => member.job === job)?.characterId ?? null;
+          if (previousId !== nextId) await saveOgchPartyMapping(leaderId, job, nextId);
         }
-
-        writeOgchPartySelections(
-          nextSelections,
-          characters.map((character) => ({
-            characterId: character.id,
-            jobLabel: character.job,
-            name: character.name,
-          }))
-        );
-        return nextSelections;
-      });
+        setNotice("Party mapping saved to the shared database.");
+      } catch (requestError) {
+        setError(requestError instanceof Error ? requestError.message : "Could not save party mapping.");
+      } finally {
+        await refreshCharacters(true);
+        setMutatingId(null);
+      }
     },
-    [characters]
+    [partySelections, refreshCharacters]
   );
+
+  const importLocalData = useCallback(async () => {
+    const progress = [
+      ...readOgchStaticRoster("bishop"),
+      ...readOgchStaticRoster("dancer"),
+      ...readOgchLocalWindhawks().filter((character) => character.id === "kittyalp"),
+    ].map((character) => ({
+      characterId: character.id,
+      clearCount: character.clearCount,
+      lastCompletedAt: character.lastCompletedAt,
+      nextAvailableAt: character.nextAvailableAt,
+    }));
+    const knownLeaders = new Set(characters.map((character) => character.id));
+    const localSelections: Record<string, OgchPartyMember[]> = Object.fromEntries(
+      Object.entries(readOgchPartySelections()).filter(([leaderId]) => knownLeaders.has(leaderId))
+    );
+    const mappingCount = Object.values(localSelections).reduce((total, members) => total + members.length, 0);
+    if (!window.confirm(
+      `นำเข้าข้อมูลจากเบราว์เซอร์เครื่องนี้: Party ${mappingCount} คู่ และความคืบหน้า ${progress.length} ตัวละคร ไปยังฐานข้อมูลกลางได้ครั้งเดียว ใช้เครื่องที่มีข้อมูลล่าสุดเท่านั้น ดำเนินการต่อ?`
+    )) return;
+    setMutatingId("import");
+    try {
+      await importOgchLocalState({ progress, partySelections: localSelections });
+      await refreshCharacters(true);
+      setNotice("OGCH browser data imported to the shared database.");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not import local OGCH data.");
+    } finally {
+      setMutatingId(null);
+    }
+  }, [characters, refreshCharacters]);
 
   const runMutation = useCallback(
     async (
@@ -424,24 +382,6 @@ export default function OgchTracker() {
     [refreshCharacters]
   );
 
-  const updateLocalWindhawk = useCallback(
-    (
-      characterId: string,
-      updater: (current: OgchCharacterProgress) => OgchCharacterProgress
-    ) => {
-      setCharacters((currentCharacters) => {
-        const nextCharacters = currentCharacters.map((character) =>
-          character.id === characterId ? updater(character) : character
-        );
-        writeOgchLocalWindhawks(
-          nextCharacters.filter((character) => localWindhawkIdsRef.current.has(character.id))
-        );
-        return nextCharacters;
-      });
-    },
-    []
-  );
-
   const openManualEdit = useCallback((character: OgchCharacterProgress) => {
     setManualTarget(character);
     setManualClearCount(String(character.clearCount));
@@ -451,11 +391,11 @@ export default function OgchTracker() {
 
   const openPartyBuilder = useCallback(
     (character: OgchCharacterProgress) => {
-      refreshStaticPartyRoster();
+      void refreshCharacters(true);
       setPartyTarget(character);
       setPartySearch("");
     },
-    [refreshStaticPartyRoster]
+    [refreshCharacters]
   );
 
   const togglePartyMember = useCallback(
@@ -483,126 +423,41 @@ export default function OgchTracker() {
 
   const confirmComplete = useCallback(async () => {
     if (!pendingComplete) return;
-
-    const completedAt = new Date(nowMs);
-    const nextResetAt = addOgchCooldown(completedAt);
-    const resetNotice = `OGCH completed. Next run: ${formatBangkokDateTime(nextResetAt)} (04:00 reset).`;
-    const partyMembers = partySelections[pendingComplete.id] ?? [];
-    let completed: boolean;
-
-    if (localWindhawkIdsRef.current.has(pendingComplete.id)) {
-      setMutatingId(pendingComplete.id);
-      updateLocalWindhawk(pendingComplete.id, (character) =>
-        buildOgchStaticCharacter(
-          { id: character.id, name: character.name, clearCount: character.clearCount },
-          character.job,
-          "",
-          {
-            clearCount: character.clearCount + 1,
-            lastCompletedAt: completedAt.toISOString(),
-            nextAvailableAt: nextResetAt.toISOString(),
-            cooldownStatus: "onCooldown",
-          }
-        )
-      );
-      setNotice(resetNotice);
-      setMutatingId(null);
-      completed = true;
-    } else {
-      completed = await runMutation(
-        pendingComplete.id,
-        () => completeOgchRun(pendingComplete.id),
-        resetNotice
-      );
-    }
-
-    if (completed && partyMembers.length > 0) {
-      const completedMembers = completeOgchStaticRosterMembers(partyMembers, completedAt);
-      refreshStaticPartyRoster();
-      setNotice(
-        completedMembers.length > 0
-          ? `OGCH completed. Party stamped: ${completedMembers.map((member) => member.name).join(", ")}. Next run: ${formatBangkokDateTime(nextResetAt)}.`
-          : resetNotice
-      );
-    }
-
-    setPendingComplete(null);
-  }, [nowMs, partySelections, pendingComplete, refreshStaticPartyRoster, runMutation, updateLocalWindhawk]);
+    const completed = await runMutation(
+      pendingComplete.id,
+      () => completeOgchRun(pendingComplete.id),
+      "OGCH completed."
+    );
+    if (completed) setPendingComplete(null);
+  }, [pendingComplete, runMutation]);
 
   const submitManualEdit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!manualTarget) return;
 
-      if (localWindhawkIdsRef.current.has(manualTarget.id)) {
-        const nextAvailableAt = fromDateTimeLocalInput(manualNextAvailableAt);
-        setMutatingId(manualTarget.id);
-        updateLocalWindhawk(manualTarget.id, (character) =>
-          buildOgchStaticCharacter(
-            { id: character.id, name: character.name, clearCount: character.clearCount },
-            character.job,
-            "",
-            {
-              clearCount: Number(manualClearCount),
-              lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
-              nextAvailableAt,
-              cooldownStatus: nextAvailableAt ? "onCooldown" : "available",
-            }
-          )
-        );
-        setNotice("OGCH progress updated.");
-        setMutatingId(null);
-      } else {
-        await runMutation(
-          manualTarget.id,
-          () => manualAdjustOgchProgress({
-            characterId: manualTarget.id,
-            clearCount: Number(manualClearCount),
-            lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
-            nextAvailableAt: fromDateTimeLocalInput(manualNextAvailableAt),
-          }),
-          "OGCH progress updated."
-        );
-      }
-      setManualTarget(null);
+      const saved = await runMutation(
+        manualTarget.id,
+        () => manualAdjustOgchProgress({
+          characterId: manualTarget.id,
+          clearCount: Number(manualClearCount),
+          lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
+          nextAvailableAt: fromDateTimeLocalInput(manualNextAvailableAt),
+        }),
+        "OGCH progress updated."
+      );
+      if (saved) setManualTarget(null);
     },
-    [manualClearCount, manualLastCompletedAt, manualNextAvailableAt, manualTarget, runMutation, updateLocalWindhawk]
+    [manualClearCount, manualLastCompletedAt, manualNextAvailableAt, manualTarget, runMutation]
   );
 
   const resetCooldown = useCallback(
     async (character: OgchCharacterProgress) => {
       if (!window.confirm(`Reset OGCH cooldown for ${character.name}?`)) return;
 
-      if (localWindhawkIdsRef.current.has(character.id)) {
-        setMutatingId(character.id);
-        updateLocalWindhawk(character.id, (currentCharacter) =>
-          buildOgchStaticCharacter(
-            {
-              id: currentCharacter.id,
-              name: currentCharacter.name,
-              clearCount: currentCharacter.clearCount,
-            },
-            currentCharacter.job,
-            "",
-            {
-              clearCount: currentCharacter.clearCount,
-              lastCompletedAt: currentCharacter.lastCompletedAt,
-              nextAvailableAt: null,
-              cooldownStatus: "available",
-            }
-          )
-        );
-        setNotice("OGCH cooldown reset.");
-        setMutatingId(null);
-      } else {
-        await runMutation(
-          character.id,
-          () => resetOgchCooldown(character.id),
-          "OGCH cooldown reset."
-        );
-      }
+      await runMutation(character.id, () => resetOgchCooldown(character.id), "OGCH cooldown reset.");
     },
-    [runMutation, updateLocalWindhawk]
+    [runMutation]
   );
 
   const pendingNextAvailableAt = pendingComplete ? addOgchCooldown(new Date(nowMs)) : null;
@@ -635,6 +490,20 @@ export default function OgchTracker() {
           <div className="mb-4 rounded-xl border border-rose-500/35 bg-rose-950/40 px-4 py-3 text-sm font-semibold text-rose-200">
             {error}
           </div>
+        ) : null}
+
+        {!isLoading && !error && !localDataImported ? (
+          <section className="mb-4 flex flex-col gap-3 rounded-xl border border-violet-500/30 bg-violet-950/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-violet-100">ย้าย Party และความคืบหน้า Bishop/Dancer จากเบราว์เซอร์ที่มีข้อมูลล่าสุดเข้าฐานข้อมูลกลางได้ครั้งเดียว</p>
+            <button
+              type="button"
+              onClick={() => void importLocalData()}
+              disabled={mutatingId === "import"}
+              className="shrink-0 rounded-lg border border-violet-400/50 bg-violet-900/40 px-4 py-2 text-sm font-bold text-violet-100 hover:bg-violet-900/60 disabled:opacity-50"
+            >
+              {mutatingId === "import" ? "กำลังนำเข้า..." : "นำเข้าข้อมูลเครื่องนี้"}
+            </button>
+          </section>
         ) : null}
 
         <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -826,7 +695,9 @@ export default function OgchTracker() {
                             className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-black uppercase ${
                               item.cooldownStatus === "available"
                                 ? "border-emerald-500/35 bg-emerald-950/35 text-emerald-200"
-                                : "border-orange-500/35 bg-orange-950/35 text-orange-200"
+                                : item.cooldownStatus === "readySoon"
+                                  ? "border-violet-500/35 bg-violet-950/35 text-violet-200"
+                                  : "border-orange-500/35 bg-orange-950/35 text-orange-200"
                             }`}
                           >
                             {item.cooldownStatus === "available"
@@ -836,7 +707,7 @@ export default function OgchTracker() {
                         </div>
                         <button
                           className="mt-3 w-full rounded-lg border border-sky-500/35 bg-sky-950/25 px-3 py-2 text-xs font-bold text-sky-100 transition hover:bg-sky-900/30 disabled:cursor-not-allowed disabled:border-slate-800 disabled:bg-slate-950/30 disabled:text-slate-600"
-                          disabled={!isSelected && !canAdd}
+                          disabled={mutatingId === partyTarget.id || (!isSelected && !canAdd)}
                           onClick={() =>
                             togglePartyMember(partyTarget.id, {
                               characterId: item.character.id,
@@ -862,9 +733,10 @@ export default function OgchTracker() {
             <div className="grid grid-cols-2 gap-2 border-t border-slate-800 p-5">
               <button
                 onClick={() => {
-                  updatePartySelection(partyTarget.id, () => []);
+                  void updatePartySelection(partyTarget.id, () => []);
                   setPartyTarget(null);
                 }}
+                disabled={mutatingId === partyTarget.id}
                 className="rounded-lg border border-rose-500/35 bg-rose-950/25 px-4 py-2 text-sm font-bold text-rose-200 transition hover:bg-rose-950/45"
                 type="button"
               >

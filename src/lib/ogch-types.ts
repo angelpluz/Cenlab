@@ -12,6 +12,7 @@ export type OgchCharacterProgress = {
   id: string;
   name: string;
   job: string;
+  roster?: "windhawk" | "bishop" | "dancer";
   baseLevel: number;
   clearCount: number;
   ogchLevel: number;
@@ -36,6 +37,19 @@ export type OgchMutationApiResponse = {
   character?: OgchCharacterProgress;
   message?: string;
   remainingCooldownSeconds?: number;
+  completedCharacters?: OgchCharacterProgress[];
+};
+
+export type OgchSharedState = {
+  characters: OgchCharacterProgress[];
+  partySelections: Record<string, { job: "bishop" | "dancer"; characterId: string }[]>;
+  localDataImported: boolean;
+};
+
+export type OgchSharedStateApiResponse = {
+  success: boolean;
+  data: OgchSharedState;
+  message?: string;
 };
 
 export type OgchApiErrorResponse = {

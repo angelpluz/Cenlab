@@ -4,6 +4,8 @@ import type {
   OgchCharacterProgress,
   OgchCharactersApiResponse,
   OgchMutationApiResponse,
+  OgchSharedState,
+  OgchSharedStateApiResponse,
 } from "@/lib/ogch-types";
 
 export const API_BASE_URL = "/api/ogch";
@@ -45,6 +47,39 @@ export async function getOgchCharacters(): Promise<OgchCharacterProgress[]> {
     cache: "no-store",
   });
 
+  return response.data;
+}
+
+export async function getOgchSharedState(): Promise<OgchSharedState> {
+  const response = await fetchApi<OgchSharedStateApiResponse>("/state", { cache: "no-store" });
+  return response.data;
+}
+
+export async function saveOgchPartyMapping(
+  leaderId: string,
+  memberJob: "bishop" | "dancer",
+  memberId: string | null
+): Promise<OgchSharedState> {
+  const response = await fetchApi<OgchSharedStateApiResponse>("/mapping", {
+    method: "POST",
+    body: JSON.stringify({ leaderId, memberJob, memberId }),
+  });
+  return response.data;
+}
+
+export async function importOgchLocalState(payload: {
+  progress: {
+    characterId: string;
+    clearCount: number;
+    lastCompletedAt: string | null;
+    nextAvailableAt: string | null;
+  }[];
+  partySelections: OgchSharedState["partySelections"];
+}): Promise<OgchSharedState> {
+  const response = await fetchApi<OgchSharedStateApiResponse>("/import-local", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
   return response.data;
 }
 

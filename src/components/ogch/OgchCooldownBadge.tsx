@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<OgchCooldownStatus, string> = {
 const STATUS_CLASSES: Record<OgchCooldownStatus, string> = {
   available: "border-emerald-500/40 bg-emerald-950/40 text-emerald-200",
   onCooldown: "border-orange-500/40 bg-orange-950/40 text-orange-200",
-  readySoon: "border-cyan-500/40 bg-cyan-950/40 text-cyan-200",
+  readySoon: "border-violet-500/40 bg-violet-950/40 text-violet-200",
 };
 
 export default function OgchCooldownBadge({ status, remainingSeconds }: OgchCooldownBadgeProps) {

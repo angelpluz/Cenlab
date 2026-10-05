@@ -1,6 +1,4 @@
 import type { NextRequest } from "next/server";
-import { addOgchCooldown } from "@/lib/ogch";
-import type { OgchCharacterProgress, OgchMutationApiResponse } from "@/lib/ogch-types";
 
 const UPSTREAM_API_BASE_URL =
   process.env.OGCH_UPSTREAM_API_BASE_URL?.replace(/\/$/, "") ??
@@ -8,6 +6,9 @@ const UPSTREAM_API_BASE_URL =
 
 const ALLOWED_ROUTES = new Set([
   "GET:characters",
+  "GET:state",
+  "POST:mapping",
+  "POST:import-local",
   "POST:complete",
   "POST:manual-adjust",
   "POST:reset-cooldown",
@@ -41,86 +42,6 @@ function getProxyHeaders(contentType = "application/json") {
   };
 }
 
-function getMutationCharacter(payload: OgchMutationApiResponse): OgchCharacterProgress | undefined {
-  return payload.data ?? payload.character;
-}
-
-async function alignCompletedCharacterReset(
-  request: NextRequest,
-  oidcToken: string,
-  completeResponse: Response
-): Promise<Response> {
-  const responseText = await completeResponse.text();
-  let completePayload: OgchMutationApiResponse;
-
-  try {
-    completePayload = JSON.parse(responseText) as OgchMutationApiResponse;
-  } catch {
-    return new Response(responseText, {
-      headers: getProxyHeaders(completeResponse.headers.get("content-type") ?? "application/json"),
-      status: completeResponse.status,
-    });
-  }
-
-  const completedCharacter = getMutationCharacter(completePayload);
-  if (
-    !completeResponse.ok ||
-    completePayload.success === false ||
-    !completedCharacter ||
-    !completedCharacter.lastCompletedAt ||
-    !Number.isFinite(completedCharacter.clearCount)
-  ) {
-    return Response.json(completePayload, {
-      headers: getProxyHeaders(),
-      status: completeResponse.status,
-    });
-  }
-
-  let alignedNextAvailableAt: string;
-
-  try {
-    alignedNextAvailableAt = addOgchCooldown(
-      new Date(completedCharacter.lastCompletedAt)
-    ).toISOString();
-  } catch {
-    return Response.json(completePayload, {
-      headers: getProxyHeaders(),
-      status: completeResponse.status,
-    });
-  }
-
-  const adjustResponse = await fetch(`${UPSTREAM_API_BASE_URL}/api/ogch/manual-adjust`, {
-    body: JSON.stringify({
-      characterId: completedCharacter.id,
-      clearCount: completedCharacter.clearCount,
-      lastCompletedAt: completedCharacter.lastCompletedAt,
-      nextAvailableAt: alignedNextAvailableAt,
-    }),
-    cache: "no-store",
-    headers: getUpstreamHeaders(request, oidcToken),
-    method: "POST",
-  });
-
-  if (!adjustResponse.ok) {
-    return Response.json(completePayload, {
-      headers: getProxyHeaders(),
-      status: completeResponse.status,
-    });
-  }
-
-  const adjustPayload = (await adjustResponse.json().catch(() => null)) as OgchMutationApiResponse | null;
-  const adjustedCharacter = adjustPayload ? getMutationCharacter(adjustPayload) : undefined;
-  if (adjustedCharacter) {
-    if (completePayload.data) completePayload.data = adjustedCharacter;
-    if (completePayload.character) completePayload.character = adjustedCharacter;
-  }
-
-  return Response.json(completePayload, {
-    headers: getProxyHeaders(),
-    status: completeResponse.status,
-  });
-}
-
 async function proxyOgchRequest(
   request: NextRequest,
   context: { params: { path: string[] } }
@@ -150,10 +71,6 @@ async function proxyOgchRequest(
     headers: getUpstreamHeaders(request, oidcToken),
     method: request.method,
   });
-
-  if (request.method === "POST" && path === "complete") {
-    return alignCompletedCharacterReset(request, oidcToken, upstreamResponse);
-  }
 
   return new Response(upstreamResponse.body, {
     headers: getProxyHeaders(upstreamResponse.headers.get("content-type") ?? "application/json"),

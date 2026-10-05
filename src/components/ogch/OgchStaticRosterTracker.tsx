@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import OgchCharacterCard from "@/components/ogch/OgchCharacterCard";
 import OgchNav from "@/components/ogch/OgchNav";
+import { completeOgchRun, getOgchSharedState, manualAdjustOgchProgress, resetOgchCooldown } from "@/lib/api";
 import {
   addOgchCooldown,
   formatBangkokDateTime,
@@ -12,21 +13,12 @@ import {
 } from "@/lib/ogch";
 import {
   OGCH_PARTY_EVENT,
-  OGCH_PARTY_STORAGE_KEY,
-  OGCH_STATIC_ROSTER_EVENT,
-  buildOgchStaticCharacter,
-  getOgchStaticRosterStorageKey,
-  readOgchPartyLeaders,
-  readOgchPartySelections,
-  readOgchStaticRoster,
-  writeOgchStaticRoster,
   type OgchPartyLeader,
   type OgchPartyLinkDisplay,
   type OgchPartyMember,
   type OgchStaticRosterJob,
   type StaticRosterCharacterSeed,
 } from "@/lib/ogch-static-rosters";
-import { PERSONAL_DATA_EVENT, PERSONAL_DATA_STORAGE_KEY } from "@/lib/personal-data";
 import type { OgchCharacterProgress } from "@/lib/ogch-types";
 
 type FilterKey = "all" | "available" | "cooldown" | "readySoon" | "lv10" | "needProgress";
@@ -80,12 +72,10 @@ export default function OgchStaticRosterTracker({
   activeNav,
   introLabel,
   jobLabel,
-  nextAvailableAt,
   sourceLabel,
 }: OgchStaticRosterTrackerProps) {
-  const [characters, setCharacters] = useState<OgchCharacterProgress[]>(() =>
-    readOgchStaticRoster(activeNav)
-  );
+  const [characters, setCharacters] = useState<OgchCharacterProgress[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("nextAvailable");
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -104,48 +94,33 @@ export default function OgchStaticRosterTracker({
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    function refreshStoredRoster() {
-      setCharacters(readOgchStaticRoster(activeNav));
+  const refreshState = useCallback(async () => {
+    try {
+      const state = await getOgchSharedState();
+      setCharacters(state.characters.filter((character) => character.roster === activeNav));
+      setPartySelections(state.partySelections);
+      setPartyLeaders(Object.fromEntries(
+        state.characters.filter((character) => character.roster === "windhawk").map((character) => [
+          character.id,
+          { characterId: character.id, name: character.name, jobLabel: character.job },
+        ])
+      ));
+      setError(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not load OGCH data.");
     }
-
-    function refreshPartyMappings() {
-      setPartySelections(readOgchPartySelections());
-      setPartyLeaders(readOgchPartyLeaders());
-    }
-
-    function handleRosterEvent(event: Event) {
-      const detail = (event as CustomEvent<{ job?: OgchStaticRosterJob }>).detail;
-      if (!detail?.job || detail.job === activeNav) refreshStoredRoster();
-    }
-
-    function handleStorageEvent(event: StorageEvent) {
-      if (
-        event.key === getOgchStaticRosterStorageKey(activeNav) ||
-        event.key === PERSONAL_DATA_STORAGE_KEY
-      ) {
-        refreshStoredRoster();
-      }
-
-      if (event.key === OGCH_PARTY_STORAGE_KEY) refreshPartyMappings();
-    }
-
-    refreshStoredRoster();
-    refreshPartyMappings();
-    window.addEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
-    window.addEventListener(OGCH_PARTY_EVENT, refreshPartyMappings);
-    window.addEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
-    window.addEventListener(PERSONAL_DATA_EVENT, refreshPartyMappings);
-    window.addEventListener("storage", handleStorageEvent);
-
-    return () => {
-      window.removeEventListener(OGCH_STATIC_ROSTER_EVENT, handleRosterEvent);
-      window.removeEventListener(OGCH_PARTY_EVENT, refreshPartyMappings);
-      window.removeEventListener(PERSONAL_DATA_EVENT, refreshStoredRoster);
-      window.removeEventListener(PERSONAL_DATA_EVENT, refreshPartyMappings);
-      window.removeEventListener("storage", handleStorageEvent);
-    };
   }, [activeNav]);
+
+  useEffect(() => {
+    void refreshState();
+    const onFocus = () => void refreshState();
+    window.addEventListener("focus", onFocus);
+    window.addEventListener(OGCH_PARTY_EVENT, onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(OGCH_PARTY_EVENT, onFocus);
+    };
+  }, [refreshState]);
 
   useEffect(() => {
     if (!notice) return;
@@ -262,104 +237,54 @@ export default function OgchStaticRosterTracker({
 
   const pendingNextAvailableAt = pendingComplete ? addOgchCooldown(new Date(nowMs)) : null;
 
-  function updateCharacter(
-    characterId: string,
-    updater: (current: OgchCharacterProgress) => OgchCharacterProgress
-  ) {
-    setCharacters((currentCharacters) => {
-      const nextCharacters = currentCharacters.map((character) =>
-        character.id === characterId ? updater(character) : character
-      );
-      writeOgchStaticRoster(activeNav, nextCharacters);
-      return nextCharacters;
-    });
-  }
-
-  function confirmComplete() {
+  async function confirmComplete() {
     if (!pendingComplete) return;
-
     setMutatingId(pendingComplete.id);
-    const completedAt = new Date(nowMs);
-    const nextResetAt = addOgchCooldown(completedAt);
-
-    updateCharacter(pendingComplete.id, (character) =>
-      buildOgchStaticCharacter(
-        {
-          id: character.id,
-          name: character.name,
-          clearCount: character.clearCount,
-        },
-        character.job,
-        nextAvailableAt,
-        {
-          clearCount: character.clearCount + 1,
-          lastCompletedAt: completedAt.toISOString(),
-          nextAvailableAt: nextResetAt.toISOString(),
-          cooldownStatus: "onCooldown",
-        }
-      )
-    );
-
-    setNotice(
-      `OGCH completed for ${pendingComplete.name}. Next run: ${formatBangkokDateTime(nextResetAt)} (04:00 reset).`
-    );
-    setPendingComplete(null);
-    setMutatingId(null);
+    try {
+      const result = await completeOgchRun(pendingComplete.id);
+      await refreshState();
+      setNotice(result.message ?? `OGCH completed for ${pendingComplete.name}.`);
+      setPendingComplete(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not complete OGCH run.");
+    } finally {
+      setMutatingId(null);
+    }
   }
 
-  function submitManualEdit(event: FormEvent<HTMLFormElement>) {
+  async function submitManualEdit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!manualTarget) return;
-
     setMutatingId(manualTarget.id);
-    const nextManualAvailableAt = fromDateTimeLocalInput(manualNextAvailableAt);
-
-    updateCharacter(manualTarget.id, (character) =>
-      buildOgchStaticCharacter(
-        {
-          id: character.id,
-          name: character.name,
-          clearCount: character.clearCount,
-        },
-        character.job,
-        nextAvailableAt,
-        {
-          clearCount: Number(manualClearCount),
-          lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
-          nextAvailableAt: nextManualAvailableAt,
-          cooldownStatus: nextManualAvailableAt ? "onCooldown" : "available",
-        }
-      )
-    );
-
-    setNotice(`OGCH progress updated for ${manualTarget.name}.`);
-    setManualTarget(null);
-    setMutatingId(null);
+    try {
+      await manualAdjustOgchProgress({
+        characterId: manualTarget.id,
+        clearCount: Number(manualClearCount),
+        lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
+        nextAvailableAt: fromDateTimeLocalInput(manualNextAvailableAt),
+      });
+      await refreshState();
+      setNotice(`OGCH progress updated for ${manualTarget.name}.`);
+      setManualTarget(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not save OGCH progress.");
+    } finally {
+      setMutatingId(null);
+    }
   }
 
-  function resetCooldown(character: OgchCharacterProgress) {
+  async function resetCooldown(character: OgchCharacterProgress) {
     if (!window.confirm(`Reset OGCH cooldown for ${character.name}?`)) return;
-
     setMutatingId(character.id);
-    updateCharacter(character.id, (currentCharacter) =>
-      buildOgchStaticCharacter(
-        {
-          id: currentCharacter.id,
-          name: currentCharacter.name,
-          clearCount: currentCharacter.clearCount,
-        },
-        currentCharacter.job,
-        nextAvailableAt,
-        {
-          clearCount: currentCharacter.clearCount,
-          lastCompletedAt: currentCharacter.lastCompletedAt,
-          nextAvailableAt: null,
-          cooldownStatus: "available",
-        }
-      )
-    );
-    setNotice(`OGCH cooldown reset for ${character.name}.`);
-    setMutatingId(null);
+    try {
+      await resetOgchCooldown(character.id);
+      await refreshState();
+      setNotice(`OGCH cooldown reset for ${character.name}.`);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Could not reset OGCH cooldown.");
+    } finally {
+      setMutatingId(null);
+    }
   }
 
   return (
@@ -379,6 +304,7 @@ export default function OgchStaticRosterTracker({
             {notice}
           </div>
         ) : null}
+        {error ? <p role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
 
         <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <SummaryCard label="Total Characters" value={summary.total.toString()} tone="cyan" />
