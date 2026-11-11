@@ -38,6 +38,8 @@ Backend code in `C:\databaseauth\server`:
 
 Restart or deploy the backend with these files before using the deployed frontend. The usual backend startup creates the three new tables without copying or resetting existing OGCH/Sakray progress. The frontend requires Vercel OIDC in the same way as the existing trackers; a plain local Next.js server cannot call the production API without it.
 
+Production rollout on November 11, 2026: created the three two-dungeon tables and restarted the backend serving port 4272. Verified the authenticated Vercel `/api/two-dungeons/state` endpoint returned HTTP 200 with 12 Windhawk-side and 12 Cardinal-side characters and no inherited party mappings. The original failure was HTTP 404 from the previous backend process, which had not loaded the new route.
+
 ## Checks
 
 ```text
