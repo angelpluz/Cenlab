@@ -734,6 +734,8 @@ export default function ExpQuestCalculator() {
               <NavLink href="/personal-data" label="Personal" tone="emerald" />
               <NavLink href="/exp" label="EXP" tone="amber" active />
               <NavLink href="/stat-calculator" label="Stat" tone="cyan" />
+              <NavLink href="/rune-tablet" label="Rune Tablet" tone="violet" />
+              <NavLink href="/two-dungeons" label="สองดัน" tone="pink" />
               <NavLink href="/ogch/bishop" label="Bishop" tone="pink" />
               <NavLink href="/cen-lab/calculator" label="Public" tone="emerald" />
             </nav>

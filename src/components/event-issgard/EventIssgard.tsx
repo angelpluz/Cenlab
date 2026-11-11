@@ -64,6 +64,8 @@ export default function EventIssgard() {
           <nav className="flex flex-wrap gap-2 text-sm font-semibold" aria-label="Page navigation">
             <Link href="/cen-lab" className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-200">Cen Lab</Link>
             <Link href="/codex" className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-200">Codex</Link>
+            <Link href="/rune-tablet" className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 transition hover:border-violet-500/50 hover:text-violet-200">Rune Tablet</Link>
+<Link href="/two-dungeons" className="rounded-lg border border-slate-700 px-3 py-2 text-slate-300 transition hover:border-violet-500/50 hover:text-violet-200">สองดัน</Link>
           </nav>
         </header>
 

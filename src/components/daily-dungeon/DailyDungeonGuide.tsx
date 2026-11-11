@@ -48,6 +48,8 @@ const NAV_ITEMS = [
   { href: "/personal-data", label: "Personal Data", tone: "emerald" },
   { href: "/exp", label: "EXP", tone: "amber" },
   { href: "/stat-calculator", label: "Stat", tone: "cyan" },
+  { href: "/rune-tablet", label: "Rune Tablet", tone: "violet" },
+  { href: "/two-dungeons", label: "สองดัน", tone: "pink" },
   { href: "/ogch/bishop", label: "Bishop Rounds", tone: "cyan" },
   { href: "/cen-lab/calculator", label: "Public Timer", tone: "emerald" },
 ] as const;

@@ -11,13 +11,9 @@ import {
   getLiveCooldownStatus,
 } from "@/lib/ogch";
 import {
-  completeSakrayRun,
-  getSakrayState,
-  manualAdjustSakrayProgress,
-  resetSakrayCooldown,
-  SAKRAY_API_BASE_URL,
-  saveSakrayMapping,
+  createDailyDungeonApi,
 } from "@/lib/sakray-api";
+import { getTwoDungeonMappingChange, TWO_DUNGEONS_API } from "@/lib/two-dungeons";
 import type {
   SakrayCharacter,
   SakrayRole,
@@ -29,11 +25,7 @@ type SortKey = "nextAvailable" | "name" | "clearCount";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 const EMPTY_STATE: SakrayState = { characters: [], mappings: {} };
-
-const ROLE_LABELS: Record<SakrayRole, string> = {
-  windhawk: "Windhawk Set",
-  bishop: "Bishop / Cardinal",
-};
+const SAKRAY_API = createDailyDungeonApi("/api/sakray");
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -78,7 +70,12 @@ function SummaryCard({
   );
 }
 
-export default function SakrayTracker() {
+export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakray" | "two-dungeons" }) {
+  const isTwoDungeons = variant === "two-dungeons";
+  const trackerName = isTwoDungeons ? "สองดัน" : "Sakray";
+  const supportLabel = isTwoDungeons ? "Cardinal" : "Bishop / Cardinal";
+  const api = isTwoDungeons ? TWO_DUNGEONS_API : SAKRAY_API;
+  const roleLabels: Record<SakrayRole, string> = { windhawk: "Windhawk Set", bishop: supportLabel };
   const [state, setState] = useState<SakrayState>(EMPTY_STATE);
   const [role, setRole] = useState<SakrayRole>("windhawk");
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -103,19 +100,19 @@ export default function SakrayTracker() {
     else setIsLoading(true);
 
     try {
-      const nextState = await getSakrayState();
+      const nextState = await api.getState();
       setState(nextState);
       if (!silent) setNotice(null);
     } catch (error) {
       setNotice({
         tone: "error",
-        text: error instanceof Error ? error.message : "โหลดข้อมูล Sakray ไม่สำเร็จ",
+        text: error instanceof Error ? error.message : `โหลดข้อมูล ${trackerName} ไม่สำเร็จ`,
       });
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [api, trackerName]);
 
   useEffect(() => {
     void refresh();
@@ -144,10 +141,12 @@ export default function SakrayTracker() {
   );
 
   useEffect(() => {
-    const anchorId = window.location.hash.replace(/^#sakray-character-/, "");
+    const prefix = `#${variant}-character-`;
+    if (!window.location.hash.startsWith(prefix)) return;
+    const anchorId = window.location.hash.slice(prefix.length);
     const anchoredCharacter = characterById.get(anchorId);
     if (anchoredCharacter) setRole(anchoredCharacter.role);
-  }, [characterById]);
+  }, [characterById, variant]);
 
   const roleCharacters = useMemo(
     () => state.characters.filter((character) => character.role === role),
@@ -184,12 +183,18 @@ export default function SakrayTracker() {
 
   const isPartyReady = useCallback(
     (character: SakrayCharacter) => {
+      if (isTwoDungeons && character.role === "bishop") {
+        return (inverseMappings.get(character.id) ?? []).every((id) => {
+          const member = characterById.get(id);
+          return member && getLiveCooldownStatus(member.nextAvailableAt, member.cooldownStatus, new Date(nowMs)) === "available";
+        });
+      }
       if (character.role !== "windhawk") return true;
       const bishopId = state.mappings[character.id];
       const bishop = bishopId ? characterById.get(bishopId) : undefined;
       return !bishop || getLiveCooldownStatus(bishop.nextAvailableAt, bishop.cooldownStatus, new Date(nowMs)) === "available";
     },
-    [characterById, nowMs, state.mappings]
+    [characterById, inverseMappings, isTwoDungeons, nowMs, state.mappings]
   );
 
   const summary = useMemo(() => {
@@ -250,61 +255,76 @@ export default function SakrayTracker() {
       } catch (error) {
         setNotice({
           tone: "error",
-          text: error instanceof Error ? error.message : "บันทึกข้อมูล Sakray ไม่สำเร็จ",
+          text: error instanceof Error ? error.message : `บันทึกข้อมูล ${trackerName} ไม่สำเร็จ`,
         });
         return false;
       } finally {
         setMutatingId(null);
       }
     },
-    []
+    [trackerName]
   );
 
   const navigateToPartyMember = useCallback((member: SakrayPartyLink) => {
     setRole(member.role);
-    const hash = `#sakray-character-${member.id}`;
+    setFilter("all");
+    setSearch("");
+    const hash = `#${variant}-character-${member.id}`;
     window.history.replaceState(null, "", hash);
     window.setTimeout(() => {
-      document.getElementById(`sakray-character-${member.id}`)?.scrollIntoView({
+      document.getElementById(`${variant}-character-${member.id}`)?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }, 50);
-  }, []);
+  }, [variant]);
 
   const openMapping = useCallback(
     (character: SakrayCharacter) => {
       setMappingTarget(character);
-      setMappingSelection(state.mappings[character.id] ?? "");
+      setMappingSelection(character.role === "windhawk"
+        ? state.mappings[character.id] ?? ""
+        : inverseMappings.get(character.id)?.[0] ?? "");
       setMappingSearch("");
     },
-    [state.mappings]
+    [inverseMappings, state.mappings]
   );
 
   const submitMapping = useCallback(async () => {
     if (!mappingTarget) return;
+    const change = isTwoDungeons
+      ? getTwoDungeonMappingChange(mappingTarget, mappingSelection, state.mappings)
+      : { windhawkId: mappingTarget.id, bishopId: mappingSelection || null };
+    if (!change) {
+      setMappingTarget(null);
+      return;
+    }
     const saved = await runMutation(
       mappingTarget.id,
-      () => saveSakrayMapping(mappingTarget.id, mappingSelection || null),
-      mappingSelection ? "บันทึก Party mapping แล้ว" : "ลบ Party mapping แล้ว"
+      () => api.saveMapping(change.windhawkId, change.bishopId),
+      isTwoDungeons
+        ? mappingSelection ? "บันทึกคู่ลงสองดันแล้ว" : "ยกเลิกคู่ลงสองดันแล้ว"
+        : mappingSelection ? "บันทึก Party mapping แล้ว" : "ลบ Party mapping แล้ว"
     );
     if (saved) setMappingTarget(null);
-  }, [mappingSelection, mappingTarget, runMutation]);
+  }, [api, isTwoDungeons, mappingSelection, mappingTarget, runMutation, state.mappings]);
 
   const confirmComplete = useCallback(async () => {
     if (!pendingComplete) return;
-    const mappedBishopId = pendingComplete.role === "windhawk" ? state.mappings[pendingComplete.id] : undefined;
+    const mappedBishopId = pendingComplete.role === "windhawk"
+      ? state.mappings[pendingComplete.id]
+      : isTwoDungeons ? inverseMappings.get(pendingComplete.id)?.[0] : undefined;
     const mappedBishop = mappedBishopId ? characterById.get(mappedBishopId) : undefined;
     const successText = mappedBishop
       ? `บันทึกรอบของ ${pendingComplete.name} และ ${mappedBishop.name} แล้ว`
       : `บันทึกรอบของ ${pendingComplete.name} แล้ว`;
     const saved = await runMutation(
       pendingComplete.id,
-      () => completeSakrayRun(pendingComplete.id),
+      () => api.completeRun(pendingComplete.id),
       successText
     );
     if (saved) setPendingComplete(null);
-  }, [characterById, pendingComplete, runMutation, state.mappings]);
+  }, [api, characterById, inverseMappings, isTwoDungeons, pendingComplete, runMutation, state.mappings]);
 
   const openManualEdit = useCallback((character: SakrayCharacter) => {
     setManualTarget(character);
@@ -326,7 +346,7 @@ export default function SakrayTracker() {
 
       const saved = await runMutation(
         manualTarget.id,
-        () => manualAdjustSakrayProgress({
+        () => api.manualAdjust({
           characterId: manualTarget.id,
           clearCount,
           lastCompletedAt: fromDateTimeLocalInput(manualLastCompletedAt),
@@ -337,6 +357,7 @@ export default function SakrayTracker() {
       if (saved) setManualTarget(null);
     },
     [
+      api,
       manualClearCount,
       manualLastCompletedAt,
       manualNextAvailableAt,
@@ -350,19 +371,21 @@ export default function SakrayTracker() {
       if (!window.confirm(`Reset cooldown ของ ${character.name} ใช่ไหม?`)) return;
       await runMutation(
         character.id,
-        () => resetSakrayCooldown(character.id),
+        () => api.resetCooldown(character.id),
         `Reset cooldown ของ ${character.name} แล้ว`
       );
     },
-    [runMutation]
+    [api, runMutation]
   );
 
   const mappedBishop = pendingComplete?.role === "windhawk"
     ? characterById.get(state.mappings[pendingComplete.id] ?? "")
-    : undefined;
+    : isTwoDungeons && pendingComplete ? characterById.get(inverseMappings.get(pendingComplete.id)?.[0] ?? "") : undefined;
   const predictedNextReset = addBangkokGameDayCooldown(new Date(nowMs), 1);
-  const bishopCandidates = state.characters
-    .filter((character) => character.role === "bishop")
+  const mappingPartnerRole = isTwoDungeons && mappingTarget?.role === "bishop" ? "windhawk" : "bishop";
+  const mappingPartnerLabel = mappingPartnerRole === "windhawk" ? "Windhawk" : supportLabel;
+  const mappingCandidates = state.characters
+    .filter((character) => character.role === mappingPartnerRole)
     .filter((character) => {
       const query = mappingSearch.trim().toLowerCase();
       return !query || `${character.name} ${character.job}`.toLowerCase().includes(query);
@@ -375,12 +398,12 @@ export default function SakrayTracker() {
         <header className="mb-5 flex flex-col gap-4 border-b border-slate-800 pb-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="bg-gradient-to-r from-pink-300 via-violet-300 to-cyan-300 bg-clip-text text-4xl font-black text-transparent">
-              ดัน Sakray
+              {isTwoDungeons ? "สองดัน" : "ดัน Sakray"}
             </h1>
-            <p className="mt-1 text-sm text-slate-400">Windhawk + Bishop / Cardinal Daily Run Tracker</p>
-            <p className="mt-1 text-xs text-slate-600">Data: {SAKRAY_API_BASE_URL} · Reset 04:00 Bangkok</p>
+            <p className="mt-1 text-sm text-slate-400">{isTwoDungeons ? "Lasgand + Sakray · Cardinal & Windhawk" : "Windhawk + Bishop / Cardinal Daily Run Tracker"}</p>
+            <p className="mt-1 text-xs text-slate-500">ตัดรอบทุกวันเวลา 04:00 น. ตามเวลาไทย</p>
           </div>
-          <SakrayNav />
+          <SakrayNav active={variant} />
         </header>
 
         {notice ? (
@@ -401,7 +424,7 @@ export default function SakrayTracker() {
           <SummaryCard label="Available Now" value={summary.available.toString()} tone="emerald" />
           <SummaryCard label="On Cooldown" value={summary.cooldown.toString()} tone="orange" />
           <SummaryCard label="Mapped" value={summary.mapped.toString()} tone="violet" />
-          <SummaryCard label="Total Sakray Runs" value={summary.runs.toString()} tone="pink" />
+          <SummaryCard label={isTwoDungeons ? "รอบสองดันทั้งหมด" : "Total Sakray Runs"} value={summary.runs.toString()} tone="pink" />
         </section>
 
         <section className="rounded-xl border border-slate-800 bg-slate-900/55 p-3">
@@ -415,10 +438,11 @@ export default function SakrayTracker() {
                       : "border-slate-700 bg-slate-950/60 text-slate-300 hover:border-pink-500/35"
                   }`}
                   key={roleKey}
+                  aria-pressed={role === roleKey}
                   onClick={() => setRole(roleKey)}
                   type="button"
                 >
-                  {ROLE_LABELS[roleKey]} ({state.characters.filter((item) => item.role === roleKey).length})
+                  {roleLabels[roleKey]} ({state.characters.filter((item) => item.role === roleKey).length})
                 </button>
               ))}
             </div>
@@ -433,6 +457,7 @@ export default function SakrayTracker() {
                         : "border-slate-700 bg-slate-950/60 text-slate-400 hover:text-slate-200"
                     }`}
                     key={item.key}
+                    aria-pressed={filter === item.key}
                     onClick={() => setFilter(item.key)}
                     type="button"
                   >
@@ -459,7 +484,7 @@ export default function SakrayTracker() {
               </select>
               <button
                 className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs font-bold text-slate-300 transition hover:border-cyan-500/40 disabled:opacity-50"
-                disabled={isRefreshing}
+                disabled={isRefreshing || mutatingId !== null}
                 onClick={() => void refresh(true)}
                 type="button"
               >
@@ -470,29 +495,31 @@ export default function SakrayTracker() {
         </section>
 
         <section className="mt-4 rounded-xl border border-pink-500/25 bg-gradient-to-r from-pink-950/25 via-violet-950/20 to-cyan-950/20 px-4 py-3 text-sm leading-6 text-slate-200">
-          คูลดาวน์ Sakray 1 วันเกม ตัดรอบเวลา 04:00 น. กรุงเทพฯ ข้อมูลรอบและ Party mapping ซิงก์จากฐานข้อมูลกลางทุกเครื่อง
-          เมื่อจบด้วย Windhawk ระบบจะบันทึก Bishop / Cardinal ที่ map ไว้พร้อมกันในครั้งเดียว
+          {isTwoDungeons ? "ตั้งคู่ Windhawk–Cardinal สำหรับ Lasgand + Sakray ในหน้านี้ได้เลย คู่ลงสองดันแยกจากปาร์ตี้ OGCH และเลือกคนละคู่กันได้ บันทึกเมื่อจบครบทั้งสองดันเป็น 1 รอบ คูลดาวน์ถึงตี 4 รอบถัดไปตามเวลาไทย" : "คูลดาวน์ Sakray 1 วันเกม ตัดรอบเวลา 04:00 น. กรุงเทพฯ ข้อมูลรอบและ Party mapping ซิงก์จากฐานข้อมูลกลางทุกเครื่อง เมื่อจบด้วย Windhawk ระบบจะบันทึก Bishop / Cardinal ที่ map ไว้พร้อมกันในครั้งเดียว"}
         </section>
 
         {isLoading ? (
           <div className="mt-5 rounded-xl border border-slate-800 bg-slate-900/55 p-10 text-center text-sm text-slate-400">
-            Loading Sakray data...
+            กำลังโหลดข้อมูล {trackerName}...
           </div>
         ) : visibleCharacters.length ? (
           <section className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
             {visibleCharacters.map((character) => (
               <SakrayCharacterCard
                 character={character}
-                isMutating={mutatingId === character.id}
+                isMutating={mutatingId !== null}
                 isPartyReady={isPartyReady(character)}
                 key={character.id}
                 nowMs={nowMs}
                 onComplete={setPendingComplete}
-                onManageMapping={character.role === "windhawk" ? openMapping : undefined}
+                onManageMapping={isTwoDungeons || character.role === "windhawk" ? openMapping : undefined}
                 onManualEdit={openManualEdit}
                 onNavigateParty={navigateToPartyMember}
                 onResetCooldown={(item) => void handleResetCooldown(item)}
                 partyLinks={getPartyLinks(character)}
+                runLabel={trackerName}
+                idPrefix={variant}
+                supportLabel={supportLabel}
               />
             ))}
           </section>
@@ -506,7 +533,8 @@ export default function SakrayTracker() {
       {pendingComplete ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-xl border border-pink-500/30 bg-slate-900 p-5 shadow-2xl shadow-pink-950/30">
-            <h2 className="text-xl font-black text-pink-200">Complete Sakray Run</h2>
+            <h2 className="text-xl font-black text-pink-200">Complete {trackerName} Run</h2>
+            {isTwoDungeons && <p className="mt-2 text-xs text-amber-200">ใช้ปุ่มนี้เมื่อจบครบทั้ง Lasgand และ Sakray แล้ว</p>}
             <p className="mt-3 text-sm leading-6 text-slate-300">
               บันทึกรอบของ <span className="font-bold text-white">{pendingComplete.name}</span>
               {mappedBishop ? (
@@ -516,7 +544,7 @@ export default function SakrayTracker() {
             </p>
             {pendingComplete.role === "windhawk" && !mappedBishop ? (
               <p className="mt-2 rounded-lg border border-amber-500/25 bg-amber-950/20 px-3 py-2 text-xs text-amber-200">
-                ตัวนี้ยังไม่ได้ map Bishop / Cardinal ระบบจะบันทึกเฉพาะ Windhawk
+                ตัวนี้ยังไม่ได้ map {supportLabel} ระบบจะบันทึกเฉพาะ Windhawk
               </p>
             ) : null}
             <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-400">
@@ -547,15 +575,16 @@ export default function SakrayTracker() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-sky-500/30 bg-slate-900 shadow-2xl shadow-sky-950/30">
             <div className="border-b border-slate-800 p-5">
-              <h2 className="text-xl font-black text-sky-200">Party Mapping</h2>
+              <h2 className="text-xl font-black text-sky-200">{isTwoDungeons ? "จัดปาร์ตี้สองดัน" : "Party Mapping"}</h2>
               <p className="mt-1 text-sm text-slate-400">
-                {mappingTarget.name} · เลือก Bishop / Cardinal ได้ 1 ตัว
+                {mappingTarget.name} · เลือก {mappingPartnerLabel} ได้ 1 ตัว
               </p>
+              {isTwoDungeons && <p className="mt-2 text-xs leading-6 text-amber-200">คู่ปาร์ตี้นี้ใช้สำหรับ Lasgand + Sakray เท่านั้น เปลี่ยนคู่ที่นี่ไม่กระทบปาร์ตี้ OGCH หากตัวที่เลือกมีคู่สองดันอยู่แล้ว ระบบจะจัดคู่สองดันใหม่ให้</p>}
               <input
-                aria-label="Search bishop"
+                aria-label={`Search ${mappingPartnerLabel}`}
                 className="mt-4 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-500"
                 onChange={(event) => setMappingSearch(event.target.value)}
-                placeholder="Search Bishop / Cardinal..."
+                placeholder={`Search ${mappingPartnerLabel}...`}
                 value={mappingSearch}
               />
             </div>
@@ -569,13 +598,15 @@ export default function SakrayTracker() {
                 onClick={() => setMappingSelection("")}
                 type="button"
               >
-                ไม่เลือก Bishop / Cardinal
+                ไม่เลือก {mappingPartnerLabel}
               </button>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {bishopCandidates.map((bishop) => {
+                {mappingCandidates.map((bishop) => {
                   const selected = mappingSelection === bishop.id;
                   const status = getLiveCooldownStatus(bishop.nextAvailableAt, bishop.cooldownStatus, new Date(nowMs));
-                  const leaderCount = (inverseMappings.get(bishop.id) ?? []).length;
+                  const leaderCount = bishop.role === "bishop"
+                    ? (inverseMappings.get(bishop.id) ?? []).length
+                    : state.mappings[bishop.id] ? 1 : 0;
 
                   return (
                     <button
@@ -593,7 +624,7 @@ export default function SakrayTracker() {
                         Lv.{bishop.baseLevel} {bishop.job} · {status === "available" ? "Available" : "On cooldown"}
                       </span>
                       {leaderCount ? (
-                        <span className="mt-1 block text-[11px] text-sky-300">Mapped with {leaderCount} Windhawk</span>
+                        <span className="mt-1 block text-[11px] text-sky-300">{isTwoDungeons ? "มีคู่ลงสองดันอยู่แล้ว" : `Mapped with ${leaderCount} Windhawk`}</span>
                       ) : null}
                     </button>
                   );
@@ -614,7 +645,7 @@ export default function SakrayTracker() {
                 onClick={() => void submitMapping()}
                 type="button"
               >
-                Save Mapping
+                {isTwoDungeons ? "บันทึกคู่สองดัน" : "Save Mapping"}
               </button>
             </div>
           </div>

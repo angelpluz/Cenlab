@@ -771,6 +771,18 @@ export default function CenLabBossTimer() {
                 Bishop Rounds
               </Link>
               <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-violet-500/40 hover:text-violet-200"
+                href="/rune-tablet"
+              >
+                Rune Tablet
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-violet-500/40 hover:text-violet-200"
+                href="/two-dungeons"
+              >
+                สองดัน
+              </Link>
+              <Link
                 className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-bold text-slate-300 transition hover:border-amber-500/40 hover:text-amber-200"
                 href="/event-issgard"
               >

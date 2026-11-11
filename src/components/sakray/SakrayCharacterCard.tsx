@@ -27,6 +27,9 @@ type SakrayCharacterCardProps = {
   onNavigateParty: (member: SakrayPartyLink) => void;
   onResetCooldown: (character: SakrayCharacter) => void;
   partyLinks: SakrayPartyLink[];
+  runLabel?: string;
+  idPrefix?: string;
+  supportLabel?: string;
 };
 
 export default function SakrayCharacterCard({
@@ -40,6 +43,9 @@ export default function SakrayCharacterCard({
   onNavigateParty,
   onResetCooldown,
   partyLinks,
+  runLabel = "Sakray",
+  idPrefix = "sakray",
+  supportLabel = "Bishop / Cardinal",
 }: SakrayCharacterCardProps) {
   const now = new Date(nowMs);
   const cooldownStatus = getLiveCooldownStatus(character.nextAvailableAt, character.cooldownStatus, now);
@@ -48,12 +54,15 @@ export default function SakrayCharacterCard({
     : character.remainingCooldownSeconds;
   const characterImage = getCharacterImage(character.id, character.name);
   const canComplete = cooldownStatus === "available" && isPartyReady && !isMutating;
-  const partyLabel = character.role === "windhawk" ? "Mapped Bishop / Cardinal" : "Mapped Windhawk";
+  const isTwoDungeons = idPrefix === "two-dungeons";
+  const partyLabel = isTwoDungeons
+    ? "คู่ลงสองดัน · Lasgand + Sakray"
+    : character.role === "windhawk" ? `Mapped ${supportLabel}` : "Mapped Windhawk";
 
   return (
     <article
       className="scroll-mt-5 rounded-xl border border-slate-800 bg-slate-900/70 p-3 shadow-lg shadow-black/10 transition hover:border-pink-500/35 target:border-pink-400/70 target:ring-2 target:ring-pink-400/20"
-      id={`sakray-character-${character.id}`}
+      id={`${idPrefix}-character-${character.id}`}
     >
       <div className="mb-3 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
         {characterImage ? (
@@ -94,7 +103,7 @@ export default function SakrayCharacterCard({
 
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg border border-pink-500/20 bg-pink-950/20 p-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-pink-300">Sakray Runs</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-pink-300">{idPrefix === "two-dungeons" ? "รอบสองดัน" : `${runLabel} Runs`}</p>
           <p className="mt-1 font-mono text-2xl font-black text-pink-100">{character.clearCount}</p>
         </div>
         <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-2">
@@ -113,7 +122,9 @@ export default function SakrayCharacterCard({
               onClick={() => onManageMapping(character)}
               type="button"
             >
-              {partyLinks.length ? "Edit Mapping" : "Add Mapping"}
+              {isTwoDungeons
+                ? partyLinks.length ? "เปลี่ยนคู่สองดัน" : "เลือกคู่สองดัน"
+                : partyLinks.length ? "Edit Mapping" : "Add Mapping"}
             </button>
           ) : null}
         </div>
@@ -126,13 +137,15 @@ export default function SakrayCharacterCard({
                 onClick={() => onNavigateParty(member)}
                 type="button"
               >
-                {member.role === "bishop" ? "Bishop" : "Windhawk"}: {member.name}
+                {member.role === "bishop" ? supportLabel : "Windhawk"}: {member.name}
               </button>
             ))}
           </div>
         ) : (
           <p className="mt-2 text-xs text-slate-500">
-            {character.role === "windhawk" ? "ยังไม่ได้เลือก Bishop / Cardinal" : "ยังไม่มี Windhawk ที่ map ไว้"}
+            {isTwoDungeons
+              ? "ยังไม่ได้เลือกคู่ลงสองดัน"
+              : character.role === "windhawk" ? `ยังไม่ได้เลือก ${supportLabel}` : "ยังไม่มี Windhawk ที่ map ไว้"}
           </p>
         )}
       </div>
@@ -162,8 +175,8 @@ export default function SakrayCharacterCard({
           {isMutating
             ? "Saving..."
             : !isPartyReady
-              ? "Mapped Bishop on Cooldown"
-              : "Complete Sakray Run"}
+              ? "Party on Cooldown"
+              : idPrefix === "two-dungeons" ? "จบ Lasgand + Sakray" : `Complete ${runLabel} Run`}
         </button>
         <button
           className="rounded-lg border border-violet-500/35 bg-violet-950/30 px-3 py-2 text-xs font-bold text-violet-200 transition hover:bg-violet-900/30 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2"

@@ -143,3 +143,21 @@ npm run lint     # ESLint check
 - Approach: own curated database instead of parsing ro-calculator.sanka.in.th bundle (fragile) or relying on Divine Pride API.
 - Schema supports optional `externalIds` (Divine Pride / rAthena) for future sync.
 - Build & lint: ✅ passing.
+
+## 2026-11-11 Update - Rune Tablet Guide
+- Added the protected `/rune-tablet` page and Rune Tablet links in existing navigation.
+- Imported all nine sheets from the supplied Thai Excel guide into `src/lib/generated/rune-tablet.json`, with local workbook illustrations and a source download.
+- Six sections cover the walkthrough, 12 sample sets with 22 piece bonus tiers, 17 calculator metrics, eight materials, Rune Shop, NPCs, update history, glossary and sources.
+- Search supports Thai/English, piece names and Episode filtering. The calculator supports +0 to +15 with per-three-level and per-level scaling from the workbook.
+- This is kRO reference data. Unlock costs exclude piece, Printing and enhancement costs; calculator results assume each stated piece requirement is met.
+- Import: `python scripts/import-rune-tablet.py`. Validation: `npm run check:rune-tablet`.
+- Implementation and source notes: `RUNE_TABLET_SETUP.md`.
+
+## 2026-11-11 Update - Two-Dungeon Daily Tracker
+- Added `/two-dungeons`, named “สองดัน”, for Lasgand + Sakray with Windhawk and Cardinal roster tabs.
+- Reuses the Sakray tracker UI with an explicit variant and a separate `/api/two-dungeons` API. New progress and party mappings do not affect OGCH or standalone Sakray.
+- Uses the canonical OGCH character roster and shared MySQL storage in `C:\databaseauth\server`, with three new `two_dungeon_*` tables created during backend startup.
+- One Windhawk maps one Cardinal. Completion from either side records both available members atomically.
+- Cooldown ends at the next 04:00 Asia/Bangkok boundary, including same-morning reset for runs completed before 04:00.
+- Backend startup/deployment and verification notes: `TWO_DUNGEONS_SETUP.md`.
+- Two-dungeon party selection is explicitly independent of OGCH. Both Cardinal and Windhawk tabs can edit their two-dungeon partner; the same character may have different partners in each tracker.

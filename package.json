@@ -7,6 +7,8 @@
     "build": "next build",
     "import:rathena-items": "node scripts/import-rathena-items.mjs",
     "import:sanka-items": "node scripts/import-sanka-items.mjs",
+    "check:rune-tablet": "node scripts/check-rune-tablet.cjs",
+    "check:two-dungeons": "node scripts/check-two-dungeons.cjs",
     "start": "next start",
     "lint": "next lint"
   },

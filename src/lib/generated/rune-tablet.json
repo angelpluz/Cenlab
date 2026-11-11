@@ -1,0 +1,959 @@
+{
+  "source": {
+    "filename": "RO_Rune_Tablet_Thai_Guide.xlsx",
+    "guideDate": "2026-11-11",
+    "server": "kRO",
+    "url": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+    "downloadUrl": "/guides/ro-rune-tablet-thai-guide.xlsx",
+    "sheets": [
+      "01 เริ่มตรงนี้",
+      "02 วิธีเล่น",
+      "03 วัตถุดิบ",
+      "04 Rune Set ตัวอย่าง",
+      "05 โบนัสแยกชิ้น",
+      "06 คำนวณ +15",
+      "07 ร้านแลกของ",
+      "08 NPC และอัปเดต",
+      "09 ศัพท์และที่มา"
+    ]
+  },
+  "reminders": [
+    {
+      "title": "แยกความคืบหน้าตามตัวละคร (ไม่แชร์ทั้งไอดี)",
+      "detail": "จะเล่นหลายตัว = อาจต้องลงทุนปลดล็อกหลายรอบ"
+    },
+    {
+      "title": "เปิดใช้งาน Rune Set พร้อมกันได้แค่ 1 เซ็ต",
+      "detail": "เปลี่ยนไปใช้เซ็ตอื่นได้ เมื่อปลดล็อกไว้แล้ว"
+    },
+    {
+      "title": "แปรสภาพอุปกรณ์ (Printing) ย้อนคืนไม่ได้",
+      "detail": "ของจะกลายเป็นวัตถุดิบและล้างการ์ด/ตีบวก/ออปชัน"
+    },
+    {
+      "title": "การย่อยการ์ดแบบชุดล่าสุดในบทความคือ 30 ใบ",
+      "detail": "สเปกเดิม 100 ใบ เปลี่ยนใน EP18 (15 พ.ย. 2023)"
+    },
+    {
+      "title": "ข้อมูลทั้งหมดเป็น kRO",
+      "detail": "GGT/ไทยอาจเปลี่ยนสูตร จำนวนวัตถุดิบ หรือช่วงเปิดใช้งาน"
+    }
+  ],
+  "steps": [
+    {
+      "title": "คุย NPC Rune Stone",
+      "action": "เลือกเปิดหน้า Rune Tablet หรือเมนูแปรสภาพอุปกรณ์",
+      "result": "เริ่มใช้งานระบบ",
+      "warning": "NPC หลายเมือง",
+      "example": "Prontera 161,192",
+      "summary": "เข้าหน้าระบบ"
+    },
+    {
+      "title": "ย่อยการ์ด",
+      "action": "เอาการ์ดที่ไม่ใช้ไปย่อย (ทีละใบ หรือเป็นชุด)",
+      "result": "ได้ Imperfect Rune / Perfect Rune",
+      "warning": "อัปเดต EP18 เปลี่ยนชุดละ 100 → 30 ใบ",
+      "example": "การ์ด Boss ให้ของดีกว่าการ์ดทั่วไป",
+      "summary": "หาเงินทุนเป็น Rune"
+    },
+    {
+      "title": "แปรสภาพอุปกรณ์ (Printing)",
+      "action": "แปลงอาวุธ/ชุดเกราะที่ระบบรองรับเป็น Printed Gear",
+      "result": "ได้วัตถุดิบปลดล็อก Rune Piece",
+      "warning": "อุปกรณ์หายจากสถานะสวมใส่; การ์ด/Refine/Enchant หาย",
+      "example": "ใช้ Imperfect Rune 10 ต่อชิ้น",
+      "summary": "อย่าใช้ของตีบวกแพง"
+    },
+    {
+      "title": "ปลดล็อก Rune Piece",
+      "action": "รวบรวมการ์ด + ของดรอป + Printed Gear ตามสูตรชิ้นนั้น",
+      "result": "ได้ชิ้นส่วนสำหรับประกอบเซ็ต",
+      "warning": "Rune Piece เองยังไม่มีโบนัส",
+      "example": "บางชิ้นต้องใช้การ์ด MVP",
+      "summary": "เก็บชิ้นส่วนให้ครบ"
+    },
+    {
+      "title": "ปลดล็อก Rune Set",
+      "action": "เลือกเซ็ตและจ่ายวัตถุดิบเปิดเซ็ต",
+      "result": "เซ็ตอยู่ถาวรในตัวละครนั้น",
+      "warning": "1 ชิ้นปลดล็อกได้ แต่ 2 ชิ้นขึ้นไปจึงได้โบนัส",
+      "example": "2–6 ชิ้นตามชนิดเซ็ต",
+      "summary": "เริ่มเห็นโบนัส"
+    },
+    {
+      "title": "เลือกเซ็ตมาใช้งาน",
+      "action": "เปิดใช้เซ็ตใดเซ็ตหนึ่งเป็น Active Set",
+      "result": "ได้รับโบนัสของเซ็ตที่เปิดอยู่",
+      "warning": "ใช้พร้อมกันได้แค่ 1 เซ็ต",
+      "example": "เปลี่ยนเซ็ตตามสายสกิล",
+      "summary": "ใช้ให้ถูกงาน"
+    },
+    {
+      "title": "อัปเกรด Rune Set",
+      "action": "จ่ายวัตถุดิบตีบวกเซ็ตจาก +0 ถึง +15",
+      "result": "ปลดล็อกโบนัสที่ต้องการขั้น +3/+5 ฯลฯ",
+      "warning": "พลาดแล้วไม่ลดขั้น/ไม่แตก แต่เสียวัตถุดิบ",
+      "example": "ความสำเร็จเพิ่มสะสมหลังพลาด",
+      "summary": "ปลดโบนัสเต็มที่"
+    }
+  ],
+  "materials": [
+    {
+      "category": "รูนหลัก",
+      "thaiName": "รูนไม่สมบูรณ์",
+      "name": "Imperfect Rune",
+      "itemId": "1001282",
+      "obtainedFrom": "ย่อยการ์ดทั่วไป/การ์ดบอส",
+      "usage": "ปลดล็อกเซ็ต • แปรสภาพอุปกรณ์ • แลกของ",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001282.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001282/",
+      "imageSrc": "/rune-tablet/1001282.png"
+    },
+    {
+      "category": "รูนหลัก",
+      "thaiName": "รูนสมบูรณ์",
+      "name": "Perfect Rune",
+      "itemId": "1001283",
+      "obtainedFrom": "ย่อยการ์ด (โอกาสได้รับ) หรือแลกใน Rune Shop",
+      "usage": "ปลดล็อก Rune Set ระดับต่าง ๆ",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001283.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001283/",
+      "imageSrc": "/rune-tablet/1001283.png"
+    },
+    {
+      "category": "อุปกรณ์พิมพ์",
+      "thaiName": "อาวุธที่แปรสภาพ (ตัวอย่าง)",
+      "name": "Printed Blasti-OS",
+      "itemId": "1001365",
+      "obtainedFrom": "นำ Blasti-OS ไปทำ Printing ที่ Rune Stone",
+      "usage": "ใช้เปิด Rune Piece บางชิ้น",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001365.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001365/",
+      "imageSrc": "/rune-tablet/1001365.png"
+    },
+    {
+      "category": "รูนจากดัน",
+      "thaiName": "หินรูนพลังเวทจาง ๆ",
+      "name": "Faint Magical Rune Stone",
+      "itemId": "1001593",
+      "obtainedFrom": "Mysterious Box จาก Hall of Life ระดับ 9+ หรือ Constellation Tower",
+      "usage": "สะสม 70 ชิ้นไปแลก Condensed Magical Rune Stone",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001593.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001593/kROM",
+      "imageSrc": "/rune-tablet/1001593.png"
+    },
+    {
+      "category": "ของจากการ์ดบอส",
+      "thaiName": "ตราประทับรูน",
+      "name": "Rune Seal",
+      "itemId": "1001594",
+      "obtainedFrom": "ย่อย Sealed Boss Card ผ่าน NPC",
+      "usage": "ใช้ 3 + Imperfect Rune 150 แลก Sealed Rune Stone",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001594.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001594/kROM",
+      "imageSrc": "/rune-tablet/1001594.png"
+    },
+    {
+      "category": "ของแลก",
+      "thaiName": "หินรูนเวทเข้มข้น",
+      "name": "Condensed Magical Rune Stone",
+      "itemId": "1001592",
+      "obtainedFrom": "Rune Shop (Faint Rune Stone 70 ชิ้น)",
+      "usage": "นำไปย่อยต่อที่ Card Disassembly",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001592.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001592/kROM",
+      "imageSrc": "/rune-tablet/1001592.png"
+    },
+    {
+      "category": "ของแลก",
+      "thaiName": "หินรูนผนึก",
+      "name": "Sealed Rune Stone",
+      "itemId": "1001595",
+      "obtainedFrom": "Rune Shop (Rune Seal 3 + Imperfect Rune 150)",
+      "usage": "นำไปย่อยต่อที่ Card Disassembly",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/1001595.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/1001595/kROM",
+      "imageSrc": "/rune-tablet/1001595.png"
+    },
+    {
+      "category": "การ์ดแลก",
+      "thaiName": "การ์ดรูนระดับต่ำ",
+      "name": "Lesser / Low-grade Rune Card",
+      "itemId": "300482",
+      "obtainedFrom": "Card Coin จากกิจกรรมแลกการ์ด (ตามระบบที่เปิด)",
+      "usage": "ใช้สำหรับย่อยเอา Rune",
+      "originalImageUrl": "https://static.divine-pride.net/images/items/collection/300482.png",
+      "sourceUrl": "https://www.divine-pride.net/database/item/300482/kROM",
+      "imageSrc": "/rune-tablet/300482.png"
+    }
+  ],
+  "otherMaterials": "กลุ่มไอเทมอื่น ๆ ที่ต้องสะสม: Varmeal Ticket (EP17), Amethyst Fragment (EP18), Snow Flower Petal (EP19), Sacred Cat Whiskers (EP20), Wigner Premium Exchange Ticket (EP21), Root Coin / Mana Ring (CH1) และการ์ดมอนสเตอร์ตามสูตร Rune Piece แต่ละชิ้น",
+  "sets": [
+    {
+      "episode": "EP17",
+      "name": "Automatic Armor",
+      "playstyle": "สายถึก/HP",
+      "pieceCount": 2,
+      "imperfectRunes": 100,
+      "perfectRunes": 1,
+      "otherMaterials": "Varmeal Ticket ×1,350",
+      "pieces": [
+        "Automatic Armor A",
+        "Automatic Armor B"
+      ],
+      "summary": "2 ชิ้น: DEF +100, MDEF +25; ทุก +3 ได้ MaxHP +1%",
+      "exampleAt15": "MaxHP +5% เมื่อมี 2 ชิ้น",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2023_08/rt_ep17_auto.png.5d0e47aebcdf77da1b8ca642d317509c.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "automatic-armor",
+      "imageSrc": "/rune-tablet/automatic-armor.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "DEF +100, MDEF +25; ทุก +3 ได้ MaxHP +1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "MaxHP",
+          "base": 0,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 5,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP18",
+      "name": "Gray Wolf",
+      "playstyle": "สายลง EP18",
+      "pieceCount": 2,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Amethyst Fragment ×650",
+      "pieces": [
+        "Gray Wolf Armor A",
+        "Gray Wolf Armor B"
+      ],
+      "summary": "2 ชิ้น: เพิ่มดาเมจกายภาพ/เวทต่อมอนสเตอร์ EP18 +10%; ทุก +3 เพิ่มอีก +1%",
+      "exampleAt15": "ดาเมจต่อมอน EP18 รวม +15% เมื่อมี 2 ชิ้น",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2023_11/Rt_Ep18_Armor.png.9502f943c1e622e7df07a0c34fc01450.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "gray-wolf",
+      "imageSrc": "/rune-tablet/gray-wolf.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "เพิ่มดาเมจกายภาพ/เวทต่อมอนสเตอร์ EP18 +10%; ทุก +3 เพิ่มอีก +1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจต่อมอน EP18",
+          "base": 10,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 15,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP18",
+      "name": "Demigod",
+      "playstyle": "สายล่าบอส กายภาพ/เวท",
+      "pieceCount": 3,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Amethyst Fragment ×1,250",
+      "pieces": [
+        "Demigod",
+        "Phantom Kite",
+        "Grey Wolf"
+      ],
+      "summary": "2 ชิ้น: ดาเมจกายภาพและเวทต่อ Boss +10% | 3 ชิ้น: เพิ่มดาเมจต่อ Boss อีก +15%; ทุก +3 เพิ่มอีก +3%",
+      "exampleAt15": "โบนัส Boss รวม +40% (ครบ 3 ชิ้น)",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2023_11/Rt_Ep18_Demi.png.0593c22abb2df4adbc105590d09bb617.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "demigod",
+      "imageSrc": "/rune-tablet/demigod.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "ดาเมจกายภาพและเวทต่อ Boss +10%",
+          "scaling": "โบนัสจากจำนวนชิ้นที่เปิดได้"
+        },
+        {
+          "pieces": 3,
+          "description": "เพิ่มดาเมจต่อ Boss อีก +15%; ทุก +3 เพิ่มอีก +3%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจต่อ Boss กายภาพ/เวท",
+          "base": 25,
+          "perStep": 3,
+          "step": 3,
+          "expectedAt15": 40,
+          "unit": "%",
+          "requirement": "ครบ 3 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP20",
+      "name": "Predator (EP20)",
+      "playstyle": "สายกายภาพ ระยะใกล้/ไกล",
+      "pieceCount": 2,
+      "imperfectRunes": 300,
+      "perfectRunes": 1,
+      "otherMaterials": "Sacred Cat Whiskers ×350",
+      "pieces": [
+        "Hide and Seek",
+        "Ultimate"
+      ],
+      "summary": "2 ชิ้น: P.ATK +20 และได้รับความเสียหายทุกธาตุเพิ่ม 15%; ทุก +3 ได้ดาเมจกายภาพระยะใกล้/ไกล +4% และลดความเสียหายที่ได้รับ 2%",
+      "exampleAt15": "กายภาพใกล้/ไกล +20% จากเงื่อนไขทุก +3",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_04/Rt_Ep20_Predator.png.ce2a568b6377f1ed9ff57f4bfd8c340a.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "predator-ep20",
+      "imageSrc": "/rune-tablet/predator-ep20.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "P.ATK +20 และได้รับความเสียหายทุกธาตุเพิ่ม 15%; ทุก +3 ได้ดาเมจกายภาพระยะใกล้/ไกล +4% และลดความเสียหายที่ได้รับ 2%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจกายภาพใกล้/ไกล",
+          "base": 0,
+          "perStep": 4,
+          "step": 3,
+          "expectedAt15": 20,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น; *ยังมีโทษรับดาเมจเพิ่ม*"
+        }
+      ]
+    },
+    {
+      "episode": "EP21",
+      "name": "Purification Activity",
+      "playstyle": "ยิงไกล/คริติคอล",
+      "pieceCount": 5,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Wigner Premium Exchange Ticket ×450",
+      "pieces": [
+        "Ice Sea Seafood",
+        "Ice Sea Seawater",
+        "Yoster Squadron",
+        "Yormi Duo",
+        "Bishop"
+      ],
+      "summary": "2 ชิ้น: ดาเมจกายภาพระยะไกล +4%; ทุก +3 เพิ่มอีก +1% | 3 ชิ้น: C.RATE +3, Critical Damage +12% | 5 ชิ้น: ลด Variable Cast 6%; ทุก +3 ลดอีก 1%",
+      "exampleAt15": "ครบ 5 ชิ้น: ระยะไกล +9%; Crit Dmg +12%; ลด Variable Cast 11%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_12/Rt_Ep21_Purify.png.3788e17b892c28d833a7be394320fc34.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "purification-activity",
+      "imageSrc": "/rune-tablet/purification-activity.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "ดาเมจกายภาพระยะไกล +4%; ทุก +3 เพิ่มอีก +1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 3,
+          "description": "C.RATE +3, Critical Damage +12%",
+          "scaling": "โบนัสจากจำนวนชิ้นที่เปิดได้"
+        },
+        {
+          "pieces": 5,
+          "description": "ลด Variable Cast 6%; ทุก +3 ลดอีก 1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจกายภาพระยะไกล",
+          "base": 4,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 9,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น"
+        },
+        {
+          "label": "ลด Variable Cast",
+          "base": 6,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 11,
+          "unit": "%",
+          "requirement": "ครบ 5 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP21",
+      "name": "Military Aid",
+      "playstyle": "สายถึก/ลดคูลดาวน์",
+      "pieceCount": 4,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Wigner Premium Exchange Ticket ×450",
+      "pieces": [
+        "Fluffy Soft",
+        "Yorker",
+        "Yoster Squadron",
+        "Yordos Trio"
+      ],
+      "summary": "2 ชิ้น: MaxHP +5%; ทุก +3 เพิ่ม MaxHP อีก 2% | 4 ชิ้น: ลด Global Cooldown 5%; ทุก +3 ลดเพิ่มอีก 1%",
+      "exampleAt15": "ครบ 4 ชิ้น: MaxHP +15%; ลด Global Cooldown 10%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_12/Rt_Ep21_Aid.png.8e24b893c3fc8615e9abd0e406bf865c.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "military-aid",
+      "imageSrc": "/rune-tablet/military-aid.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "MaxHP +5%; ทุก +3 เพิ่ม MaxHP อีก 2%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 4,
+          "description": "ลด Global Cooldown 5%; ทุก +3 ลดเพิ่มอีก 1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "MaxHP",
+          "base": 5,
+          "perStep": 2,
+          "step": 3,
+          "expectedAt15": 15,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น"
+        },
+        {
+          "label": "ลด Global Cooldown",
+          "base": 5,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 10,
+          "unit": "%",
+          "requirement": "ครบ 4 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP21",
+      "name": "Company",
+      "playstyle": "กายภาพ/คริครบเซ็ต",
+      "pieceCount": 6,
+      "imperfectRunes": 250,
+      "perfectRunes": 1,
+      "otherMaterials": "Wigner Premium Exchange Ticket ×750",
+      "pieces": [
+        "Arbiter",
+        "Bishop",
+        "Yoscopus",
+        "Yordos Trio",
+        "Yormi Duo",
+        "Yoster Squadron"
+      ],
+      "summary": "2 ชิ้น: กายภาพใกล้/ไกล +6%; ทุก +3 ดาเมจระยะไกลเพิ่มอีก 1% | 4 ชิ้น: P.ATK +20 และกายภาพใกล้/ไกล +4% | 6 ชิ้น: CRI +15, Critical Damage +35%; ทุก +3 Critical Damage เพิ่มอีก +5%",
+      "exampleAt15": "ครบ 6 ชิ้น: Crit Dmg +60%; ระยะไกลจากโบนัสชุดรวม +15%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_12/Rt_Ep21_Company.png.f4492014ecb6b0483ed0468083166e47.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "company",
+      "imageSrc": "/rune-tablet/company.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "กายภาพใกล้/ไกล +6%; ทุก +3 ดาเมจระยะไกลเพิ่มอีก 1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 4,
+          "description": "P.ATK +20 และกายภาพใกล้/ไกล +4%",
+          "scaling": "โบนัสจากจำนวนชิ้นที่เปิดได้"
+        },
+        {
+          "pieces": 6,
+          "description": "CRI +15, Critical Damage +35%; ทุก +3 Critical Damage เพิ่มอีก +5%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "Critical Damage",
+          "base": 35,
+          "perStep": 5,
+          "step": 3,
+          "expectedAt15": 60,
+          "unit": "%",
+          "requirement": "ครบ 6 ชิ้น"
+        },
+        {
+          "label": "ดาเมจกายภาพระยะไกล",
+          "base": 10,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 15,
+          "unit": "%",
+          "requirement": "ครบ 4 ชิ้น (โบนัส 2+4 ชิ้น)"
+        }
+      ]
+    },
+    {
+      "episode": "EP21",
+      "name": "Frozen Horn",
+      "playstyle": "เวทธาตุ",
+      "pieceCount": 5,
+      "imperfectRunes": 250,
+      "perfectRunes": 1,
+      "otherMaterials": "Wigner Premium Exchange Ticket ×750",
+      "pieces": [
+        "Fluffy Soft",
+        "Yorker",
+        "Ice Horn",
+        "Ice Sea Seafood",
+        "Ice Sea Seawater"
+      ],
+      "summary": "2 ชิ้น: S.MATK +20; ทุก +3 เพิ่ม S.MATK +4 | 5 ชิ้น: เวทพิษ/ดิน/ลม/น้ำ +25%; ทุก +3 เพิ่มอีก +3%",
+      "exampleAt15": "ครบ 5 ชิ้น: S.MATK +40; เวท 4 ธาตุที่กำหนด +40%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_12/Rt_Ep21_Horn.png.38033e4dd16099d76f816b009a4e7246.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "frozen-horn",
+      "imageSrc": "/rune-tablet/frozen-horn.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "S.MATK +20; ทุก +3 เพิ่ม S.MATK +4",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 5,
+          "description": "เวทพิษ/ดิน/ลม/น้ำ +25%; ทุก +3 เพิ่มอีก +3%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "S.MATK",
+          "base": 20,
+          "perStep": 4,
+          "step": 3,
+          "expectedAt15": 40,
+          "unit": "แต้ม",
+          "requirement": "ครบ 2 ชิ้น"
+        },
+        {
+          "label": "เวทพิษ/ดิน/ลม/น้ำ",
+          "base": 25,
+          "perStep": 3,
+          "step": 3,
+          "expectedAt15": 40,
+          "unit": "%",
+          "requirement": "ครบ 5 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "EP21",
+      "name": "Encroachment",
+      "playstyle": "สายล่าบอส กายภาพ",
+      "pieceCount": 2,
+      "imperfectRunes": 300,
+      "perfectRunes": 1,
+      "otherMaterials": "Wigner Premium Exchange Ticket ×850",
+      "pieces": [
+        "Ghost Captain",
+        "Tan"
+      ],
+      "summary": "2 ชิ้น: กายภาพต่อ Boss +20%, ต่อ Normal +5%; ทุก +1 เพิ่มดาเมจต่อ Boss และ Normal อย่างละ +1%",
+      "exampleAt15": "ครบ 2 ชิ้น: ต่อ Boss +35%; ต่อ Normal +20%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2025_12/Rt_Ep21_Tan.png.5de722fb8c79e7c59162704e05cb6165.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "encroachment",
+      "imageSrc": "/rune-tablet/encroachment.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "กายภาพต่อ Boss +20%, ต่อ Normal +5%; ทุก +1 เพิ่มดาเมจต่อ Boss และ Normal อย่างละ +1%",
+          "scaling": "ทุก +1 = ได้โบนัสทุกระดับตีบวก"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจกายภาพต่อ Boss",
+          "base": 20,
+          "perStep": 1,
+          "step": 1,
+          "expectedAt15": 35,
+          "unit": "%",
+          "requirement": "ครบ 2 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "CH1",
+      "name": "Fire",
+      "playstyle": "สายเวทล่าบอส",
+      "pieceCount": 3,
+      "imperfectRunes": 300,
+      "perfectRunes": 1,
+      "otherMaterials": "Root Coin ×450; Mana Ring ×450",
+      "pieces": [
+        "Rolling",
+        "Bulgasari",
+        "Volcano"
+      ],
+      "summary": "2 ชิ้น: เวทต่อ Normal/Boss +5%; ทุก +3 เพิ่มอีก +1% | 3 ชิ้น: เวทต่อ Boss อีก +15%",
+      "exampleAt15": "ครบ 3 ชิ้น: เวทต่อ Boss +25% และต่อ Normal +10%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2026_03/rt_ch01_bulgasari.png.12ece89c396d0b101a13440c136bf210.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "fire",
+      "imageSrc": "/rune-tablet/fire.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "เวทต่อ Normal/Boss +5%; ทุก +3 เพิ่มอีก +1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 3,
+          "description": "เวทต่อ Boss อีก +15%",
+          "scaling": "โบนัสจากจำนวนชิ้นที่เปิดได้"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ดาเมจเวทต่อ Boss",
+          "base": 20,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 25,
+          "unit": "%",
+          "requirement": "ครบ 3 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "CH1",
+      "name": "Junkyard",
+      "playstyle": "สเตตัสคลาส 4/ลดคูลดาวน์",
+      "pieceCount": 3,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Root Coin ×100; Mana Ring ×100",
+      "pieces": [
+        "Knightage",
+        "Toxic Gathering",
+        "Junk Disposal Squad"
+      ],
+      "summary": "2 ชิ้น: ทุก +3: POW/CON/SPL/CRT +1, P.ATK +3, S.MATK +3 | 3 ชิ้น: ลด Global Cooldown 3%; ทุก +3 ลดเพิ่มอีก 1%",
+      "exampleAt15": "ครบ 3 ชิ้น: POW/CON/SPL/CRT +5; P.ATK/S.MATK +15; ลด Global Cooldown 8%",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2026_03/rt_ch01_chunk.png.f6050122bfd3c772bcb071f14c25d6d3.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "junkyard",
+      "imageSrc": "/rune-tablet/junkyard.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "ทุก +3: POW/CON/SPL/CRT +1, P.ATK +3, S.MATK +3",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 3,
+          "description": "ลด Global Cooldown 3%; ทุก +3 ลดเพิ่มอีก 1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ลด Global Cooldown",
+          "base": 3,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 8,
+          "unit": "%",
+          "requirement": "ครบ 3 ชิ้น"
+        },
+        {
+          "label": "ค่า POW / CON / SPL / CRT ต่อประเภท",
+          "base": 0,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 5,
+          "unit": "แต้ม",
+          "requirement": "ครบ 2 ชิ้น"
+        }
+      ]
+    },
+    {
+      "episode": "CH1",
+      "name": "Noise",
+      "playstyle": "เพิ่ม ASPD/สเตตัสคลาส 4",
+      "pieceCount": 3,
+      "imperfectRunes": 150,
+      "perfectRunes": 1,
+      "otherMaterials": "Root Coin ×100; Mana Ring ×100",
+      "pieces": [
+        "Noise",
+        "Flowers Bouquet",
+        "Volcano"
+      ],
+      "summary": "2 ชิ้น: ทุก +3: POW/CON/SPL/CRT +1, P.ATK +3, S.MATK +3 | 3 ชิ้น: ลด Delay หลังโจมตี 5%; ทุก +3 ลดเพิ่มอีก 1%",
+      "exampleAt15": "ครบ 3 ชิ้น: ลด Delay หลังโจมตี 10%; POW/CON/SPL/CRT +5",
+      "originalImageUrl": "https://www.divine-pride.net/forum/uploads/monthly_2026_03/rt_ch01_noise.png.b76a648c075eaaa5d020189f46460dd6.png",
+      "sourceUrl": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "id": "noise",
+      "imageSrc": "/rune-tablet/noise.png",
+      "bonuses": [
+        {
+          "pieces": 2,
+          "description": "ทุก +3: POW/CON/SPL/CRT +1, P.ATK +3, S.MATK +3",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        },
+        {
+          "pieces": 3,
+          "description": "ลด Delay หลังโจมตี 5%; ทุก +3 ลดเพิ่มอีก 1%",
+          "scaling": "ทุก +3 = ได้โบนัสที่ +3, +6, +9, +12, +15"
+        }
+      ],
+      "metrics": [
+        {
+          "label": "ลด Delay หลังการโจมตี",
+          "base": 5,
+          "perStep": 1,
+          "step": 3,
+          "expectedAt15": 10,
+          "unit": "%",
+          "requirement": "ครบ 3 ชิ้น"
+        }
+      ]
+    }
+  ],
+  "shop": [
+    {
+      "name": "Episode 17–18 Card Album",
+      "imperfectRunes": 150,
+      "otherItem": "–",
+      "otherQuantity": null,
+      "description": "แลกกล่องสุ่มการ์ด EP17–18",
+      "note": "มีโอกาสได้การ์ด Boss / MVP ด้วย (ขึ้นกับกติกา)"
+    },
+    {
+      "name": "Perfect Rune",
+      "imperfectRunes": 1500,
+      "otherItem": "–",
+      "otherQuantity": null,
+      "description": "ใช้รูนไม่สมบูรณ์จำนวนมากมาแลกรูนสมบูรณ์",
+      "note": "ช่วยคนที่ยังหา Perfect Rune ไม่พอ"
+    },
+    {
+      "name": "Condensed Magical Rune Stone",
+      "imperfectRunes": 0,
+      "otherItem": "Faint Magical Rune Stone",
+      "otherQuantity": 70,
+      "description": "สะสมหินรูนจากดันแล้วนำมาแลก",
+      "note": "นำ Condensed Stone ไปย่อยในระบบได้"
+    },
+    {
+      "name": "Sealed Rune Stone",
+      "imperfectRunes": 150,
+      "otherItem": "Rune Seal",
+      "otherQuantity": 3,
+      "description": "ใช้ตราประทับจากการ์ดบอสผนึกมารวมกับ Rune",
+      "note": "นำ Sealed Stone ไปย่อยในระบบได้"
+    }
+  ],
+  "npcs": [
+    {
+      "city": "Prontera",
+      "map": "prontera",
+      "coordinates": "161, 192",
+      "services": "Rune Tablet / Printing / Lore"
+    },
+    {
+      "city": "Juno",
+      "map": "yuno",
+      "coordinates": "142, 177",
+      "services": "Rune Tablet / Printing / Lore"
+    },
+    {
+      "city": "Rachel",
+      "map": "rachel",
+      "coordinates": "131, 144",
+      "services": "Rune Tablet / Printing / Lore"
+    },
+    {
+      "city": "Ice Castle",
+      "map": "icecastle",
+      "coordinates": "71, 230",
+      "services": "Rune Tablet / Printing / Lore"
+    },
+    {
+      "city": "Varmundt Mansion",
+      "map": "ba_maison",
+      "coordinates": "137, 111",
+      "services": "Rune Tablet / Printing / Lore"
+    }
+  ],
+  "updates": [
+    {
+      "date": "4 ส.ค. 2023",
+      "title": "เปิดระบบ",
+      "change": "เปิดตัว Rune Tablet System",
+      "meaning": "เริ่มย่อยการ์ด / ปลดล็อก Rune Set"
+    },
+    {
+      "date": "15 พ.ย. 2023",
+      "title": "EP18",
+      "change": "เพิ่มเซ็ตใหม่และเปลี่ยนชุดย่อยการ์ด 100 → 30 ใบ",
+      "meaning": "อัตราแปลงการ์ดปรับใหม่"
+    },
+    {
+      "date": "16 เม.ย. 2024",
+      "title": "EP19",
+      "change": "เพิ่ม Rune Piece / Rune Set",
+      "meaning": "ตัวเลือกของสายต่าง ๆ มากขึ้น"
+    },
+    {
+      "date": "17 พ.ค. 2024",
+      "title": "Rune Shop",
+      "change": "เพิ่ม Faint Rune Stone, Rune Seal และร้านแลก",
+      "meaning": "มีแหล่งแลก/ย่อยรูนเพิ่ม"
+    },
+    {
+      "date": "16 ต.ค. 2024",
+      "title": "Completion Rewards",
+      "change": "ทำจำนวนเซ็ตถึงเกณฑ์ได้รับกล่องรางวัล",
+      "meaning": "มีรางวัลจากการสะสมเซ็ต"
+    },
+    {
+      "date": "16 เม.ย. 2025",
+      "title": "EP20",
+      "change": "เพิ่มเซ็ตและชิ้นส่วน EP20",
+      "meaning": "เริ่มมีชุด Glacier / มอน EP20"
+    },
+    {
+      "date": "6 ส.ค. 2025",
+      "title": "CH1",
+      "change": "เพิ่มเซ็ตและ Rune Piece CH1 ชุดแรก",
+      "meaning": "เริ่มมีตัวเลือก CH1"
+    },
+    {
+      "date": "19 พ.ย. 2025",
+      "title": "EP21",
+      "change": "เพิ่มเซ็ตและชิ้นส่วน EP21",
+      "meaning": "เพิ่มสายยิงไกล / เวท / Boss / GCD"
+    },
+    {
+      "date": "4 มี.ค. 2026",
+      "title": "CH1 เพิ่มเติม",
+      "change": "เพิ่ม Fire, Junkyard, Noise ฯลฯ",
+      "meaning": "มีเซ็ตใหม่สำหรับสายเวท/คลาส 4"
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Rune Tablet",
+      "meaning": "ระบบเสริมโบนัสตัวละครจากรูนที่สะสม",
+      "note": "แยกจากอุปกรณ์ที่สวมใส่"
+    },
+    {
+      "term": "Rune Piece",
+      "meaning": "ชิ้นส่วนที่ใช้ประกอบ Rune Set",
+      "note": "ชิ้นเดียวไม่มีโบนัส"
+    },
+    {
+      "term": "Rune Set",
+      "meaning": "ชุดรูนที่เลือกใช้งานเพื่อรับโบนัส",
+      "note": "Active ได้ครั้งละ 1 เซ็ต"
+    },
+    {
+      "term": "Printing / Printed Gear",
+      "meaning": "เปลี่ยนอุปกรณ์ให้กลายเป็นวัตถุดิบ",
+      "note": "ย้อนกลับไม่ได้ ล้างทุกอย่างบนอุปกรณ์"
+    },
+    {
+      "term": "Card Disassembly",
+      "meaning": "ย่อยการ์ดเป็นวัตถุดิบรูน",
+      "note": "การ์ดที่เก็บไว้มีประโยชน์"
+    },
+    {
+      "term": "Enhancement",
+      "meaning": "ตีบวก Rune Set (+0 ถึง +15)",
+      "note": "พลาดไม่ลดขั้นแต่เสียของ"
+    },
+    {
+      "term": "P.ATK / S.MATK",
+      "meaning": "พลังโจมตีกายภาพ / เวทของคลาส 4",
+      "note": "ไม่ใช่ ATK/MATK แบบเดียวกันทุกกรณี"
+    },
+    {
+      "term": "C.RATE / CRI",
+      "meaning": "ค่าคริติคอลแบบคลาส 4 / โอกาสติดคริ",
+      "note": "เป็นคนละค่าสถานะ"
+    },
+    {
+      "term": "Global Cooldown",
+      "meaning": "ดีเลย์ร่วมหลังใช้สกิล",
+      "note": "ไม่ใช่คูลดาวน์เฉพาะสกิล"
+    },
+    {
+      "term": "Variable Cast",
+      "meaning": "เวลาร่ายที่ลดได้ด้วยเงื่อนไขต่าง ๆ",
+      "note": "ไม่ใช่ Fixed Cast"
+    },
+    {
+      "term": "ทุก +3",
+      "meaning": "ผลเพิ่มเมื่ออัปเกรดครบ 3,6,9,12,15",
+      "note": "ที่ +15 เท่ากับ 5 ครั้ง"
+    },
+    {
+      "term": "ทุก +1",
+      "meaning": "ผลเพิ่มทุกระดับอัปเกรด",
+      "note": "ที่ +15 เท่ากับ 15 ครั้ง"
+    }
+  ],
+  "sources": [
+    {
+      "title": "กระทู้รวบรวมระบบ Rune Tablet",
+      "url": "https://www.divine-pride.net/forum/index.php?/topic/6983-kro-rune-tablet-system/",
+      "note": "โพสต์เริ่มปี 2023 และมีอัปเดตถึง มี.ค. 2026"
+    },
+    {
+      "title": "ฐานข้อมูล Imperfect Rune",
+      "url": "https://www.divine-pride.net/database/item/1001282/",
+      "note": "รหัสไอเทม 1001282"
+    },
+    {
+      "title": "ฐานข้อมูล Perfect Rune",
+      "url": "https://www.divine-pride.net/database/item/1001283/",
+      "note": "รหัสไอเทม 1001283"
+    },
+    {
+      "title": "ฐานข้อมูล Rune Seal",
+      "url": "https://www.divine-pride.net/database/item/1001594/kROM",
+      "note": "รหัสไอเทม 1001594"
+    },
+    {
+      "title": "ฐานข้อมูล Faint Magical Rune Stone",
+      "url": "https://www.divine-pride.net/database/item/1001593/kROM",
+      "note": "รหัสไอเทม 1001593"
+    }
+  ]
+}

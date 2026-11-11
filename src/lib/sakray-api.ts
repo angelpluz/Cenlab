@@ -11,11 +11,11 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json().catch(() => ({}))) as T;
 }
 
-async function fetchSakrayApi(path: string, init?: RequestInit): Promise<SakrayState> {
+async function fetchSakrayApi(path: string, init?: RequestInit, baseUrl = SAKRAY_API_BASE_URL): Promise<SakrayState> {
   let response: Response;
 
   try {
-    response = await fetch(`${SAKRAY_API_BASE_URL}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       ...init,
       cache: "no-store",
       headers: {
@@ -24,7 +24,7 @@ async function fetchSakrayApi(path: string, init?: RequestInit): Promise<SakrayS
       },
     });
   } catch {
-    throw new Error("เชื่อมต่อฐานข้อมูล Sakray ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
+    throw new Error("เชื่อมต่อฐานข้อมูลดันเจียนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
   }
 
   const payload = await readJson<SakrayStateApiResponse & SakrayApiErrorResponse>(response);
@@ -34,10 +34,25 @@ async function fetchSakrayApi(path: string, init?: RequestInit): Promise<SakrayS
       typeof payload.remainingCooldownSeconds === "number"
         ? ` (${payload.remainingCooldownSeconds}s remaining)`
         : "";
-    throw new Error(`${payload.message ?? "Sakray API request failed."}${cooldownText}`);
+    throw new Error(`${payload.message ?? "Dungeon API request failed."}${cooldownText}`);
   }
 
   return payload.data;
+}
+
+export function createDailyDungeonApi(baseUrl: string) {
+  const post = (path: string, payload: unknown) => fetchSakrayApi(path, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, baseUrl);
+
+  return {
+    getState: () => fetchSakrayApi("/state", undefined, baseUrl),
+    completeRun: (characterId: string) => post("/complete", { characterId }),
+    saveMapping: (windhawkId: string, bishopId: string | null) => post("/mapping", { windhawkId, bishopId }),
+    manualAdjust: (payload: SakrayManualAdjustPayload) => post("/manual-adjust", payload),
+    resetCooldown: (characterId: string) => post("/reset-cooldown", { characterId }),
+  };
 }
 
 export function getSakrayState(): Promise<SakrayState> {
