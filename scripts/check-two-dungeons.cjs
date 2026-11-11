@@ -16,6 +16,33 @@ function load(relativePath, globals = {}) {
 }
 
 const { addBangkokGameDayCooldown } = load("src/lib/game-day.ts");
+const { getTwoDungeonMappingChange } = load("src/lib/two-dungeons.ts", {
+  require: () => ({ createDailyDungeonApi: () => ({}) }),
+});
+
+test("a Windhawk can choose a different two-dungeon Cardinal from its OGCH partner", () => {
+  const ogchParty = { kittyalp: "rainna" };
+  const twoDungeonParty = { kittyalp: "chronos" };
+  const change = getTwoDungeonMappingChange({ id: "kittyalp", role: "windhawk" }, "molloreena", twoDungeonParty);
+  assert.equal(change.windhawkId, "kittyalp");
+  assert.equal(change.bishopId, "molloreena");
+  assert.equal(ogchParty.kittyalp, "rainna");
+  assert.equal(twoDungeonParty.kittyalp, "chronos");
+});
+
+test("Cardinal-side selection sends the selected Windhawk and the current Cardinal", () => {
+  const change = getTwoDungeonMappingChange({ id: "chronos", role: "bishop" }, "soulalp", { kittyalp: "chronos" });
+  assert.equal(change.windhawkId, "soulalp");
+  assert.equal(change.bishopId, "chronos");
+});
+
+test("Cardinal-side removal resolves its two-dungeon partner even when OGCH pairs differ", () => {
+  const twoDungeonParty = { kittyalp: "chronos", soulalp: "rainna" };
+  const change = getTwoDungeonMappingChange({ id: "rainna", role: "bishop" }, "", twoDungeonParty);
+  assert.equal(change.windhawkId, "soulalp");
+  assert.equal(change.bishopId, null);
+  assert.equal(getTwoDungeonMappingChange({ id: "molloreena", role: "bishop" }, "", twoDungeonParty), null);
+});
 
 test("the one-day preview resets at the next Bangkok 04:00, including midnight and year rollover", () => {
   for (const [input, expected] of [
