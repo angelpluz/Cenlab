@@ -16,8 +16,29 @@ function load(relativePath, globals = {}) {
 }
 
 const { addBangkokGameDayCooldown } = load("src/lib/game-day.ts");
-const { getTwoDungeonMappingChange } = load("src/lib/two-dungeons.ts", {
+const { getTwoDungeonMappingChange, compareTwoDungeonCharacters, isTwoDungeonCharacterVisible } = load("src/lib/two-dungeons.ts", {
   require: () => ({ createDailyDungeonApi: () => ({}) }),
+});
+
+test("Windhawk roster follows the character selection screenshot instead of alphabetical order", () => {
+  const expected = ["francesgaz", "junoirextreme", "archangelpluz", "queen0feria", "izanoalp", "reginaalp",
+    "khrasedraalp", "soulalp", "power0franz", "kittyalp", "jessigaalp", "soufflextreme"];
+  const characters = [...expected].reverse().map((id) => ({ id, name: id, role: "windhawk" }));
+  assert.equal(characters.sort(compareTwoDungeonCharacters).map((character) => character.id).join(","), expected.join(","));
+});
+
+test("alternate character IDs keep the same screenshot positions", () => {
+  const characters = ["souffleextreme", "jessigazalp", "poweroffranz", "queenofferia"].map((id) => ({ id, name: id, role: "windhawk" }));
+  assert.equal(characters.sort(compareTwoDungeonCharacters).map((character) => character.id).join(","),
+    "queenofferia,poweroffranz,jessigazalp,souffleextreme");
+});
+
+test("CandySeller and CandyWorker are excluded by ID or name, including spelling variants", () => {
+  for (const key of ["CandYSellerALP", "canddysellerALP", "candyworkerALP", "CANDY_WORKER_ALP"]) {
+    assert.equal(isTwoDungeonCharacterVisible({ id: key, name: "Other" }), false);
+    assert.equal(isTwoDungeonCharacterVisible({ id: "other-id", name: key }), false);
+  }
+  assert.equal(isTwoDungeonCharacterVisible({ id: "kittyalp", name: "KittyALP" }), true);
 });
 
 test("a Windhawk can choose a different two-dungeon Cardinal from its OGCH partner", () => {

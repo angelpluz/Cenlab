@@ -14,6 +14,8 @@ Each Windhawk can map one Cardinal. Each Cardinal belongs to one two-dungeon par
 
 Party selection is independent from OGCH: sharing character identities does not copy or synchronize party membership. A Windhawk can run OGCH with one Cardinal and the two dungeons with another. Both roster tabs can select, change or remove the two-dungeon partner. Removing a mapping from the Cardinal tab resolves only the partner recorded in `two_dungeon_party_mappings`.
 
+The default Windhawk order follows the character selection screenshot: FranCesGaz, JunoirExtreme, ArchAngelpluZ, QueenofFeria, IzanoALP, ReginaALP, KhrasedraALP, SoulALP, PoWerofFranZ, KittyALP, JessiGazALP, SouffleExtreme. Alternate IDs for the same characters retain their positions. CandySellerALP (including the CanddySeller spelling) and CandyWorkerALP are excluded from the two-dungeon roster and partner picker. This does not delete character records or historical progress from other trackers.
+
 ## Daily reset
 
 Completion is recorded after both dungeons are finished. The cooldown ends at the next **04:00 Asia/Bangkok** boundary:

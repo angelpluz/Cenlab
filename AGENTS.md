@@ -162,3 +162,4 @@ npm run lint     # ESLint check
 - Backend startup/deployment and verification notes: `TWO_DUNGEONS_SETUP.md`.
 - Two-dungeon party selection is explicitly independent of OGCH. Both Cardinal and Windhawk tabs can edit their two-dungeon partner; the same character may have different partners in each tracker.
 - Production API rollout completed on 2026-11-11: applied the three new tables, restarted the backend on port 4272, and verified authenticated Vercel `/api/two-dungeons/state` returned HTTP 200 with 24 characters (12 per roster) and independent empty party mappings. The initial API failure was the old process returning 404 for the new endpoint.
+- On 2026-11-12, changed the two-dungeon default Windhawk order to match the supplied character selection screenshot. Excluded CandySeller/CanddySellerALP and CandyWorkerALP from the roster and partner picker; other trackers retain their own data.

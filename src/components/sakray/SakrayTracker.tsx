@@ -13,7 +13,12 @@ import {
 import {
   createDailyDungeonApi,
 } from "@/lib/sakray-api";
-import { getTwoDungeonMappingChange, TWO_DUNGEONS_API } from "@/lib/two-dungeons";
+import {
+  compareTwoDungeonCharacters,
+  getTwoDungeonMappingChange,
+  isTwoDungeonCharacterVisible,
+  TWO_DUNGEONS_API,
+} from "@/lib/two-dungeons";
 import type {
   SakrayCharacter,
   SakrayRole,
@@ -21,7 +26,7 @@ import type {
 } from "@/lib/sakray-types";
 
 type FilterKey = "all" | "available" | "cooldown";
-type SortKey = "nextAvailable" | "name" | "clearCount";
+type SortKey = "roster" | "nextAvailable" | "name" | "clearCount";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 const EMPTY_STATE: SakrayState = { characters: [], mappings: {} };
@@ -79,7 +84,7 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
   const [state, setState] = useState<SakrayState>(EMPTY_STATE);
   const [role, setRole] = useState<SakrayRole>("windhawk");
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [sort, setSort] = useState<SortKey>("nextAvailable");
+  const [sort, setSort] = useState<SortKey>(isTwoDungeons ? "roster" : "nextAvailable");
   const [search, setSearch] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [isLoading, setIsLoading] = useState(true);
@@ -135,9 +140,13 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
     };
   }, [refresh]);
 
+  const rosterCharacters = useMemo(
+    () => isTwoDungeons ? state.characters.filter(isTwoDungeonCharacterVisible) : state.characters,
+    [isTwoDungeons, state.characters]
+  );
   const characterById = useMemo(
-    () => new Map(state.characters.map((character) => [character.id, character])),
-    [state.characters]
+    () => new Map(rosterCharacters.map((character) => [character.id, character])),
+    [rosterCharacters]
   );
 
   useEffect(() => {
@@ -149,8 +158,8 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
   }, [characterById, variant]);
 
   const roleCharacters = useMemo(
-    () => state.characters.filter((character) => character.role === role),
-    [role, state.characters]
+    () => rosterCharacters.filter((character) => character.role === role),
+    [role, rosterCharacters]
   );
 
   const inverseMappings = useMemo(() => {
@@ -233,6 +242,7 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
         return true;
       })
       .sort((left, right) => {
+        if (sort === "roster" && isTwoDungeons) return compareTwoDungeonCharacters(left, right);
         if (sort === "name") return left.name.localeCompare(right.name);
         if (sort === "clearCount") return right.clearCount - left.clearCount || left.name.localeCompare(right.name);
 
@@ -240,7 +250,7 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
         const rightTime = right.nextAvailableAt ? new Date(right.nextAvailableAt).getTime() : 0;
         return leftTime - rightTime || left.name.localeCompare(right.name);
       });
-  }, [filter, nowMs, roleCharacters, search, sort]);
+  }, [filter, isTwoDungeons, nowMs, roleCharacters, search, sort]);
 
   const runMutation = useCallback(
     async (characterId: string, mutation: () => Promise<SakrayState>, successText: string) => {
@@ -384,13 +394,13 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
   const predictedNextReset = addBangkokGameDayCooldown(new Date(nowMs), 1);
   const mappingPartnerRole = isTwoDungeons && mappingTarget?.role === "bishop" ? "windhawk" : "bishop";
   const mappingPartnerLabel = mappingPartnerRole === "windhawk" ? "Windhawk" : supportLabel;
-  const mappingCandidates = state.characters
+  const mappingCandidates = rosterCharacters
     .filter((character) => character.role === mappingPartnerRole)
     .filter((character) => {
       const query = mappingSearch.trim().toLowerCase();
       return !query || `${character.name} ${character.job}`.toLowerCase().includes(query);
     })
-    .sort((left, right) => left.name.localeCompare(right.name));
+    .sort((left, right) => isTwoDungeons ? compareTwoDungeonCharacters(left, right) : left.name.localeCompare(right.name));
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -442,7 +452,7 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
                   onClick={() => setRole(roleKey)}
                   type="button"
                 >
-                  {roleLabels[roleKey]} ({state.characters.filter((item) => item.role === roleKey).length})
+                  {roleLabels[roleKey]} ({rosterCharacters.filter((item) => item.role === roleKey).length})
                 </button>
               ))}
             </div>
@@ -478,6 +488,7 @@ export default function SakrayTracker({ variant = "sakray" }: { variant?: "sakra
                 onChange={(event) => setSort(event.target.value as SortKey)}
                 value={sort}
               >
+                {isTwoDungeons && <option value="roster">ลำดับตัวละคร</option>}
                 <option value="nextAvailable">Next available time</option>
                 <option value="name">Name</option>
                 <option value="clearCount">Clear count</option>
